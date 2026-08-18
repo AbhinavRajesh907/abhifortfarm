@@ -1,0 +1,122 @@
+{% extends "marketplace/base_marketplace.html" %}
+{% load static %}
+
+{% block title %}Dashboard — AgriSmart Marketplace{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<!-- ====== HERO / WELCOME ====== -->
+<section class="agri-hero">
+  <div class="container py-5">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <h1 class="hero-title">Welcome back, {{ request.user.name|default:request.user.email }}! 👋</h1>
+        <p class="hero-subtitle">Discover fresh <strong>Seeds &amp; Plants</strong> for your farm and garden.</p>
+        <!-- Search bar -->
+        <form method="get" action="{% url 'marketplace:product_list' %}" class="hero-search d-flex gap-2">
+          <input type="text" name="q" class="form-control form-control-lg search-input"
+                 placeholder="Search seeds or plants…" value="{{ query }}" id="heroSearchInput"/>
+          <button type="submit" class="btn btn-success btn-lg px-4">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+      </div>
+      <div class="col-lg-5 text-center d-none d-lg-block">
+        <div class="hero-illustration">🌾</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== CATEGORY CARDS ====== -->
+<section class="container my-5">
+  <h2 class="section-title">Shop by Category</h2>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a href="{% url 'marketplace:product_list' %}?category=Seeds" class="text-decoration-none">
+        <div class="category-card category-seeds h-100">
+          <div class="category-icon">🌱</div>
+          <h3 class="category-name">Seeds</h3>
+          <p class="category-desc">High-quality vegetable &amp; herb seeds for every garden.</p>
+          <span class="btn btn-outline-success mt-2">Browse Seeds →</span>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a href="{% url 'marketplace:product_list' %}?category=Plants" class="text-decoration-none">
+        <div class="category-card category-plants h-100">
+          <div class="category-icon">🌿</div>
+          <h3 class="category-name">Plants</h3>
+          <p class="category-desc">Ready-to-grow saplings and flowering plants for your farm.</p>
+          <span class="btn btn-outline-success mt-2">Browse Plants →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ====== FEATURED PRODUCTS ====== -->
+<section class="container mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title mb-0">Featured Products</h2>
+    <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success btn-sm">View All</a>
+  </div>
+
+  {% if products %}
+    <div class="row g-4">
+      {% for product in products|slice:":8" %}
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="product-card h-100">
+            <!-- Image -->
+            <div class="product-img-wrap">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img"/>
+              {% else %}
+                <div class="product-img-placeholder">
+                  {% if product.category.name == "Seeds" %}🌱{% else %}🌿{% endif %}
+                </div>
+              {% endif %}
+              <span class="product-category-badge badge
+                {% if product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                {{ product.category.name }}
+              </span>
+            </div>
+            <!-- Info -->
+            <div class="product-card-body">
+              <h5 class="product-name">{{ product.name }}</h5>
+              <p class="product-desc text-muted small">{{ product.description|truncatechars:60 }}</p>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="product-price">₹{{ product.price }}</span>
+                {% if product.in_stock %}
+                  <span class="badge bg-success-subtle text-success">In Stock ({{ product.stock }})</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger">Out of Stock</span>
+                {% endif %}
+              </div>
+              <div class="d-flex gap-2">
+                <a href="{% url 'marketplace:product_detail' product.pk %}"
+                   class="btn btn-outline-success btn-sm flex-fill">Details</a>
+                {% if product.in_stock %}
+                  <form method="post" action="{% url 'marketplace:add_to_cart' product.pk %}" class="flex-fill">
+                    {% csrf_token %}
+                    <input type="hidden" name="quantity" value="1"/>
+                    <button type="submit" class="btn btn-success btn-sm w-100">
+                      <i class="bi bi-cart-plus"></i> Cart
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state text-center py-5">
+      <div class="empty-icon">🌾</div>
+      <h4>No products available yet.</h4>
+      <p class="text-muted">Products will appear here once the admin approves them.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -18,6 +18,8 @@ urlpatterns = [
     # User management
     path("users/", include("agrivision.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # User Marketplace
+    path("marketplace/", include("agrivision.marketplace.urls", namespace="marketplace")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

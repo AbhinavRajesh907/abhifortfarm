@@ -1,0 +1,59 @@
+{% extends "marketplace/base_marketplace.html" %}
+
+{% block title %}Order Confirmed — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm text-center p-4 success-card">
+        <div class="success-icon mb-3">✅</div>
+        <h2 class="text-success fw-bold">Order Placed Successfully!</h2>
+        <p class="text-muted mb-4">Thank you for your purchase. Your order has been received.</p>
+
+        <div class="order-info-box">
+          <div class="row g-2 text-start">
+            <div class="col-6">
+              <small class="text-muted">Order Number</small>
+              <div class="fw-bold text-success">#{{ order.order_number }}</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Total Amount</small>
+              <div class="fw-bold">₹{{ order.total_amount }}</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Payment Method</small>
+              <div class="fw-bold">{{ order.get_payment_method_display }}</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Payment Status</small>
+              <div>
+                <span class="badge bg-warning text-dark">{{ order.get_payment_status_display }}</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <small class="text-muted">Order Status</small>
+              <div>
+                <span class="badge bg-info text-dark">{{ order.get_order_status_display }}</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <small class="text-muted">Delivering to</small>
+              <div>{{ order.full_name }} · {{ order.delivery_address }}, {{ order.city }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 justify-content-center mt-4 flex-wrap">
+          <a href="{% url 'marketplace:order_detail' order.order_number %}" class="btn btn-success">
+            <i class="bi bi-receipt me-1"></i> View Order Details
+          </a>
+          <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success">
+            🌱 Continue Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
