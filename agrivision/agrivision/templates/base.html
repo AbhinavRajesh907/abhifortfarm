@@ -7,7 +7,7 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>
       {% block title %}
-      agrivision
+      AgriFarm - Grow Better. Buy Smarter.
     {% endblock title %}
   </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,6 +28,57 @@
 
   
   <link href="{% static 'css/project.css' %}" rel="stylesheet" />
+  <style>
+    :root {
+      --agri-green: #2E7D32;
+      --agri-light: #E8F5E9;
+      --agri-dark: #1B5E20;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fcfcfc;
+    }
+    .navbar-agri {
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .navbar-brand {
+      color: var(--agri-green) !important;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .nav-link {
+      font-weight: 500;
+      color: #555 !important;
+      transition: color 0.3s ease;
+    }
+    .nav-link:hover {
+      color: var(--agri-green) !important;
+    }
+    .btn-agri {
+      background-color: var(--agri-green);
+      color: white;
+      border-radius: 25px;
+      padding: 0.5rem 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .btn-agri:hover {
+      background-color: var(--agri-dark);
+      color: white;
+      transform: translateY(-2px);
+    }
+    .btn-outline-agri {
+      border: 2px solid var(--agri-green);
+      color: var(--agri-green);
+      border-radius: 25px;
+      padding: 0.4rem 1.4rem;
+      transition: all 0.3s ease;
+    }
+    .btn-outline-agri:hover {
+      background-color: var(--agri-green);
+      color: white;
+    }
+  </style>
 
 
 {% endblock css %}
@@ -56,10 +107,16 @@
 </head>
 <body class="{% block bodyclass %}{% endblock bodyclass %}">
   {% block body %}
-  <div class="mb-1">
-    <nav class="navbar navbar-expand-md navbar-light bg-light">
-      <div class="container-fluid">
-        <button class="navbar-toggler navbar-toggler-right"
+  <div>
+    <nav class="navbar navbar-expand-lg navbar-agri sticky-top py-3">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-tree-fill me-2" viewBox="0 0 16 16">
+            <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.739A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.761L10.902 5.5H11a.5.5 0 0 0 .416-.777l-3-4.5z"/>
+          </svg>
+          AgriFarm
+        </a>
+        <button class="navbar-toggler"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent"
@@ -68,37 +125,35 @@
                 aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="{% url 'home' %}">agrivision</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
+          <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Plants</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Seeds</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Categories</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'about' %}">About</a>
             </li>
-            {% if request.user.is_authenticated %}
-              <li class="nav-item">
-                <a class="nav-link"
-                   href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
-              </li>
-              <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a class="nav-link" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
-              </li>
-            {% else %}
-              {% if ACCOUNT_ALLOW_REGISTRATION %}
-                <li class="nav-item">
-                  {# URL provided by django-allauth/account/urls.py #}
-                  <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% translate "Sign Up" %}</a>
-                </li>
-              {% endif %}
-              <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
-                <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% translate "Sign In" %}</a>
-              </li>
-            {% endif %}
           </ul>
+          <div class="d-flex align-items-center gap-3">
+            {% if request.user.is_authenticated %}
+              <a class="nav-link" href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
+              <a class="btn btn-outline-agri" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
+            {% else %}
+              <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% translate "Login" %}</a>
+              {% if ACCOUNT_ALLOW_REGISTRATION %}
+                <a id="sign-up-link" class="btn btn-agri" href="{% url 'users:register' %}">{% translate "Register" %}</a>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
       </div>
     </nav>
@@ -117,7 +172,6 @@
     {% endif %}
     {% block main %}
       {% block content %}
-        <p>Use this document as a way to quick start any new project.</p>
       {% endblock content %}
     {% endblock main %}
 

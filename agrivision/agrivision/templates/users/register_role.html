@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Register - AgriFarm{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6 text-center">
+      <h2 class="fw-bold mb-4" style="color: var(--agri-dark);">Who are you?</h2>
+      <p class="text-muted mb-5">Select your role to join AgriFarm</p>
+      
+      <div class="row g-4">
+        <div class="col-md-6">
+          <a href="{% url 'users:register_user' %}" class="text-decoration-none text-dark">
+            <div class="card h-100 border-2 shadow-sm role-card" style="border-radius: 15px; border-color: var(--agri-light) !important; transition: all 0.3s ease;">
+              <div class="card-body p-5">
+                <div class="mb-3 mx-auto" style="width: 80px; height: 80px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                  👤
+                </div>
+                <h4 class="fw-bold h5">User</h4>
+                <p class="text-muted mb-0 small">Buy plants & seeds</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        
+        <div class="col-md-6">
+          <a href="{% url 'users:register_provider' %}" class="text-decoration-none text-dark">
+            <div class="card h-100 border-2 shadow-sm role-card" style="border-radius: 15px; border-color: var(--agri-light) !important; transition: all 0.3s ease;">
+              <div class="card-body p-5">
+                <div class="mb-3 mx-auto" style="width: 80px; height: 80px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                  🌱
+                </div>
+                <h4 class="fw-bold h5">Provider</h4>
+                <p class="text-muted mb-0 small">Sell plants & seeds</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+      
+      <div class="mt-5">
+        <p class="text-muted">Already have an account? <a href="{% url 'account_login' %}" style="color: var(--agri-green); text-decoration: none; font-weight: 500;">Login here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .role-card:hover {
+    border-color: var(--agri-green) !important;
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+  }
+</style>
+{% endblock content %}

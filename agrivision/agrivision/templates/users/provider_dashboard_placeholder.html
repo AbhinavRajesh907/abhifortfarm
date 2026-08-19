@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Provider Dashboard - AgriFarm{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="fw-bold mb-4" style="color: var(--agri-dark);">Provider Dashboard</h2>
+      
+      <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading fw-bold">Verification Pending</h4>
+        <p>Your account is currently under review by our administrators. You will be able to manage your products and view analytics once your account has been approved.</p>
+        <hr>
+        <p class="mb-0">Thank you for joining AgriFarm!</p>
+      </div>
+      
+      <!-- Placeholder content for future marketplace development -->
+      <div class="card mt-4 border-0 shadow-sm opacity-50" style="pointer-events: none;">
+        <div class="card-header bg-white fw-bold">
+          My Products (Placeholder)
+        </div>
+        <div class="card-body">
+          <p class="text-muted">This section is disabled until your account is approved.</p>
+          <button class="btn btn-secondary" disabled>Add New Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

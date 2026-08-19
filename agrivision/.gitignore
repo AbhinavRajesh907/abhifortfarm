@@ -274,3 +274,6 @@ agrivision/media/
 .ipython/
 .env
 .envs/*
+
+db.sqlite3
+requirements.txt

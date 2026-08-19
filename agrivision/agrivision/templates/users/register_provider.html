@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Provider Registration - AgriFarm{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="card-body p-5">
+          <div class="text-center mb-4">
+            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              🌱
+            </div>
+            <h2 class="fw-bold" style="color: var(--agri-dark);">Provider Registration</h2>
+            <p class="text-muted">Join AgriFarm as a verified seller and grow your business.</p>
+          </div>
+          
+          <div class="alert alert-info mb-4" role="alert">
+            <h5 class="alert-heading fw-bold">Verification Notice</h5>
+            <p class="mb-0">Your provider account will be submitted for verification. An administrator will review your details and license before you can publish products.</p>
+          </div>
+
+          <form method="post" action="{% url 'users:register_provider' %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <h4 class="fw-bold mt-4 mb-3 border-bottom pb-2">Personal Details</h4>
+            <div class="row">
+              <div class="col-md-6">{{ form.name|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.phone|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.username|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.password|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.confirm_password|as_crispy_field }}</div>
+            </div>
+            
+            <h4 class="fw-bold mt-4 mb-3 border-bottom pb-2">Address Details</h4>
+            <div class="row">
+              <div class="col-12">{{ form.address|as_crispy_field }}</div>
+              <div class="col-md-4">{{ form.city|as_crispy_field }}</div>
+              <div class="col-md-4">{{ form.state|as_crispy_field }}</div>
+              <div class="col-md-4">{{ form.pincode|as_crispy_field }}</div>
+            </div>
+
+            <h4 class="fw-bold mt-4 mb-3 border-bottom pb-2">Farm/Business Details</h4>
+            <div class="row">
+              <div class="col-md-6">{{ form.farm_name|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.provider_type|as_crispy_field }}</div>
+              <div class="col-12">{{ form.farm_address|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.experience_years|as_crispy_field }}</div>
+              <div class="col-12">{{ form.description|as_crispy_field }}</div>
+            </div>
+
+            <h4 class="fw-bold mt-4 mb-3 border-bottom pb-2">License Details</h4>
+            <div class="row">
+              <div class="col-md-6">{{ form.license_number|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.license_type|as_crispy_field }}</div>
+              <div class="col-md-12">{{ form.issuing_authority|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.issue_date|as_crispy_field }}</div>
+              <div class="col-md-6">{{ form.expiry_date|as_crispy_field }}</div>
+              <div class="col-12">{{ form.license_document|as_crispy_field }}</div>
+            </div>
+            
+            <div class="d-grid mt-5">
+              <button type="submit" class="btn btn-agri btn-lg">Submit for Verification</button>
+            </div>
+          </form>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
