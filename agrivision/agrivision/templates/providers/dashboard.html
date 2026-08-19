@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Provider Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Provider Dashboard</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Profile Information</h4>
+            <p><strong>Company:</strong> {{ profile.company_name|default:"Not specified" }}</p>
+            <p><strong>Phone:</strong> {{ profile.phone_number|default:"Not specified" }}</p>
+            <p><strong>Address:</strong> {{ profile.address|default:"Not specified" }}</p>
+            <a href="{% url 'providers:profile_edit' %}" class="btn btn-primary btn-sm">Edit Profile</a>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>My Requests</h3>
+        <a href="{% url 'providers:request_new' %}" class="btn btn-success">Add New Request</a>
+    </div>
+
+    {% if requests %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Expected Price</th>
+                    <th>Status</th>
+                    <th>Date Submitted</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.item_name }}</td>
+                    <td>{{ req.quantity }}</td>
+                    <td>${{ req.expected_price }}</td>
+                    <td>
+                        {% if req.status == 'Accepted' %}
+                            <span class="badge bg-success">Accepted</span>
+                        {% elif req.status == 'Rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ req.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You have not submitted any requests yet.</p>
+    {% endif %}
+</div>
+{% endblock content %}

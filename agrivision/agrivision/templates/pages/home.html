@@ -1,3 +1,65 @@
 {% extends "base.html" %}
 
+{% block title %}Home - Agrivision{% endblock %}
 
+{% block content %}
+<div class="container mt-5">
+    <div class="row text-center mb-5">
+        <h1>Welcome to Agrivision</h1>
+        <p class="lead">Connect providers and farmers</p>
+    </div>
+
+    {% if user.is_authenticated %}
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <h3>Welcome back, {{ user.email }}!</h3>
+                <a href="{% url 'providers:dashboard' %}" class="btn btn-primary btn-lg mt-3">Go to Provider Dashboard</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <!-- Login Form -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">Provider Login</h3>
+                        <form class="login" method="POST" action="{% url 'account_login' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="login_email" class="form-label">Email</label>
+                                <input type="email" name="login" class="form-control" id="login_email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="login_password" class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" id="login_password" required>
+                            </div>
+                            <button class="btn btn-primary w-100" type="submit">Sign In</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">Register as Provider</h3>
+                        <form class="signup" method="POST" action="{% url 'account_signup' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="signup_email" class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" id="signup_email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="signup_password" class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" id="signup_password" required>
+                            </div>
+                            <button class="btn btn-success w-100" type="submit">Sign Up</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
