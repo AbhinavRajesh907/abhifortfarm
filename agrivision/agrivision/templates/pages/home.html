@@ -1,3 +1,50 @@
 {% extends "base.html" %}
+{% load static %}
 
+{% block content %}
+<div class="py-5 text-center">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        <div class="p-3 mb-3 d-inline-block rounded-circle bg-success-subtle text-success">
+          <i class="fa-solid fa-seedling fs-1"></i>
+        </div>
+        <h1 class="display-4 fw-bold text-dark mb-3">AgriVision Ecosystem</h1>
+        <p class="lead text-muted mb-4">
+          Integrated smart agricultural marketplace, provider procurement, AI crop health, and central administration governance.
+        </p>
 
+        <div class="d-flex justify-content-center gap-3 flex-wrap mb-5">
+          <a href="{% url 'admin_portal:dashboard' %}" class="btn btn-success btn-lg px-4 shadow-sm fw-bold">
+            <i class="fa-solid fa-shield-halved me-2"></i> Launch Admin Management Portal
+          </a>
+          <a href="{% url 'account_login' %}" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In
+          </a>
+        </div>
+
+        <div class="row g-4 text-start mt-4">
+          <div class="col-md-4">
+            <div class="p-4 bg-light rounded-3 border h-100 shadow-sm">
+              <h5 class="fw-bold text-dark"><i class="fa-solid fa-gavel text-warning me-2"></i>Provider Approvals</h5>
+              <p class="text-muted small mb-0">Evaluate seed/plant submissions from nurseries, adjust margins, and approve live catalog listings with 1-click.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-4 bg-light rounded-3 border h-100 shadow-sm">
+              <h5 class="fw-bold text-dark"><i class="fa-solid fa-boxes-stacked text-success me-2"></i>Catalog & Stock Control</h5>
+              <p class="text-muted small mb-0">Manage 5 categories (Seeds, Plants, Fertilizers, Pesticides, Tools) with real-time low stock replenishment alerts.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-4 bg-light rounded-3 border h-100 shadow-sm">
+              <h5 class="fw-bold text-dark"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Analytics & Reports</h5>
+              <p class="text-muted small mb-0">Interactive Chart.js visual telemetry, order fulfillment stages, and exportable financial CSV audits.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

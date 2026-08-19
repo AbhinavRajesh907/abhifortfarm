@@ -18,8 +18,8 @@ urlpatterns = [
     # User management
     path("users/", include("agrivision.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    # Your stuff: custom urls includes go here
-    # ...
+    # Member 5: Admin Management Portal
+    path("admin-portal/", include("agrivision.admin_portal.urls", namespace="admin_portal")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

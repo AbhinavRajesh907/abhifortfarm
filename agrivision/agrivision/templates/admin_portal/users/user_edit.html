@@ -1,0 +1,65 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Edit User: {{ target_user.email }} | AgriVision Admin{% endblock title %}
+{% block page_title %}Edit User Permissions & Roles{% endblock page_title %}
+{% block page_subtitle %}Update personal profile, staff privileges, or ban/activate accounts{% endblock page_subtitle %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'admin_portal:user_detail' target_user.pk %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to User Profile
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title"><i class="fa-solid fa-user-pen text-warning"></i> Modify Account: {{ target_user.email }}</h5>
+      </div>
+      <div class="admin-card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.errors %}
+            <div class="alert alert-danger">{{ form.errors }}</div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Full Name</label>
+            {{ form.name }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Email Address</label>
+            {{ form.email }}
+          </div>
+
+          <hr class="my-4" />
+
+          <h6 class="fw-bold mb-3">Permissions & Access Level</h6>
+          <div class="form-check form-switch mb-3">
+            {{ form.is_active }}
+            <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">Active (User can log into the platform)</label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            {{ form.is_staff }}
+            <label class="form-check-label fw-semibold" for="{{ form.is_staff.id_for_label }}">Staff Status (Permits access to Admin Management Control Center)</label>
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            {{ form.is_superuser }}
+            <label class="form-check-label fw-semibold text-danger" for="{{ form.is_superuser.id_for_label }}">Superuser Status (Grants full system control without restrictions)</label>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{% url 'admin_portal:user_detail' target_user.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-admin-primary">Save User Permissions</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

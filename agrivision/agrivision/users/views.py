@@ -46,6 +46,8 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self) -> str:
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return reverse("admin_portal:dashboard")
         return reverse("users:detail", kwargs={"pk": self.request.user.pk})
 
 

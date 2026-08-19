@@ -1,0 +1,118 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Providers Directory | AgriVision Admin{% endblock title %}
+{% block page_title %}Agricultural Providers & Seed Producers{% endblock page_title %}
+{% block page_subtitle %}Manage registered nursery partners, seed producers, and verify vendor credentials{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Top Metrics & Filters -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search farm name, contact person, city..." />
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="verification" class="form-select" onchange="this.form.submit()">
+        <option value="">All Verification Statuses</option>
+        <option value="verified" {% if verification_filter == 'verified' %}selected{% endif %}>Verified Partners Only ({{ verified_providers }})</option>
+        <option value="unverified" {% if verification_filter == 'unverified' %}selected{% endif %}>Unverified Providers</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-admin-primary w-100">Search Providers</button>
+    </div>
+  </form>
+</div>
+
+<!-- Providers Table -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-handshake-angle text-success"></i> Registered Agricultural Providers
+    </h5>
+    <span class="badge bg-light text-dark border">{{ total_providers }} Providers Registered</span>
+  </div>
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Farm / Business Name</th>
+          <th>Contact Representative</th>
+          <th>Location</th>
+          <th>Requests Submitted</th>
+          <th>Verification Badge</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in providers %}
+          <tr>
+            <td>
+              <div class="fw-bold fs-6">
+                <a href="{% url 'admin_portal:provider_detail' p.pk %}" class="text-dark text-decoration-none hover-primary">
+                  {{ p.farm_name }}
+                </a>
+              </div>
+              <small class="text-muted">{{ p.email }}</small>
+            </td>
+            <td>
+              <div>{{ p.contact_person }}</div>
+              <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ p.phone }}</small>
+            </td>
+            <td>
+              <div>{{ p.city }}</div>
+              <small class="text-muted">{{ p.district }}, {{ p.state }}</small>
+            </td>
+            <td>
+              <a href="{% url 'admin_portal:request_list' %}?q={{ p.farm_name }}" class="badge bg-primary-subtle text-primary text-decoration-none fs-6">
+                {{ p.req_count }} requests
+              </a>
+            </td>
+            <td>
+              <form method="post" action="{% url 'admin_portal:provider_verify_toggle' p.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm {% if p.is_verified %}btn-outline-success{% else %}btn-outline-warning{% endif %}" title="Click to toggle verification status">
+                  {% if p.is_verified %}
+                    <i class="fa-solid fa-circle-check me-1"></i> Verified Partner
+                  {% else %}
+                    <i class="fa-solid fa-clock me-1"></i> Unverified
+                  {% endif %}
+                </button>
+              </form>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'admin_portal:provider_detail' p.pk %}" class="btn btn-sm btn-light border">
+                <i class="fa-solid fa-eye me-1"></i> View Profile & Requests
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">No providers found matching your search.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <div class="p-3 border-top d-flex justify-content-center">
+      <nav>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if verification_filter %}&verification={{ verification_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if verification_filter %}&verification={{ verification_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}
