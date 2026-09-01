@@ -4,10 +4,11 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
+from django.views.generic import RedirectView
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("", RedirectView.as_view(pattern_name="marketplace:dashboard", permanent=False), name="home"),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),

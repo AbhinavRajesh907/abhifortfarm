@@ -43,6 +43,11 @@
                         {% if item.product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %} small">
                         {{ item.product.category.name }}
                       </span>
+                      {% if item.product.provider %}
+                      <div class="text-muted small mt-1">
+                        <i class="bi bi-shop"></i> {{ item.product.provider.business_name }}
+                      </div>
+                      {% endif %}
                     {% endif %}
                   </td>
                   <td class="text-center">{{ item.quantity }}</td>

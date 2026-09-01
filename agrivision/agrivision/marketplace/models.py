@@ -21,10 +21,30 @@ class Category(models.Model):
         return self.name
 
 
+class LocalProvider(models.Model):
+    """Temporary local provider model for multi-provider testing."""
+
+    name = models.CharField(max_length=200)
+    business_name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    branch_name = models.CharField(max_length=100)
+    branch_location = models.CharField(max_length=100)
+    branch_address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     """A seed or plant product available in the marketplace."""
 
     name = models.CharField(max_length=200)
+    provider = models.ForeignKey(LocalProvider, on_delete=models.CASCADE, related_name="products", null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)

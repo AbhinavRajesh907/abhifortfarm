@@ -179,7 +179,7 @@ def remove_from_cart(request, pk):
 @login_required
 def checkout(request):
     cart = _get_or_create_cart(request.user)
-    items = cart.items.select_related("product").all()
+    items = cart.items.select_related("product", "product__provider").all()
 
     if not items.exists():
         messages.warning(request, "Your cart is empty.")
@@ -188,6 +188,15 @@ def checkout(request):
     total = cart.get_total()
     cart_count = cart.get_item_count()
     user = request.user
+
+    # Group items by provider for summary display
+    grouped_items = {}
+    for item in items:
+        provider = item.product.provider
+        if provider not in grouped_items:
+            grouped_items[provider] = {"items": [], "subtotal": 0}
+        grouped_items[provider]["items"].append(item)
+        grouped_items[provider]["subtotal"] += item.get_subtotal()
 
     # Pre-fill form fields from user profile if available
     initial_name = getattr(user, "name", "") or ""
@@ -220,6 +229,7 @@ def checkout(request):
 
     context = {
         "items": items,
+        "grouped_items": grouped_items,
         "total": total,
         "cart_count": cart_count,
         "initial_name": initial_name,

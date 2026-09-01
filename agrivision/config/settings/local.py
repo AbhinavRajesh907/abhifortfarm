@@ -77,3 +77,5 @@ INSTALLED_APPS += ["django_extensions"]
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+ACCOUNT_EMAIL_VERIFICATION = "none"
+
