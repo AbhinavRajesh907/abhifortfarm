@@ -4,117 +4,163 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import ProviderProfile, ProviderRequest
 
+PROVIDER_TYPE_CHOICES = [
+    ("Plant Nursery", "Plant Nursery"),
+    ("Seed Producer", "Seed Producer"),
+    ("Organic Farm", "Organic Farm"),
+    ("Plant & Seed Supplier", "Plant & Seed Supplier"),
+    ("Agricultural Cooperative", "Agricultural Cooperative"),
+    ("Fruit & Vegetable Grower", "Fruit & Vegetable Grower"),
+]
 
-class ProviderApplyForm(forms.ModelForm):
+
+class ProviderProfileForm(forms.ModelForm):
     """
-    Form for a regular authenticated user to apply to become a Provider.
-    Creates/updates their ProviderProfile with status=PENDING.
+    Form for editing Provider profile, structured into 3 sections:
+      1. Personal & Contact Details
+      2. Farm & Business Details
+      3. License & Verification Details
     """
+
+    full_name = forms.CharField(
+        label=_("Full Name"),
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Full Name"}
+        ),
+    )
+    email = forms.EmailField(
+        label=_("Email Address"),
+        required=False,
+        widget=forms.EmailInput(
+            attrs={"class": "form-control", "placeholder": "Email Address"}
+        ),
+    )
+
+    provider_type = forms.CharField(
+        label=_("Provider Type"),
+        required=False,
+        initial="Plant Nursery",
+        widget=forms.Select(choices=PROVIDER_TYPE_CHOICES, attrs={"class": "form-select"}),
+    )
+
+    issue_date = forms.DateField(
+        label=_("Issue Date"),
+        required=False,
+        widget=forms.DateInput(
+            attrs={"class": "form-control", "type": "date", "placeholder": "dd-mm-yyyy"}
+        ),
+    )
+    expiry_date = forms.DateField(
+        label=_("Expiry Date"),
+        required=False,
+        widget=forms.DateInput(
+            attrs={"class": "form-control", "type": "date", "placeholder": "dd-mm-yyyy"}
+        ),
+    )
 
     class Meta:
         model = ProviderProfile
         fields = [
-            "farm_name",
-            "provider_type",
-            "description",
+            # Section 1
             "phone_number",
             "address",
             "city",
-            "district",
             "state",
+            "pincode",
+            # Section 2
+            "farm_name",
+            "provider_type",
+            "farm_address",
             "experience_years",
+            "description",
+            # Section 3
             "license_number",
             "license_type",
+            "issuing_authority",
+            "issue_date",
+            "expiry_date",
             "license_document",
         ]
         widgets = {
-            "farm_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g. Green Valley Nursery"}
+            # Section 1
+            "phone_number": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Phone Number"}
             ),
-            "provider_type": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g. Plant Nursery & Seeds"}
+            "address": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Street Address / Location"}
+            ),
+            "city": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "City"}
+            ),
+            "state": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "State"}
+            ),
+            "pincode": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Pincode"}
+            ),
+            # Section 2
+            "farm_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Farm or Business Name"}
+            ),
+            "farm_address": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Farm / Facility Location Address"}
+            ),
+            "experience_years": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "e.g. 5 Years"}
             ),
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 3,
-                    "placeholder": "Tell us about your farm/business...",
+                    "placeholder": "Tell us briefly about your agricultural products or farm...",
                 }
             ),
-            "phone_number": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "+91 98765 43210"}
+            # Section 3
+            "license_number": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "License / Registration Number"}
             ),
-            "address": forms.Textarea(
-                attrs={"class": "form-control", "rows": 2, "placeholder": "Street address"}
+            "license_type": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "License Type (e.g. Trade License, Seed Dealer License)"}
             ),
-            "city": forms.TextInput(attrs={"class": "form-control"}),
-            "district": forms.TextInput(attrs={"class": "form-control"}),
-            "state": forms.TextInput(attrs={"class": "form-control"}),
-            "experience_years": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g. 3+ Years"}
+            "issuing_authority": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Issuing Authority (e.g. Dept of Agriculture)"}
             ),
-            "license_number": forms.TextInput(attrs={"class": "form-control"}),
-            "license_type": forms.TextInput(attrs={"class": "form-control"}),
             "license_document": forms.ClearableFileInput(
-                attrs={"class": "form-control"}
+                attrs={"class": "form-control", "accept": ".jpg,.jpeg,.png,.pdf"}
             ),
         }
-        labels = {
-            "farm_name": "Farm / Business Name *",
-            "phone_number": "Phone Number *",
-        }
 
-    def clean_farm_name(self):
-        name = self.cleaned_data.get("farm_name", "").strip()
-        if not name:
-            raise ValidationError(_("Farm/Business name is required."))
-        return name
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user_id:
+            self.fields["full_name"].initial = self.instance.user.name or ""
+            self.fields["email"].initial = self.instance.user.email or ""
 
-    def clean_phone_number(self):
-        phone = self.cleaned_data.get("phone_number", "").strip()
-        if not phone:
-            raise ValidationError(_("Phone number is required."))
-        return phone
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        full_name = self.cleaned_data.get("full_name")
+        email = self.cleaned_data.get("email")
+        if getattr(profile, "user_id", None) is not None:
+            user = profile.user
+            if full_name:
+                user.name = full_name
+            if email and user.email != email:
+                user.email = email
+            user.save()
+        if commit:
+            profile.save()
+        return profile
 
 
-class ProviderProfileForm(forms.ModelForm):
-    """
-    Form for an approved Provider to update their own profile details.
-    Does NOT allow changing verification_status.
-    """
-
-    class Meta:
-        model = ProviderProfile
-        fields = [
-            "farm_name",
-            "provider_type",
-            "description",
-            "phone_number",
-            "address",
-            "city",
-            "district",
-            "state",
-            "experience_years",
-        ]
-        widgets = {
-            "farm_name": forms.TextInput(attrs={"class": "form-control"}),
-            "provider_type": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
-            "phone_number": forms.TextInput(attrs={"class": "form-control"}),
-            "address": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
-            "city": forms.TextInput(attrs={"class": "form-control"}),
-            "district": forms.TextInput(attrs={"class": "form-control"}),
-            "state": forms.TextInput(attrs={"class": "form-control"}),
-            "experience_years": forms.TextInput(attrs={"class": "form-control"}),
-        }
+class ProviderApplyForm(ProviderProfileForm):
+    """Form for a new user to apply to become a Provider."""
+    pass
 
 
 class ProviderRequestForm(forms.ModelForm):
-    """
-    Form for an approved Provider to submit a new seed/plant product for admin review.
-    """
+    """Form for an approved Provider to submit a new seed/plant product for admin review."""
 
     class Meta:
         model = ProviderRequest

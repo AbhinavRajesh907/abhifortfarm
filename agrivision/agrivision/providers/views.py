@@ -89,6 +89,10 @@ def provider_apply(request):
             profile = form.save(commit=False)
             profile.user = request.user
             profile.verification_status = ProviderProfile.VerificationStatus.PENDING
+            full_name = form.cleaned_data.get("full_name")
+            if full_name:
+                request.user.name = full_name
+                request.user.save(update_fields=["name"])
             profile.save()
             messages.success(
                 request,

@@ -29,19 +29,24 @@ class ProviderProfile(models.Model):
     # Farm / Business Information
     farm_name = models.CharField(_("Farm/Business Name"), max_length=200)
     provider_type = models.CharField(
-        _("Type of Provider"), max_length=100, blank=True, default="Plant Nursery & Seeds"
+        _("Type of Provider"), max_length=100, blank=True, default="Plant Nursery"
     )
-    description = models.TextField(_("Description"), blank=True)
+    description = models.TextField(_("Short Description / Products Overview"), blank=True)
     phone_number = models.CharField(_("Phone Number"), max_length=20, blank=True)
-    address = models.TextField(_("Address"), blank=True)
+    address = models.TextField(_("Personal / Residential Address"), blank=True)
+    farm_address = models.TextField(_("Farm / Facility Address"), blank=True)
     city = models.CharField(_("City"), max_length=100, blank=True)
     district = models.CharField(_("District"), max_length=100, blank=True)
     state = models.CharField(_("State"), max_length=100, blank=True, default="Kerala")
+    pincode = models.CharField(_("Pincode"), max_length=20, blank=True)
     experience_years = models.CharField(_("Years of Experience"), max_length=50, blank=True)
 
     # License & Verification
-    license_number = models.CharField(_("License Number"), max_length=100, blank=True)
+    license_number = models.CharField(_("License / Registration Number"), max_length=100, blank=True)
     license_type = models.CharField(_("License Type"), max_length=100, blank=True)
+    issuing_authority = models.CharField(_("Issuing Authority"), max_length=255, blank=True)
+    issue_date = models.DateField(_("Issue Date"), null=True, blank=True)
+    expiry_date = models.DateField(_("Expiry Date"), null=True, blank=True)
     license_document = models.FileField(
         _("License Document"), upload_to="licenses/", blank=True, null=True
     )
