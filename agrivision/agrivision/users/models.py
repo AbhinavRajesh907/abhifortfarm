@@ -35,16 +35,14 @@ class User(AbstractUser):
     state = CharField(_("State"), max_length=100, blank=True)
     pincode = CharField(_("Pincode"), max_length=20, blank=True)
     
-    # First and last name do not cover name patterns around the globe
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
     email = EmailField(_("email address"), unique=True)
-    # We will use email for authentication, but allow a username for profile display.
-    username = CharField(_("username"), max_length=150, unique=True, null=True, blank=True)
+    username = CharField(_("username"), max_length=150, unique=True)
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email"]
 
     objects: ClassVar[UserManager] = UserManager()
 

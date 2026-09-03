@@ -1,236 +1,212 @@
 {% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}AgriFarm - Grow Better. Grow Smarter.{% endblock title %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="py-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, var(--agri-light) 0%, #ffffff 100%);">
-  <div class="container py-5">
-    <div class="row align-items-center">
-      <div class="col-lg-6 mb-4 mb-lg-0">
-        <h1 class="display-4 fw-bold mb-3" style="color: var(--agri-dark);">AgriFarm</h1>
-        <h2 class="h3 fw-light mb-4 text-secondary">Grow Better. Buy Smarter.</h2>
-        <p class="lead mb-4">Your trusted marketplace for quality plants, seeds and smarter farming solutions.</p>
-        <div class="d-flex gap-3">
-          <a href="#" class="btn btn-agri btn-lg px-4">Explore Plants</a>
+<!-- ==========================================================================
+     HERO SECTION
+     ========================================================================== -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="hero-badge mb-3">
+          <i class="bi bi-patch-check-fill text-success"></i>
+          <span>Agricultural Ecosystem</span>
+        </div>
+        <h1 class="hero-title">AgriFarm</h1>
+        <div class="hero-subtitle">"Grow Better. Grow Smarter."</div>
+        <p class="hero-desc mt-3">
+          AgriFarm is a platform connecting people with quality plants, seeds, and trusted agricultural providers, making it easier to discover and grow better.
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 mt-4 pt-2">
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'users:redirect' %}" class="btn-agri-primary">
+              <i class="bi bi-speedometer2"></i> Open Dashboard
+            </a>
+          {% else %}
+            <a href="{% url 'users:register' %}" class="btn-agri-primary">
+              <i class="bi bi-arrow-right-circle"></i> Get Started
+            </a>
+            <a href="{% url 'users:login' %}" class="btn-agri-outline">
+              <i class="bi bi-person"></i> Login
+            </a>
+          {% endif %}
+          <a href="{% url 'about' %}" class="btn-agri-ghost">
+            Learn More
+          </a>
+        </div>
+
+        <!-- Quick highlights -->
+        <div class="row g-3 mt-4 pt-2">
+          <div class="col-sm-6">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success fs-5"></i>
+              <span class="fw-semibold text-secondary small">Verified Agricultural Providers</span>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-check-circle-fill text-success fs-5"></i>
+              <span class="fw-semibold text-secondary small">Direct Grower Connection</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="hero-image-wrapper">
+          <img src="{% static 'images/hero_seedling.jpg' %}" alt="Lush Seedling Sprouting" />
+          <div class="hero-floating-stat">
+            <div class="hero-stat-icon">
+              <i class="bi bi-flower1"></i>
+            </div>
+            <div>
+              <div class="fw-bold fs-6 text-dark">Quality Growth</div>
+              <div class="small text-muted">Certified plants & seeds</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     ABOUT AGRIFARM SECTION
+     ========================================================================== -->
+<section class="about-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 order-2 order-lg-1">
+        <div class="about-banner">
+          <img src="{% static 'images/farm_landscape.jpg' %}" alt="Organic Farm Landscape" />
+        </div>
+      </div>
+
+      <div class="col-lg-6 order-1 order-lg-2">
+        <div class="hero-badge mb-2">
+          <i class="bi bi-info-circle-fill"></i>
+          <span>About AgriFarm</span>
+        </div>
+        <h2 class="display-6 fw-bold mb-3">Connecting Growers with Verified Agricultural Providers</h2>
+        <p class="text-muted leading-relaxed mb-3">
+          AgriFarm was created to bridge the gap between enthusiastic growers, local farmers, and certified agricultural providers. We believe that accessing high quality farming products should be transparent, reliable, and straightforward.
+        </p>
+        <p class="text-muted leading-relaxed mb-4">
+          Through AgriFarm, licensed nurseries and seed providers can showcase their agricultural offerings, while users gain direct access to trusted sources for plants, seeds, and organic farming essentials.
+        </p>
+
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex align-items-start gap-3">
+            <div class="feature-icon-box m-0 flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.1rem;">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-1">Licensed & Verified Providers</h6>
+              <p class="text-muted small mb-0">Every provider account goes through verification with valid licenses and documentation.</p>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-start gap-3">
+            <div class="feature-icon-box m-0 flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.1rem;">
+              <i class="bi bi-sprout"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold mb-1">Premium Seeds & Healthy Plants</h6>
+              <p class="text-muted small mb-0">Dedicated to supporting sustainable agriculture and high germination quality.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     CORE PLATFORM PILLARS
+     ========================================================================== -->
+<section class="py-5" style="background-color: var(--agri-surface);">
+  <div class="container py-4">
+    <div class="text-center mx-auto mb-5" style="max-width: 600px;">
+      <div class="hero-badge mb-2">
+        <i class="bi bi-gem"></i>
+        <span>Why AgriFarm</span>
+      </div>
+      <h2 class="fw-bold">Building Trust in Agriculture</h2>
+      <p class="text-muted">A dedicated platform designed to support both everyday gardeners and commercial agricultural providers.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="feature-icon-box mx-auto">
+            <i class="bi bi-person-heart"></i>
+          </div>
+          <h4 class="h5 fw-bold mb-2">For Individuals & Growers</h4>
+          <p class="text-muted small mb-0">
+            Easily discover authentic plant nurseries, seed distributors, and verified agricultural partners without intermediaries.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="feature-icon-box mx-auto">
+            <i class="bi bi-shop"></i>
+          </div>
+          <h4 class="h5 fw-bold mb-2">For Agricultural Providers</h4>
+          <p class="text-muted small mb-0">
+            Register your farm or nursery, present verified business licenses, and connect directly with a dedicated community of buyers.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="feature-icon-box mx-auto">
+            <i class="bi bi-globe-americas"></i>
+          </div>
+          <h4 class="h5 fw-bold mb-2">Sustainable Ecosystem</h4>
+          <p class="text-muted small mb-0">
+            Fostering responsible farming practices, certified seeds, and healthy plant cultivation across agricultural communities.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     CALL TO ACTION
+     ========================================================================== -->
+<section class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="p-5 rounded-4 shadow-sm text-center position-relative overflow-hidden" 
+         style="background: linear-gradient(135deg, var(--agri-dark) 0%, var(--agri-forest) 100%); color: white;">
+      <div class="position-relative z-1 mx-auto" style="max-width: 650px;">
+        <h2 class="display-6 fw-bold text-white mb-3">Join the AgriFarm Network Today</h2>
+        <p class="text-white-50 mb-4 fs-6">
+          Whether you are looking to source high quality plants and seeds or you are an agricultural provider ready to grow your reach, AgriFarm is your home.
+        </p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
           {% if not request.user.is_authenticated %}
-            <a href="{% url 'users:register' %}" class="btn btn-outline-agri btn-lg px-4">Get Started</a>
+            <a href="{% url 'users:register_user' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-success">
+              <i class="bi bi-person me-1"></i> Register as User
+            </a>
+            <a href="{% url 'users:register_provider' %}" class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold">
+              <i class="bi bi-shop me-1"></i> Register as Provider
+            </a>
+          {% else %}
+            <a href="{% url 'users:redirect' %}" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-success">
+              <i class="bi bi-speedometer2 me-1"></i> Go to Dashboard
+            </a>
           {% endif %}
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="rounded-4 overflow-hidden shadow-lg" style="height: 400px; background-color: var(--agri-green); display: flex; align-items: center; justify-content: center; position: relative;">
-          <div style="position: absolute; width: 150%; height: 150%; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);"></div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" fill="white" class="bi bi-flower1" viewBox="0 0 16 16" style="opacity: 0.9; z-index: 1;">
-            <path d="M2.26 13.093c-.097.028-.21.066-.333.111C1.042 13.565 0 14.28 0 15c0 .356.326.68 1.05.9.68.205 1.53.303 2.502.303 1.571 0 3.011-.274 3.968-.549a11.96 11.96 11.96 0 0 0 .584-.183l.006-.002a2.38 2.38 0 0 0 .151-.059c.27-.11.517-.232.744-.367-.148.165-.28.32-.4.463-.38.455-.705.811-1.002 1.082-.6.55-1.12.87-1.74 1.11-.643.25-1.393.38-2.26.38-1.57 0-3.01-.274-3.967-.548-.958-.275-1.53-.7-1.53-1.155 0-.573.744-1.196 1.956-1.558.125-.038.257-.074.394-.108a9.42 9.42 0 0 1 .472-.112l.142-.03c.531-.113 1.18-.215 1.933-.294.67-.07 1.406-.113 2.18-.113 1.464 0 2.871.077 4.148.21.36.038.711.083 1.05.133l.078.01c.214.032.413.068.599.106.183.037.34.075.474.113.254.072.434.147.533.22a.541.541 0 0 1 .13.113c-.115.111-.284.234-.51.365a12.722 12.722 0 0 1-1.344.646l-.088.037a15.424 15.424 0 0 1-2.437.747 16.924 16.924 0 0 1-2.28.257 16.922 16.922 0 0 1-2.28-.257 15.419 15.419 0 0 1-2.437-.747l-.088-.037a12.72 12.72 0 0 1-1.344-.646c-.226-.131-.395-.254-.51-.365a.541.541 0 0 1 .13-.113c.099-.073.28-.148.533-.22.134-.038.291-.076.474-.113.186-.038.385-.074.599-.106l.078-.01c.339-.05.69-.095 1.05-.133C6.702 12.637 8.11 12.56 9.574 12.56c.774 0 1.51.043 2.18.113.753.08 1.402.181 1.933.294l.142.03c.174.037.337.075.472.112.137.034.269.07.394.108 1.212.362 1.956.985 1.956 1.558 0 .455-.572.88-1.53 1.155-.957.274-2.397.548-3.967.548-.867 0-1.617-.13-2.26-.38-.62-.24-1.14-.56-1.74-1.11-.297-.271-.622-.627-1.002-1.082-.12.143-.252.298-.4.463.227.135.474.257.744.367a2.38 2.38 0 0 0 .151.059l.006.002c.193.061.393.123.584.183.957.275 2.397.549 3.968.549.972 0 1.822-.098 2.502-.303.724-.22 1.05-.544 1.05-.9 0-.72-1.042-1.435-2.927-1.89-1.21-.29-2.731-.502-4.22-.605a28.056 28.056 0 0 0-4.045-.04l-.128.006a14.3 14.3 0 0 0-2.36.26l-.146.03a11.1 11.1 0 0 0-1.58.455z"/>
-          </svg>
-        </div>
-      </div>
     </div>
   </div>
 </section>
-
-<!-- Categories Section -->
-<section class="py-5 bg-white">
-  <div class="container py-4">
-    <div class="text-center mb-5">
-      <h3 class="fw-bold" style="color: var(--agri-dark);">Explore Categories</h3>
-      <p class="text-muted">Browse our wide selection of plants and farming supplies</p>
-    </div>
-    <div class="row g-4">
-      
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🌿
-            </div>
-            <h5 class="card-title h6 fw-bold">Indoor Plants</h5>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🍅
-            </div>
-            <h5 class="card-title h6 fw-bold">Vegetable Plants</h5>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🍎
-            </div>
-            <h5 class="card-title h6 fw-bold">Fruit Plants</h5>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🌸
-            </div>
-            <h5 class="card-title h6 fw-bold">Flower Plants</h5>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🌱
-            </div>
-            <h5 class="card-title h6 fw-bold">Medicinal Plants</h5>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🌰
-            </div>
-            <h5 class="card-title h6 fw-bold">Seeds</h5>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-4 col-lg-3">
-        <div class="card h-100 border-0 shadow-sm text-center py-4 category-card" style="border-radius: 15px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-          <div class="card-body">
-            <div class="mb-3 mx-auto" style="width: 60px; height: 60px; background: var(--agri-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              🚜
-            </div>
-            <h5 class="card-title h6 fw-bold">Farming Supplies</h5>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Why Choose Us -->
-<section class="py-5" style="background-color: #fafafa;">
-  <div class="container py-4">
-    <div class="row align-items-center">
-      <div class="col-lg-4 mb-4 mb-lg-0">
-        <h3 class="fw-bold mb-3" style="color: var(--agri-dark);">Why Choose AgriFarm</h3>
-        <p class="text-muted mb-4">We bring the best quality agricultural products right to your doorstep, sourced from verified providers and approved by experts.</p>
-        <a href="{% url 'about' %}" class="btn btn-outline-agri">Learn More About Us</a>
-      </div>
-      <div class="col-lg-8">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 bg-white p-4 rounded-4 shadow-sm h-100">
-              <div class="fs-3">🏅</div>
-              <div>
-                <h5 class="fw-bold h6">Quality Plants & Seeds</h5>
-                <p class="text-muted small mb-0">Only the highest quality products make it to our marketplace.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 bg-white p-4 rounded-4 shadow-sm h-100">
-              <div class="fs-3">🛡️</div>
-              <div>
-                <h5 class="fw-bold h6">Verified Providers</h5>
-                <p class="text-muted small mb-0">Every seller goes through a strict verification process.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 bg-white p-4 rounded-4 shadow-sm h-100">
-              <div class="fs-3">✅</div>
-              <div>
-                <h5 class="fw-bold h6">Admin-Approved Products</h5>
-                <p class="text-muted small mb-0">We manually approve products to ensure safety and quality.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="d-flex align-items-start gap-3 bg-white p-4 rounded-4 shadow-sm h-100">
-              <div class="fs-3">📦</div>
-              <div>
-                <h5 class="fw-bold h6">Easy Ordering</h5>
-                <p class="text-muted small mb-0">Seamless experience from discovery to delivery.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- How AgriFarm Works -->
-<section class="py-5 bg-white">
-  <div class="container py-4">
-    <div class="text-center mb-5">
-      <h3 class="fw-bold" style="color: var(--agri-dark);">How AgriFarm Works</h3>
-    </div>
-    <div class="row text-center g-4 position-relative">
-      
-      <div class="col-md-4">
-        <div class="position-relative z-1">
-          <div class="mx-auto mb-4 bg-white shadow-sm d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 80px; height: 80px; border-radius: 50%; color: var(--agri-green); border: 2px solid var(--agri-light);">
-            1
-          </div>
-          <h4 class="h5 fw-bold">Discover</h4>
-          <p class="text-muted px-3">Browse plants and seeds from verified providers.</p>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="position-relative z-1">
-          <div class="mx-auto mb-4 bg-white shadow-sm d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 80px; height: 80px; border-radius: 50%; color: var(--agri-green); border: 2px solid var(--agri-light);">
-            2
-          </div>
-          <h4 class="h5 fw-bold">Choose</h4>
-          <p class="text-muted px-3">Compare products and select what you need.</p>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="position-relative z-1">
-          <div class="mx-auto mb-4 bg-white shadow-sm d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 80px; height: 80px; border-radius: 50%; color: var(--agri-green); border: 2px solid var(--agri-light);">
-            3
-          </div>
-          <h4 class="h5 fw-bold">Grow</h4>
-          <p class="text-muted px-3">Purchase your plants/seeds and get useful farming recommendations.</p>
-        </div>
-      </div>
-      
-    </div>
-  </div>
-</section>
-
-<!-- Future Tech Section -->
-<section class="py-5" style="background-color: var(--agri-dark); color: white;">
-  <div class="container py-4 text-center">
-    <div class="d-inline-block px-3 py-1 bg-white text-dark rounded-pill mb-4 fw-bold" style="font-size: 0.85rem;">
-      ✨ Coming Soon
-    </div>
-    <h3 class="fw-bold mb-4">Smart Plant Disease Detection</h3>
-    <p class="lead mx-auto" style="max-width: 600px; opacity: 0.9;">
-      Upload a photo of your plant and our future AI system will help identify possible plant diseases and provide useful recommendations.
-    </p>
-  </div>
-</section>
-
-<style>
-  .category-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-    cursor: pointer;
-  }
-</style>
 {% endblock content %}

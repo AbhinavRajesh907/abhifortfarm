@@ -2,61 +2,115 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.messages.views import SuccessMessageMixin
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, TemplateView, CreateView
-from django.views.generic import RedirectView
-from django.views.generic import UpdateView
-from django.contrib.auth import login
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.views import View
+from django.views.generic import DetailView, TemplateView, CreateView, RedirectView, UpdateView
 
 from agrivision.users.models import User, ProviderProfile
-from agrivision.users.forms import UserRegistrationForm, ProviderRegistrationForm
+from agrivision.users.forms import UserLoginForm, UserRegistrationForm, ProviderRegistrationForm
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
 
-class UserDetailView(LoginRequiredMixin, DetailView):
-    model = User
-    slug_field = "id"
-    slug_url_kwarg = "id"
+# ==============================================================================
+# AUTHENTICATION VIEWS (Clean Username + Password Login / Logout)
+# ==============================================================================
+
+class CustomLoginView(View):
+    """
+    Simplified Username + Password Login View.
+    Bypasses MFA/OTP/Authenticators and redirects users to their appropriate dashboard.
+    """
+    template_name = "users/login.html"
+    form_class = UserLoginForm
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return self.redirect_by_role(request.user)
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"].strip()
+            password = form.cleaned_data["password"]
+            
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+                return self.redirect_by_role(user)
+            else:
+                messages.error(request, _("Invalid username or password."))
+        else:
+            messages.error(request, _("Invalid username or password."))
+
+        return render(request, self.template_name, {"form": form})
+
+    @staticmethod
+    def redirect_by_role(user: User):
+        """Role-based login redirection logic."""
+        if user.is_superuser or user.is_staff or getattr(user, "role", "") == User.Role.ADMIN:
+            # Redirect Admin to Django Admin or Admin Dashboard
+            return redirect("admin:index")
+        elif getattr(user, "role", "") == User.Role.PROVIDER:
+            # Redirect Provider to Provider Dashboard
+            return redirect("users:provider_dashboard")
+        else:
+            # Redirect Normal User to User Dashboard
+            return redirect("users:user_dashboard")
 
 
-user_detail_view = UserDetailView.as_view()
+custom_login_view = CustomLoginView.as_view()
 
 
-class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
-    model = User
-    fields = ["name"]
-    success_message = _("Information successfully updated")
+class CustomLogoutView(View):
+    """Logs out the user and redirects back to Home page."""
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        messages.info(request, _("You have been signed out."))
+        return redirect("home")
 
-    def get_success_url(self) -> str:
-        assert self.request.user.is_authenticated  # type guard
-        return self.request.user.get_absolute_url()
-
-    def get_object(self, queryset: QuerySet | None = None) -> User:
-        assert self.request.user.is_authenticated  # type guard
-        return self.request.user
+    def post(self, request, *args, **kwargs):
+        logout(request)
+        messages.info(request, _("You have been signed out."))
+        return redirect("home")
 
 
-user_update_view = UserUpdateView.as_view()
+custom_logout_view = CustomLogoutView.as_view()
 
 
 class UserRedirectView(LoginRequiredMixin, RedirectView):
+    """
+    Global redirect handler for authenticated users based on their role.
+    """
     permanent = False
 
     def get_redirect_url(self) -> str:
-        return reverse("users:detail", kwargs={"pk": self.request.user.pk})
+        user = self.request.user
+        if user.is_superuser or user.is_staff or getattr(user, "role", "") == User.Role.ADMIN:
+            return reverse_lazy("admin:index")
+        elif getattr(user, "role", "") == User.Role.PROVIDER:
+            return reverse_lazy("users:provider_dashboard")
+        else:
+            return reverse_lazy("users:user_dashboard")
 
 
 user_redirect_view = UserRedirectView.as_view()
 
 
+# ==============================================================================
+# REGISTRATION VIEWS (User & Provider Registration)
+# ==============================================================================
+
 class RegisterRoleSelectionView(TemplateView):
+    """Allows selecting between User and Provider registration."""
     template_name = "users/register_role.html"
 
 
@@ -64,6 +118,10 @@ register_role_selection_view = RegisterRoleSelectionView.as_view()
 
 
 class UserRegistrationView(CreateView):
+    """
+    Normal User Registration View.
+    Saves User with role=USER, does NOT auto-login, and redirects to Home with a success message.
+    """
     template_name = "users/register_user.html"
     form_class = UserRegistrationForm
     success_url = reverse_lazy("home")
@@ -73,7 +131,8 @@ class UserRegistrationView(CreateView):
         user.set_password(form.cleaned_data["password"])
         user.role = User.Role.USER
         user.save()
-        login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
+        
+        messages.success(self.request, _("Registration successful! Please login to continue."))
         return redirect(self.success_url)
 
 
@@ -81,6 +140,11 @@ user_registration_view = UserRegistrationView.as_view()
 
 
 class ProviderRegistrationView(CreateView):
+    """
+    Provider Registration View.
+    Saves User with role=PROVIDER, creates ProviderProfile (PENDING status),
+    does NOT auto-login, and redirects to Home with verification message.
+    """
     template_name = "users/register_provider.html"
     form_class = ProviderRegistrationForm
     success_url = reverse_lazy("home")
@@ -97,26 +161,81 @@ class ProviderRegistrationView(CreateView):
             farm_address=form.cleaned_data["farm_address"],
             provider_type=form.cleaned_data["provider_type"],
             experience_years=form.cleaned_data["experience_years"],
-            description=form.cleaned_data["description"],
+            description=form.cleaned_data.get("description", ""),
             license_number=form.cleaned_data["license_number"],
             license_type=form.cleaned_data["license_type"],
             issuing_authority=form.cleaned_data["issuing_authority"],
             issue_date=form.cleaned_data["issue_date"],
             expiry_date=form.cleaned_data["expiry_date"],
             license_document=form.cleaned_data["license_document"],
-            verification_status=ProviderProfile.VerificationStatus.PENDING
+            verification_status=ProviderProfile.VerificationStatus.PENDING,
         )
         
-        login(self.request, user, backend="django.contrib.auth.backends.ModelBackend")
+        messages.success(
+            self.request, 
+            _("Registration submitted successfully. Your provider account is pending verification. Please login to continue.")
+        )
         return redirect(self.success_url)
 
 
 provider_registration_view = ProviderRegistrationView.as_view()
 
-class ProviderDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+# ==============================================================================
+# DASHBOARD INTEGRATION PLACEHOLDERS (For Teammates)
+# ==============================================================================
+
+class UserDashboardPlaceholderView(LoginRequiredMixin, TemplateView):
+    """
+    NOTE FOR TEAMMATES:
+    This is the placeholder route for the User Dashboard (users:user_dashboard).
+    The User Dashboard developer should plug their dashboard view/template here.
+    """
+    template_name = "users/user_dashboard_placeholder.html"
+
+
+user_dashboard_view = UserDashboardPlaceholderView.as_view()
+
+
+class ProviderDashboardPlaceholderView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """
+    NOTE FOR TEAMMATES:
+    This is the placeholder route for the Provider Dashboard (users:provider_dashboard).
+    The Provider Dashboard developer should plug their dashboard view/template here.
+    """
     template_name = "users/provider_dashboard_placeholder.html"
 
     def test_func(self):
-        return self.request.user.role == User.Role.PROVIDER
+        return self.request.user.role == User.Role.PROVIDER or self.request.user.is_staff
 
-provider_dashboard_view = ProviderDashboardView.as_view()
+
+provider_dashboard_view = ProviderDashboardPlaceholderView.as_view()
+
+
+# ==============================================================================
+# EXISTING USER PROFILE & DETAIL VIEWS (Preserved for compatibility)
+# ==============================================================================
+
+class UserDetailView(LoginRequiredMixin, DetailView):
+    model = User
+    slug_field = "id"
+    slug_url_kwarg = "id"
+
+
+user_detail_view = UserDetailView.as_view()
+
+
+class UserUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    fields = ["name", "phone", "address", "city", "state", "pincode"]
+
+    def get_success_url(self) -> str:
+        assert self.request.user.is_authenticated
+        return self.request.user.get_absolute_url()
+
+    def get_object(self, queryset: QuerySet | None = None) -> User:
+        assert self.request.user.is_authenticated
+        return self.request.user
+
+
+user_update_view = UserUpdateView.as_view()

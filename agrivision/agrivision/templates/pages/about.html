@@ -1,3 +1,94 @@
 {% extends "base.html" %}
+{% load static i18n %}
 
+{% block title %}About Us - AgriFarm{% endblock title %}
 
+{% block content %}
+<div class="container py-5">
+  <!-- Header Title -->
+  <div class="text-center mx-auto mb-5" style="max-width: 700px;">
+    <div class="hero-badge mb-3">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>Our Mission</span>
+    </div>
+    <h1 class="display-5 fw-bold mb-3">About AgriFarm</h1>
+    <p class="text-muted fs-5">
+      Empowering agriculture by connecting growers, farmers, and plant lovers with certified agricultural providers.
+    </p>
+  </div>
+
+  <!-- Main Story Section -->
+  <div class="row align-items-center g-5 mb-5">
+    <div class="col-lg-6">
+      <div class="about-banner" style="height: 400px;">
+        <img src="{% static 'images/farm_landscape.jpg' %}" alt="AgriFarm Agricultural Landscape" />
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <h2 class="h3 fw-bold mb-3 text-dark">Why AgriFarm Exists</h2>
+      <p class="text-muted leading-relaxed">
+        Modern agriculture relies on trust, verified quality, and seamless access to resources. AgriFarm was founded to make agricultural sourcing transparent and straightforward.
+      </p>
+      <p class="text-muted leading-relaxed">
+        Whether you are cultivating crops at scale or tending to a home garden, AgriFarm connects you directly with certified nurseries, registered seed distributors, and experienced agricultural providers.
+      </p>
+
+      <div class="bg-light p-4 rounded-4 border-start border-4 border-success mt-4">
+        <h6 class="fw-bold mb-1 text-dark">Our Core Philosophy</h6>
+        <p class="text-muted small mb-0">
+          "Grow Better. Grow Smarter." &mdash; Enabling every grower to access verified agricultural products with confidence.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Pillars Grid -->
+  <div class="row g-4 my-4">
+    <div class="col-md-4">
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h4 class="h5 fw-bold mb-2">Verified Sourcing</h4>
+        <p class="text-muted small mb-0">
+          All agricultural providers on AgriFarm submit verified licenses and certifications to ensure authenticity and standards compliance.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i class="bi bi-flower2"></i>
+        </div>
+        <h4 class="h5 fw-bold mb-2">Plants & Seeds Focus</h4>
+        <p class="text-muted small mb-0">
+          Specialized in high quality seedlings, organic nursery stock, and certified seed varieties that boost yield and sustainability.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i class="bi bi-people"></i>
+        </div>
+        <h4 class="h5 fw-bold mb-2">Community Driven</h4>
+        <p class="text-muted small mb-0">
+          A platform built by agriculture enthusiasts for the entire farming and gardening ecosystem.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="text-center mt-5 pt-3">
+    <a href="{% url 'users:register' %}" class="btn-agri-primary me-2">
+      <i class="bi bi-person-plus"></i> Join AgriFarm
+    </a>
+    <a href="{% url 'home' %}" class="btn-agri-outline">
+      <i class="bi bi-arrow-left"></i> Back to Home
+    </a>
+  </div>
+</div>
+{% endblock content %}
