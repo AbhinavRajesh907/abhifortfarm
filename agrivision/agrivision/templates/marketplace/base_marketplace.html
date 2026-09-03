@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}AgriSmart Marketplace{% endblock %}</title>
+  <meta name="description" content="AgriSmart — Buy quality Seeds and Plants online"/>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Marketplace CSS -->
+  <link rel="stylesheet" href="{% static 'css/marketplace.css' %}"/>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ====== NAVBAR ====== -->
+<nav class="navbar navbar-expand-lg agri-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'marketplace:dashboard' %}">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-text">AgriSmart</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#agriNav" aria-controls="agriNav" aria-expanded="false">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="agriNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link {% block nav_home %}{% endblock %}"
+             href="{% url 'marketplace:dashboard' %}">
+            <i class="bi bi-house-door"></i> Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_products %}{% endblock %}"
+             href="{% url 'marketplace:product_list' %}">
+            <i class="bi bi-grid"></i> Products
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_seeds %}{% endblock %}"
+             href="{% url 'marketplace:product_list' %}?category=Seeds">
+            🌱 Seeds
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_disease %}{% endblock %}"
+             href="{% url 'agriculture:disease_detection' %}">
+            🔬 AI Disease Detection
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_crop_rec %}{% endblock %}"
+             href="{% url 'agriculture:crop_recommendation' %}">
+            🌾 Crop Advisory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_prices %}{% endblock %}"
+             href="{% url 'agriculture:market_prices' %}">
+            📊 Market Prices
+          </a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <!-- Cart -->
+        <li class="nav-item">
+          <a class="nav-link cart-btn position-relative" href="{% url 'marketplace:cart' %}">
+            <i class="bi bi-cart3 fs-5"></i>
+            {% if cart_count and cart_count > 0 %}
+              <span class="cart-badge badge rounded-pill bg-danger">{{ cart_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        <!-- My Orders -->
+        <li class="nav-item">
+          <a class="nav-link {% block nav_orders %}{% endblock %}"
+             href="{% url 'marketplace:my_orders' %}">
+            <i class="bi bi-receipt"></i> My Orders
+          </a>
+        </li>
+        <!-- User dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle user-avatar" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle fs-5"></i>
+            {{ request.user.name|default:request.user.email }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'users:detail' request.user.pk %}">
+                <i class="bi bi-person"></i> Profile
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"/></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ====== MESSAGES ====== -->
+{% if messages %}
+<div class="container mt-3">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ====== CONTENT ====== -->
+<main class="agri-main">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ====== FOOTER ====== -->
+<footer class="agri-footer mt-auto">
+  <div class="container text-center py-3">
+    <p class="mb-0 text-muted small">
+      🌱 AgriSmart Marketplace &copy; 2024 — Seeds &amp; Plants for a greener tomorrow
+    </p>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

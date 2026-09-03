@@ -75,7 +75,19 @@
               <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'about' %}">About</a>
+              <a class="nav-link" href="{% url 'marketplace:product_list' %}">Marketplace</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'agriculture:disease_detection' %}">AI Disease Detection</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'agriculture:crop_recommendation' %}">Crop Advisory</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'agriculture:market_prices' %}">Market Prices</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'agriculture:agriculture_info' %}">Agri Library</a>
             </li>
             {% if request.user.is_authenticated %}
               <li class="nav-item">
@@ -83,7 +95,6 @@
                    href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
               </li>
               <li class="nav-item">
-                {# URL provided by django-allauth/account/urls.py #}
                 <a class="nav-link" href="{% url 'account_logout' %}">{% translate "Sign Out" %}</a>
               </li>
             {% else %}

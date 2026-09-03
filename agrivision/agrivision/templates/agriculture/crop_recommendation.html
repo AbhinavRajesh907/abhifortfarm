@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Crop & Farming Recommendations — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header -->
+  <div class="row justify-content-center text-center mb-5">
+    <div class="col-lg-8">
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2">
+        <i class="bi bi-flower1 me-1"></i> Scientific Agronomy Engine
+      </span>
+      <h1 class="display-5 fw-bold text-dark mt-2">Crop & Farming Recommendations</h1>
+      <p class="lead text-muted">
+        Get tailored crop suggestions based on your soil test parameters (N-P-K, pH), seasonal sowing windows, or soil texture, and discover certified seeds available in our marketplace.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Recommendation Input Tabs & Form -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+        <!-- Navigation Tabs -->
+        <div class="card-header bg-light border-0 p-3">
+          <ul class="nav nav-pills nav-fill gap-2" id="recTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-3 fw-semibold {% if active_tab == 'params' or not active_tab %}active bg-success text-white{% endif %}"
+                      id="params-tab" data-bs-toggle="pill" data-bs-target="#params" type="button" role="tab">
+                <i class="bi bi-sliders me-1"></i> Soil Telemetry
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-3 fw-semibold {% if active_tab == 'season' %}active bg-success text-white{% endif %}"
+                      id="season-tab" data-bs-toggle="pill" data-bs-target="#season" type="button" role="tab">
+                <i class="bi bi-calendar3 me-1"></i> Season
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-3 fw-semibold {% if active_tab == 'soil_type' %}active bg-success text-white{% endif %}"
+                      id="soil-type-tab" data-bs-toggle="pill" data-bs-target="#soil_type" type="button" role="tab">
+                <i class="bi bi-layers me-1"></i> Soil Texture
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="tab-content" id="recTabContent">
+            <!-- Tab 1: Detailed Soil Telemetry Form -->
+            <div class="tab-pane fade {% if active_tab == 'params' or not active_tab %}show active{% endif %}" id="params" role="tabpanel">
+              <form method="post" action="{% url 'agriculture:crop_recommendation' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="params" />
+
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-eyedropper text-success me-1"></i> Soil Chemistry (NPK & pH)</h6>
+                <div class="row g-2 mb-3">
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Nitrogen (N)</label>
+                    {{ soil_form.n }}
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Phosphorus (P)</label>
+                    {{ soil_form.p }}
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Potassium (K)</label>
+                    {{ soil_form.k }}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Soil pH</label>
+                  {{ soil_form.ph }}
+                </div>
+
+                <h6 class="fw-bold text-dark mb-3 mt-4"><i class="bi bi-cloud-sun text-primary me-1"></i> Climate & Environment</h6>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Rainfall (mm)</label>
+                    {{ soil_form.rainfall }}
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Temperature (°C)</label>
+                    {{ soil_form.temperature }}
+                  </div>
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Soil Texture</label>
+                    {{ soil_form.soil_type }}
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Season</label>
+                    {{ soil_form.season }}
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label small fw-semibold">Location / State (Optional)</label>
+                  {{ soil_form.location }}
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-3 shadow-sm">
+                  <i class="bi bi-magic me-2"></i> Compute Recommended Crops
+                </button>
+              </form>
+            </div>
+
+            <!-- Tab 2: Season Based Form -->
+            <div class="tab-pane fade {% if active_tab == 'season' %}show active{% endif %}" id="season" role="tabpanel">
+              <form method="post" action="{% url 'agriculture:crop_recommendation' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="season" />
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Select Growing Season</label>
+                  {{ season_form.season }}
+                  <div class="form-text">Choose your planned sowing period to view crops with matching vegetative and flowering cycles.</div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">Regional State (Optional)</label>
+                  {{ season_form.location }}
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-3 shadow-sm">
+                  <i class="bi bi-calendar-check me-2"></i> Get Season Recommendations
+                </button>
+              </form>
+            </div>
+
+            <!-- Tab 3: Soil Type Based Form -->
+            <div class="tab-pane fade {% if active_tab == 'soil_type' %}show active{% endif %}" id="soil_type" role="tabpanel">
+              <form method="post" action="{% url 'agriculture:crop_recommendation' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="soil_type" />
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Select Soil Type</label>
+                  {{ soil_type_form.soil_type }}
+                  <div class="form-text">Matches root structure, drainage tolerance, and nutrient capacities.</div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">Regional State (Optional)</label>
+                  {{ soil_type_form.location }}
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-3 shadow-sm">
+                  <i class="bi bi-layers-half me-2"></i> Get Soil Recommendations
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light px-4 py-3 border-0">
+          <a href="{% url 'agriculture:crop_history' %}" class="text-decoration-none text-success fw-semibold small">
+            <i class="bi bi-clock-history me-1"></i> View Past Crop Query Logs &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Results Display -->
+    <div class="col-lg-6">
+      {% if result %}
+        <!-- Top Pick Hero Card -->
+        {% if result.primary_crop %}
+          <div class="card shadow-sm border-0 rounded-4 p-4 mb-4 bg-success text-white position-relative overflow-hidden">
+            <div class="position-absolute end-0 top-0 opacity-25 p-3 fs-1">🌾</div>
+            <span class="badge bg-white text-success px-3 py-1 rounded-pill fw-bold mb-2">
+              #1 Top Recommended Crop
+            </span>
+            <h2 class="display-6 fw-bold mb-2">{{ result.primary_crop.name }}</h2>
+            <p class="mb-3 opacity-90">{{ result.explanation }}</p>
+            <div class="d-flex gap-2 flex-wrap text-white small">
+              <span><strong>Soil:</strong> {{ result.primary_crop.soil_types }}</span> •
+              <span><strong>Seasons:</strong> {{ result.primary_crop.seasons }}</span>
+            </div>
+          </div>
+
+          <!-- Ranked Alternative Crops -->
+          <h5 class="fw-bold text-dark mb-3">
+            <i class="bi bi-trophy text-warning me-2"></i> Ranked Suitability Matches
+          </h5>
+          <div class="d-flex flex-column gap-3 mb-4">
+            {% for item in result.ranked_crops %}
+              <div class="card shadow-sm border-0 rounded-3 p-3 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold text-dark mb-0">{{ item.crop.name }}</h6>
+                  <span class="badge {% if item.suitability_percentage >= 80 %}bg-success{% elif item.suitability_percentage >= 60 %}bg-primary{% else %}bg-secondary{% endif %} rounded-pill px-3">
+                    {{ item.suitability_percentage }}% Match
+                  </span>
+                </div>
+                <div class="progress mb-2" style="height: 6px;">
+                  <div class="progress-bar {% if item.suitability_percentage >= 80 %}bg-success{% elif item.suitability_percentage >= 60 %}bg-primary{% else %}bg-secondary{% endif %}"
+                       style="width: {{ item.suitability_percentage }}%;"></div>
+                </div>
+                <p class="text-muted small mb-2">{{ item.explanation }}</p>
+
+                <!-- Linked Marketplace Products for this crop -->
+                {% if item.marketplace_products %}
+                  <div class="p-2 bg-light rounded-2 mt-2">
+                    <span class="small fw-semibold text-success d-block mb-1">
+                      <i class="bi bi-cart-check me-1"></i> Available Seeds & Plants in Marketplace:
+                    </span>
+                    <div class="d-flex gap-2 flex-wrap">
+                      {% for prod in item.marketplace_products %}
+                        <a href="{% url 'marketplace:product_detail' prod.pk %}" class="btn btn-sm btn-outline-success py-0 px-2 small">
+                          🌱 {{ prod.name }} (₹{{ prod.price }})
+                        </a>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <div class="alert alert-warning rounded-4 p-4 text-center">
+            <i class="bi bi-exclamation-circle display-4 d-block mb-3 text-warning"></i>
+            <h5 class="fw-bold">No Crops Match the Supplied Criteria</h5>
+            <p class="mb-0 text-muted">{{ result.explanation }}</p>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <!-- Default State before Form Submit -->
+        <div class="card shadow-sm border-0 rounded-4 p-5 text-center bg-light h-100 d-flex align-items-center justify-content-center">
+          <div class="display-3 text-success mb-3">🌱</div>
+          <h4 class="fw-bold text-dark">Ready for Agronomic Advisory</h4>
+          <p class="text-muted" style="max-width: 380px;">
+            Fill in your farm's soil parameters, choose your planting season, or select your soil type to generate scientific crop recommendations.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

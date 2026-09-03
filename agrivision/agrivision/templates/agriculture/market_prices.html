@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Agricultural Commodity Market Prices — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold mb-2">
+        <i class="bi bi-graph-up me-1"></i> Market Intelligence
+      </span>
+      <h1 class="display-6 fw-bold text-dark mb-1">Agricultural Market Prices</h1>
+      <p class="text-muted mb-0">Track real-time and APMC mandi commodity prices across agricultural hubs.</p>
+    </div>
+  </div>
+
+  <!-- Search and Filters Card -->
+  <div class="card shadow-sm border-0 rounded-4 p-4 mb-4 bg-light">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small text-muted">Crop / Commodity</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="crop" placeholder="Search crop (e.g. Rice, Wheat)..." value="{{ query_crop }}" />
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small text-muted">Market / Mandi</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
+          <input type="text" class="form-control" name="market" placeholder="Mandi or Yard name..." value="{{ query_market }}" />
+        </div>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-semibold small text-muted">State / Region</label>
+        <input type="text" class="form-control" name="region" placeholder="Region..." value="{{ query_region }}" />
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-success w-100 fw-bold">
+          <i class="bi bi-funnel me-1"></i> Filter
+        </button>
+        {% if query_crop or query_market or query_region %}
+          <a href="{% url 'agriculture:market_prices' %}" class="btn btn-outline-secondary" title="Reset Filters">
+            <i class="bi bi-x-circle"></i>
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Price Table Card -->
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 fw-bold text-dark">
+        <i class="bi bi-table text-success me-2"></i> Commodity Price Board
+      </h5>
+      <span class="text-muted small">Showing {{ total_records }} record{{ total_records|pluralize }}</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Crop Commodity</th>
+            <th>Mandi / Market</th>
+            <th>Region / State</th>
+            <th>Modal Price</th>
+            <th>Unit</th>
+            <th>Recorded Date</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in page_obj %}
+            <tr>
+              <td class="ps-4">
+                <span class="fw-bold text-dark">{{ p.crop.name }}</span>
+              </td>
+              <td>
+                <i class="bi bi-shop text-muted me-1"></i> {{ p.market }}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ p.region|default:"All India" }}</span>
+              </td>
+              <td>
+                <span class="fw-bold text-success fs-6">{{ p.currency }} {{ p.price }}</span>
+              </td>
+              <td>
+                <span class="text-muted small">per {{ p.unit }}</span>
+              </td>
+              <td class="text-muted small">
+                {{ p.observed_at|date:"M d, Y" }}
+              </td>
+              <td>
+                {% if p.data_source == "sample" %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                    Sample Data
+                  </span>
+                {% else %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    Live APMC
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox display-4 d-block mb-3 text-muted"></i>
+                <h5>No Market Price Records Found</h5>
+                <p class="small">Try clearing or adjusting your search filters above.</p>
+                <a href="{% url 'agriculture:market_prices' %}" class="btn btn-outline-success btn-sm">Clear Filters</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <div class="card-footer bg-white py-3 border-0">
+        <ul class="pagination justify-content-center mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link text-success" href="?page={{ page_obj.previous_page_number }}{% if query_crop %}&crop={{ query_crop }}{% endif %}{% if query_market %}&market={{ query_market }}{% endif %}">Previous</a></li>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+              <a class="page-link {% if page_obj.number == num %}bg-success border-success text-white{% else %}text-success{% endif %}" href="?page={{ num }}{% if query_crop %}&crop={{ query_crop }}{% endif %}{% if query_market %}&market={{ query_market }}{% endif %}">{{ num }}</a>
+            </li>
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link text-success" href="?page={{ page_obj.next_page_number }}{% if query_crop %}&crop={{ query_crop }}{% endif %}{% if query_market %}&market={{ query_market }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

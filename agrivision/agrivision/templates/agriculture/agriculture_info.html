@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Agricultural Knowledge Library — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header -->
+  <div class="row justify-content-center text-center mb-5">
+    <div class="col-lg-8">
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2">
+        <i class="bi bi-book me-1"></i> Farmer Knowledge Base
+      </span>
+      <h1 class="display-5 fw-bold text-dark mt-2">Agricultural Information Library</h1>
+      <p class="lead text-muted">
+        Explore comprehensive agronomic profiles, cultivation guides, plant pathology symptoms, and validated disease treatments.
+      </p>
+    </div>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card shadow-sm border-0 rounded-4 p-4 mb-5 bg-light">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-7">
+        <label class="form-label fw-semibold small text-muted">Search Library</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="query" placeholder="Search crops, cultivation, diseases, treatments..." value="{{ query }}" />
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small text-muted">Filter By Topic</label>
+        <select class="form-select" name="information_type">
+          <option value="">All Topics</option>
+          <option value="crop" {% if information_type == 'crop' %}selected{% endif %}>Crops Only</option>
+          <option value="disease" {% if information_type == 'disease' %}selected{% endif %}>Diseases & Pathogens</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-success w-100 fw-bold">Search</button>
+        {% if query or information_type %}
+          <a href="{% url 'agriculture:agriculture_info' %}" class="btn btn-outline-secondary" title="Clear">
+            <i class="bi bi-x-circle"></i>
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="row g-4">
+    <!-- Crops Section -->
+    {% if information_type != 'disease' %}
+      <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold text-dark mb-0">
+            <i class="bi bi-flower1 text-success me-2"></i> Crop Profiles
+          </h4>
+          <span class="badge bg-success-subtle text-success">{{ total_crops }} Crop{{ total_crops|pluralize }}</span>
+        </div>
+
+        {% for crop in crops %}
+          <div class="card shadow-sm border-0 rounded-4 p-4 mb-3 bg-white">
+            <h5 class="fw-bold text-dark mb-2">{{ crop.name }}</h5>
+            <p class="text-secondary small mb-3">{{ crop.description }}</p>
+
+            <div class="bg-light p-3 rounded-3 mb-3 small">
+              <div class="row g-2">
+                <div class="col-6"><strong>Soil:</strong> {{ crop.soil_types }}</div>
+                <div class="col-6"><strong>Seasons:</strong> {{ crop.seasons }}</div>
+                {% if crop.locations %}
+                  <div class="col-12"><strong>Regions:</strong> {{ crop.locations }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="border-top pt-2">
+              <strong class="small text-dark d-block mb-1"><i class="bi bi-info-circle text-success me-1"></i> Cultivation Advice:</strong>
+              <p class="text-muted small mb-0">{{ crop.cultivation_information }}</p>
+            </div>
+          </div>
+        {% empty %}
+          <div class="alert alert-light text-center py-4 border rounded-3 text-muted">
+            No crop profiles found matching your query.
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Diseases Section -->
+    {% if information_type != 'crop' %}
+      <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold text-dark mb-0">
+            <i class="bi bi-shield-slash text-danger me-2"></i> Plant Pathology & Diseases
+          </h4>
+          <span class="badge bg-danger-subtle text-danger">{{ total_diseases }} Disease{{ total_diseases|pluralize }}</span>
+        </div>
+
+        {% for disease in diseases %}
+          <div class="card shadow-sm border-0 rounded-4 p-4 mb-3 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="fw-bold text-dark mb-0">{{ disease.name }}</h5>
+              <span class="badge {% if disease.severity == 'high' %}bg-danger{% elif disease.severity == 'medium' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
+                {{ disease.get_severity_display|default:disease.severity|title }} Severity
+              </span>
+            </div>
+            <p class="text-secondary small mb-3">{{ disease.description }}</p>
+
+            {% if disease.symptoms %}
+              <div class="p-2 px-3 bg-light rounded-2 mb-3 border-start border-3 border-warning small">
+                <strong>Symptoms:</strong> {{ disease.symptoms }}
+              </div>
+            {% endif %}
+
+            <div class="card border-0 bg-success-subtle text-dark p-3 rounded-3 mb-2 small">
+              <strong class="text-success d-block mb-1"><i class="bi bi-prescription2 me-1"></i> Treatment:</strong>
+              {{ disease.treatment }}
+            </div>
+
+            <div class="card border-0 bg-primary-subtle text-dark p-3 rounded-3 small">
+              <strong class="text-primary d-block mb-1"><i class="bi bi-shield-check me-1"></i> Prevention:</strong>
+              {{ disease.prevention }}
+            </div>
+          </div>
+        {% empty %}
+          <div class="alert alert-light text-center py-4 border rounded-3 text-muted">
+            No disease profiles found matching your query.
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

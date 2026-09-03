@@ -81,6 +81,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "agrivision.users",
+    "agrivision.agriculture",  # AI & Agriculture Module — Member 4
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -283,3 +284,6 @@ SOCIALACCOUNT_FORMS = {"signup": "agrivision.users.forms.UserSocialSignupForm"}
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# ML Microservice URL for AI Plant Disease Detection
+ML_SERVICE_URL = env("ML_SERVICE_URL", default="http://localhost:8001")
+

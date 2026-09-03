@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Plant Disease Detection — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Header Section -->
+  <div class="row justify-content-center text-center mb-5">
+    <div class="col-lg-8">
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2">
+        <i class="bi bi-cpu me-1"></i> AI Powered Agronomy
+      </span>
+      <h1 class="display-5 fw-bold text-dark mt-2">Plant Disease Detection</h1>
+      <p class="lead text-muted">
+        Upload a clear photograph of an affected plant leaf. Our computer vision model will diagnose diseases, evaluate severity, and suggest targeted treatments.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    <!-- Upload Card -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white py-3 px-4">
+          <h5 class="card-title mb-0 fw-bold">
+            <i class="bi bi-cloud-arrow-up me-2"></i> Upload Leaf Image
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" id="diseaseUploadForm">
+            {% csrf_token %}
+
+            {% if form.errors %}
+              <div class="alert alert-danger rounded-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Please correct the errors below:
+                <ul class="mb-0 mt-1">
+                  {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <!-- Dropzone Area -->
+            <div class="upload-dropzone border border-2 border-dashed rounded-4 p-5 text-center mb-4 bg-light"
+                 id="dropzoneContainer"
+                 style="border-color: #2e7d32 !important; cursor: pointer; transition: all 0.2s ease-in-out;">
+              <div id="dropzonePrompt">
+                <i class="bi bi-camera text-success display-3 mb-3 d-block"></i>
+                <h5 class="fw-bold mb-1">Drag and drop your leaf photo here</h5>
+                <p class="text-muted small mb-3">or click to browse files from your computer or camera</p>
+                <span class="badge bg-secondary-subtle text-secondary px-3 py-1">JPEG, PNG, WEBP (Max 5 MB)</span>
+              </div>
+
+              <!-- Preview Area -->
+              <div id="imagePreviewContainer" class="d-none mt-2">
+                <img id="imagePreview" src="#" alt="Leaf Preview" class="img-fluid rounded-3 shadow-sm mb-3" style="max-height: 260px; object-fit: cover;" />
+                <p class="text-muted small mb-0" id="previewFilename"></p>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="changeImageBtn">
+                  <i class="bi bi-x-circle me-1"></i> Change Image
+                </button>
+              </div>
+
+              <input type="file" name="image" id="plantImageInput" class="d-none" accept="image/jpeg,image/png,image/webp,image/jpg" required />
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success btn-lg w-100 fw-bold py-3 rounded-3 shadow-sm" id="submitBtn">
+              <i class="bi bi-search me-2"></i> Analyze Plant Health
+            </button>
+          </form>
+        </div>
+        <div class="card-footer bg-light px-4 py-3 border-0">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 text-muted small">
+            <span><i class="bi bi-shield-check text-success me-1"></i> Secure analysis</span>
+            <a href="{% url 'agriculture:disease_history' %}" class="text-decoration-none text-success fw-semibold">
+              <i class="bi bi-clock-history me-1"></i> View Past Diagnosis History &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Guidelines & Recent Scans Sidebar -->
+    <div class="col-lg-5">
+      <!-- Photography Tips Card -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold text-dark mb-3">
+            <i class="bi bi-lightbulb text-warning me-2"></i> Best Photo Tips
+          </h5>
+          <ul class="list-unstyled mb-0">
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+              <div>
+                <strong class="d-block text-dark">Focus on Affected Areas</strong>
+                <span class="text-muted small">Capture clear close-ups of discolored spots, lesions, or wilting leaves.</span>
+              </div>
+            </li>
+            <li class="d-flex align-items-start mb-3">
+              <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+              <div>
+                <strong class="d-block text-dark">Natural Lighting</strong>
+                <span class="text-muted small">Ensure daylight without extreme glare or shadows for accurate color analysis.</span>
+              </div>
+            </li>
+            <li class="d-flex align-items-start">
+              <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+              <div>
+                <strong class="d-block text-dark">Single Leaf Composition</strong>
+                <span class="text-muted small">Isolate one infected leaf against a plain background when possible.</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Recent Scans Sidebar -->
+      {% if recent_detections %}
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-clock-history text-success me-2"></i> Recent Scans
+              </h5>
+              <a href="{% url 'agriculture:disease_history' %}" class="text-success small fw-semibold text-decoration-none">See all</a>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for d in recent_detections %}
+                <a href="{% url 'agriculture:disease_result' d.pk %}" class="list-group-item list-group-item-action border-0 px-0 py-2 d-flex align-items-center gap-3">
+                  {% if d.image %}
+                    <img src="{{ d.image.url }}" alt="Scan" class="rounded-3" style="width: 52px; height: 52px; object-fit: cover;" />
+                  {% else %}
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">🍃</div>
+                  {% endif %}
+                  <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="mb-0 text-truncate fw-bold">{{ d.disease.name|default:"Analysis result" }}</h6>
+                    <span class="text-muted small">{{ d.created_at|date:"M d, Y" }}</span>
+                  </div>
+                  <span class="badge {% if d.confidence_percentage >= 80 %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                    {{ d.confidence_percentage }}%
+                  </span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const dropzone = document.getElementById('dropzoneContainer');
+  const fileInput = document.getElementById('plantImageInput');
+  const dropzonePrompt = document.getElementById('dropzonePrompt');
+  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewFilename = document.getElementById('previewFilename');
+  const changeImageBtn = document.getElementById('changeImageBtn');
+
+  dropzone.addEventListener('click', (e) => {
+    if (e.target !== changeImageBtn) {
+      fileInput.click();
+    }
+  });
+
+  changeImageBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.value = '';
+    imagePreviewContainer.classList.add('d-none');
+    dropzonePrompt.classList.remove('d-none');
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) {
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        previewFilename.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        dropzonePrompt.classList.add('d-none');
+        imagePreviewContainer.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Drag & drop handlers
+  ['dragenter', 'dragover'].forEach(evtName => {
+    dropzone.addEventListener(evtName, (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#e8f5e9';
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(evtName => {
+    dropzone.addEventListener(evtName, (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = '#f8f9fa';
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      fileInput.files = e.dataTransfer.files;
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        imagePreview.src = ev.target.result;
+        previewFilename.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        dropzonePrompt.classList.add('d-none');
+        imagePreviewContainer.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+{% endblock %}
