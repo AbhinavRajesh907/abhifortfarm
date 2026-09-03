@@ -75,6 +75,22 @@
               <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="{% url 'marketplace:dashboard' %}">🛒 User Marketplace</a>
+            </li>
+            {% if is_approved_provider %}
+              <li class="nav-item">
+                <a class="nav-link text-success fw-semibold" href="{% url 'providers:dashboard' %}">🌱 Provider Dashboard</a>
+              </li>
+            {% elif is_pending_provider %}
+              <li class="nav-item">
+                <a class="nav-link text-warning" href="{% url 'providers:status' %}">⏳ Provider Status</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'providers:apply' %}">🌱 Become a Provider</a>
+              </li>
+            {% endif %}
+            <li class="nav-item">
               <a class="nav-link" href="{% url 'about' %}">About</a>
             </li>
             {% if request.user.is_authenticated %}

@@ -1,65 +1,72 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Agrivision{% endblock %}
+{% block title %}AgriVision - Farm & Marketplace Portal{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row text-center mb-5">
-        <h1>Welcome to Agrivision</h1>
-        <p class="lead">Connect providers and farmers</p>
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-success mb-2">🌿 AgriVision Platform</h1>
+        <p class="lead text-muted">Connecting Agricultural Providers and Buyers in One Unified System</p>
     </div>
 
-    {% if user.is_authenticated %}
-        <div class="row justify-content-center">
-            <div class="col-md-6 text-center">
-                <h3>Welcome back, {{ user.email }}!</h3>
-                <a href="{% url 'providers:dashboard' %}" class="btn btn-primary btn-lg mt-3">Go to Provider Dashboard</a>
-            </div>
-        </div>
-    {% else %}
-        <div class="row">
-            <!-- Login Form -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <h3 class="card-title text-center mb-4">Provider Login</h3>
-                        <form class="login" method="POST" action="{% url 'account_login' %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="login_email" class="form-label">Email</label>
-                                <input type="email" name="login" class="form-control" id="login_email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="login_password" class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" id="login_password" required>
-                            </div>
-                            <button class="btn btn-primary w-100" type="submit">Sign In</button>
-                        </form>
+    <div class="row g-4 justify-content-center">
+        <!-- User Marketplace Card -->
+        <div class="col-md-6 col-lg-5">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
+                <div class="card-body d-flex flex-column align-items-center">
+                    <div class="display-4 mb-3">🛒</div>
+                    <h3 class="card-title fw-bold text-success mb-2">User Marketplace</h3>
+                    <p class="card-text text-muted mb-4">
+                        Browse quality seeds and healthy plants, add items to cart, manage orders, and checkout.
+                    </p>
+                    <div class="mt-auto w-100 d-flex flex-column gap-2">
+                        <a href="{% url 'marketplace:dashboard' %}" class="btn btn-success btn-lg">
+                            Enter Marketplace
+                        </a>
+                        <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success">
+                            Browse Products
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Signup Form -->
-            <div class="col-md-6 mb-4">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <h3 class="card-title text-center mb-4">Register as Provider</h3>
-                        <form class="signup" method="POST" action="{% url 'account_signup' %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="signup_email" class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" id="signup_email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="signup_password" class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" id="signup_password" required>
-                            </div>
-                            <button class="btn btn-success w-100" type="submit">Sign Up</button>
-                        </form>
+        <!-- Provider Portal Card -->
+        <div class="col-md-6 col-lg-5">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
+                <div class="card-body d-flex flex-column align-items-center">
+                    <div class="display-4 mb-3">🌱</div>
+                    <h3 class="card-title fw-bold text-primary mb-2">Provider Portal</h3>
+                    <p class="card-text text-muted mb-4">
+                        Manage your provider profile, submit new seed/plant listing requests, and track approval status.
+                    </p>
+                    <div class="mt-auto w-100 d-flex flex-column gap-2">
+                        {% if is_approved_provider %}
+                            <a href="{% url 'providers:dashboard' %}" class="btn btn-primary btn-lg">
+                                Provider Dashboard
+                            </a>
+                            <a href="{% url 'providers:product_list' %}" class="btn btn-outline-primary">
+                                Manage Products
+                            </a>
+                        {% elif is_pending_provider %}
+                            <a href="{% url 'providers:status' %}" class="btn btn-warning btn-lg text-dark">
+                                View Application Status
+                            </a>
+                            <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary">
+                                Browse Marketplace
+                            </a>
+                        {% else %}
+                            <a href="{% url 'providers:apply' %}" class="btn btn-primary btn-lg">
+                                Apply to Become a Provider
+                            </a>
+                            <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-primary">
+                                Explore AgriVision
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}

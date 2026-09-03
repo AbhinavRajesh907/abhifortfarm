@@ -1,0 +1,167 @@
+{% extends "providers/base_provider.html" %}
+{% load static %}
+
+{% block title %}
+  {% if is_edit %}Edit Product — {{ product.name }}{% else %}Add Seed/Plant Product{% endif %} — AgriVision
+{% endblock %}
+{% block nav_add_product %}{% if not is_edit %}active{% endif %}{% endblock %}
+{% block nav_products %}{% if is_edit %}active{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'providers:dashboard' %}" class="text-success text-decoration-none">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'providers:product_list' %}" class="text-success text-decoration-none">My Products</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {% if is_edit %}Edit {{ product.name }}{% else %}Add New Product{% endif %}
+          </li>
+        </ol>
+      </nav>
+
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom p-4">
+          <h4 class="fw-bold mb-1 text-dark">
+            {% if is_edit %}
+              <i class="bi bi-pencil-square text-primary"></i> Edit Product Listing
+            {% else %}
+              <i class="bi bi-plus-circle text-success"></i> Add Seed or Plant Product
+            {% endif %}
+          </h4>
+          <p class="text-muted small mb-0">
+            {% if is_edit %}
+              Update inventory pricing, available units, and description for this product.
+            {% else %}
+              Submit seed varieties or nursery plants for listing in the AgriVision Marketplace.
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3">
+              {% if is_edit %}
+                <!-- Edit existing product fields -->
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
+                  {{ form.name }}
+                  {% if form.name.errors %}
+                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                  {{ form.category }}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Unit Price (₹) <span class="text-danger">*</span></label>
+                  {{ form.price }}
+                  {% if form.price.errors %}
+                    <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Available Stock Quantity <span class="text-danger">*</span></label>
+                  {{ form.stock }}
+                  {% if form.stock.errors %}
+                    <div class="text-danger small mt-1">{{ form.stock.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6 d-flex align-items-center pt-4">
+                  <div class="form-check form-switch fs-5">
+                    {{ form.is_active }}
+                    <label class="form-check-label fs-6 fw-semibold ms-2" for="{{ form.is_active.id_for_label }}">Active in Marketplace</label>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Description &amp; Growing Notes</label>
+                  {{ form.description }}
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Update Product Image</label>
+                  {{ form.image }}
+                </div>
+
+              {% else %}
+                <!-- Add new product submission fields -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Product Category <span class="text-danger">*</span></label>
+                  {{ form.category }}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Product / Variety Name <span class="text-danger">*</span></label>
+                  {{ form.item_name }}
+                  {% if form.item_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.item_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Description &amp; Specifications</label>
+                  {{ form.description }}
+                  <div class="form-text">Specify variety traits, seed germination rate, pot size for plants, recommended soil, etc.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Quantity Available (Units/Packets) <span class="text-danger">*</span></label>
+                  {{ form.quantity }}
+                  {% if form.quantity.errors %}
+                    <div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Expected Unit Price (₹) <span class="text-danger">*</span></label>
+                  {{ form.expected_price }}
+                  {% if form.expected_price.errors %}
+                    <div class="text-danger small mt-1">{{ form.expected_price.errors.0 }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Upload Product Image</label>
+                  {{ form.image }}
+                  <div class="form-text">Upload a clear photo of the seed packet or plant sapling.</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Or Image URL (Optional)</label>
+                  {{ form.image_url }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+              <a href="{% url 'providers:product_list' %}" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-arrow-left"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-success px-5 shadow-sm">
+                {% if is_edit %}
+                  <i class="bi bi-check2"></i> Update Product
+                {% else %}
+                  <i class="bi bi-send"></i> Submit for Listing
+                {% endif %}
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Apply to Become a Provider — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Header Card -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: white;">
+        <div class="card-body p-4 p-md-5 text-center">
+          <div style="font-size: 3rem;">🌱</div>
+          <h1 class="h2 fw-bold mt-2 mb-2">Partner with AgriVision as a Provider</h1>
+          <p class="mb-0 text-white-50" style="max-width: 580px; margin: 0 auto;">
+            List and sell your certified seeds, nursery plants, and agricultural products to verified farmers across the region.
+          </p>
+        </div>
+      </div>
+
+      <!-- Application Form Card -->
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
+          <h4 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+            <i class="bi bi-file-earmark-text text-success"></i> Provider Registration Details
+          </h4>
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Farm / Business / Nursery Name <span class="text-danger">*</span></label>
+                {{ form.farm_name }}
+                {% if form.farm_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.farm_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Type of Provider</label>
+                {{ form.provider_type }}
+                <div class="form-text">e.g. Plant Nursery, Seed Producer, Organic Farm</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Years of Experience</label>
+                {{ form.experience_years }}
+                <div class="form-text">e.g. 5+ Years, Established 2018</div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Farm / Nursery Description</label>
+                {{ form.description }}
+                <div class="form-text">Brief overview of your specialties, varieties grown, and facilities.</div>
+              </div>
+
+              <h5 class="fw-bold text-dark mt-4 pt-2 border-top">
+                <i class="bi bi-telephone text-success"></i> Contact &amp; Location
+              </h5>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Contact Phone Number <span class="text-danger">*</span></label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">City / Town</label>
+                {{ form.city }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Full Address / Land Location</label>
+                {{ form.address }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">District</label>
+                {{ form.district }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">State</label>
+                {{ form.state }}
+              </div>
+
+              <h5 class="fw-bold text-dark mt-4 pt-2 border-top">
+                <i class="bi bi-shield-check text-success"></i> License &amp; Credentials (Optional)
+              </h5>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">License / Registration Number</label>
+                {{ form.license_number }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">License Type / Issuing Body</label>
+                {{ form.license_type }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Upload License Document (PDF or Image)</label>
+                {{ form.license_document }}
+              </div>
+            </div>
+
+            <!-- Notice box -->
+            <div class="alert alert-info border-0 rounded-3 mt-4 mb-4 d-flex align-items-start gap-2">
+              <i class="bi bi-info-circle-fill fs-5 mt-1"></i>
+              <div>
+                <strong>Admin Review Notice:</strong> Once submitted, your request will be reviewed by AgriVision administrators.
+                Upon approval, your Provider Dashboard and Product Management features will be activated immediately.
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary px-4">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
+                <i class="bi bi-send-fill"></i> Submit Provider Application
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

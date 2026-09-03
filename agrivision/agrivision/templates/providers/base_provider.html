@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Provider Portal — AgriVision{% endblock %}</title>
+  <meta name="description" content="AgriVision Provider Portal — Manage your farm products, stock, and orders"/>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer"/>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Marketplace & Provider CSS -->
+  <link rel="stylesheet" href="{% static 'css/marketplace.css' %}"/>
+
+  <style>
+    :root {
+      --prov-primary: #1b5e20;
+      --prov-accent: #2e7d32;
+      --prov-light: #e8f5e9;
+      --prov-card-bg: #ffffff;
+    }
+    .prov-navbar {
+      background: #ffffff;
+      border-bottom: 2px solid var(--prov-light);
+      box-shadow: 0 2px 12px rgba(27, 94, 32, 0.08);
+    }
+    .prov-navbar .navbar-brand {
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: var(--prov-primary) !important;
+    }
+    .prov-badge-approved {
+      background-color: #d1e7dd;
+      color: #0f5132;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .prov-badge-pending {
+      background-color: #fff3cd;
+      color: #664d03;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .prov-badge-rejected {
+      background-color: #f8d7da;
+      color: #842029;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .stat-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+      border: 1px solid rgba(46, 125, 50, 0.12);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(46, 125, 50, 0.1);
+    }
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .table-card {
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .table-card .card-header {
+      background: #ffffff;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 1.2rem 1.5rem;
+    }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ====== NAVBAR ====== -->
+<nav class="navbar navbar-expand-lg prov-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'providers:dashboard' %}">
+      <span class="brand-icon">🌱</span>
+      <span>AgriVision <span class="text-muted fw-normal fs-6">| Provider Portal</span></span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#provNav" aria-controls="provNav" aria-expanded="false">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="provNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+        {% if is_approved_provider %}
+          <li class="nav-item">
+            <a class="nav-link {% block nav_dashboard %}{% endblock %}" href="{% url 'providers:dashboard' %}">
+              <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% block nav_products %}{% endblock %}" href="{% url 'providers:product_list' %}">
+              <i class="bi bi-box-seam"></i> My Products
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% block nav_add_product %}{% endblock %}" href="{% url 'providers:product_add' %}">
+              <i class="bi bi-plus-circle"></i> + Add Product
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% block nav_orders %}{% endblock %}" href="{% url 'providers:orders' %}">
+              <i class="bi bi-receipt"></i> Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% block nav_profile %}{% endblock %}" href="{% url 'providers:profile_edit' %}">
+              <i class="bi bi-building"></i> Farm Profile
+            </a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'providers:status' %}">
+              <i class="bi bi-info-circle"></i> Application Status
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <li class="nav-item">
+          <a class="btn btn-sm btn-outline-success rounded-pill px-3" href="{% url 'marketplace:dashboard' %}">
+            <i class="bi bi-shop"></i> View Marketplace
+          </a>
+        </li>
+        {% if request.user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle user-avatar" href="#" role="button"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle fs-5"></i>
+            {{ request.user.name|default:request.user.email }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'users:detail' request.user.pk %}">
+                <i class="bi bi-person"></i> My Account
+              </a>
+            </li>
+            {% if is_approved_provider %}
+            <li>
+              <a class="dropdown-item" href="{% url 'providers:profile_edit' %}">
+                <i class="bi bi-building"></i> Edit Farm Details
+              </a>
+            </li>
+            {% endif %}
+            <li><hr class="dropdown-divider"/></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ====== MESSAGES ====== -->
+{% if messages %}
+<div class="container mt-3">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ====== CONTENT ====== -->
+<main class="agri-main py-4">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ====== FOOTER ====== -->
+<footer class="agri-footer mt-auto py-3 bg-white border-top">
+  <div class="container text-center">
+    <p class="mb-0 text-muted small">
+      🌱 AgriVision Provider Portal &copy; 2026 — Connecting growers, nurseries, and farmers
+    </p>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

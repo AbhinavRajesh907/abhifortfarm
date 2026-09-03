@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Provider Application Status — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      {% if profile.is_pending %}
+      <!-- ================= PENDING CARD ================= -->
+      <div class="card border-0 shadow-sm rounded-4 text-center p-4 p-md-5">
+        <div class="mb-3">
+          <div style="width: 80px; height: 80px; background: #fff3cd; color: #856404; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+        </div>
+
+        <h2 class="h3 fw-bold text-dark mb-2">Application Pending Review</h2>
+        <span class="badge bg-warning text-dark align-self-center px-3 py-2 rounded-pill mb-4" style="font-size: 0.9rem;">
+          Status: Pending Administrator Approval
+        </span>
+
+        <p class="text-muted mb-4">
+          Thank you for applying, <strong>{{ profile.farm_name }}</strong>! Your request to become a verified seed/plant provider on AgriVision has been submitted and is currently being evaluated by our team.
+        </p>
+
+        <!-- Details Card -->
+        <div class="card bg-light border-0 rounded-3 text-start p-3 mb-4">
+          <div class="row g-2 small">
+            <div class="col-sm-4 text-muted">Applicant Account:</div>
+            <div class="col-sm-8 fw-semibold">{{ profile.user.email }}</div>
+
+            <div class="col-sm-4 text-muted">Farm Name:</div>
+            <div class="col-sm-8 fw-semibold">{{ profile.farm_name }}</div>
+
+            <div class="col-sm-4 text-muted">Provider Type:</div>
+            <div class="col-sm-8 fw-semibold">{{ profile.provider_type }}</div>
+
+            <div class="col-sm-4 text-muted">Contact Phone:</div>
+            <div class="col-sm-8 fw-semibold">{{ profile.phone_number }}</div>
+
+            <div class="col-sm-4 text-muted">Date Submitted:</div>
+            <div class="col-sm-8">{{ profile.created_at|date:"F d, Y - h:i A" }}</div>
+          </div>
+        </div>
+
+        <div class="alert alert-secondary border-0 small text-muted text-start mb-4">
+          <i class="bi bi-shield-lock"></i> <strong>Access Restricted:</strong> Provider management tools, product listings, and provider dashboard will become accessible automatically once an administrator approves your profile.
+        </div>
+
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{% url 'marketplace:dashboard' %}" class="btn btn-success px-4 rounded-pill">
+            <i class="bi bi-shop"></i> Browse Marketplace
+          </a>
+          <a href="{% url 'users:detail' request.user.pk %}" class="btn btn-outline-secondary px-4 rounded-pill">
+            <i class="bi bi-person"></i> My Profile
+          </a>
+        </div>
+      </div>
+
+      {% elif profile.is_rejected %}
+      <!-- ================= REJECTED CARD ================= -->
+      <div class="card border-0 shadow-sm rounded-4 text-center p-4 p-md-5">
+        <div class="mb-3">
+          <div style="width: 80px; height: 80px; background: #f8d7da; color: #842029; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+            <i class="bi bi-x-circle-fill"></i>
+          </div>
+        </div>
+
+        <h2 class="h3 fw-bold text-dark mb-2">Application Not Approved</h2>
+        <span class="badge bg-danger align-self-center px-3 py-2 rounded-pill mb-4" style="font-size: 0.9rem;">
+          Status: Application Rejected
+        </span>
+
+        <p class="text-muted mb-4">
+          We regret to inform you that your request to become a provider for <strong>{{ profile.farm_name }}</strong> was not approved at this time.
+        </p>
+
+        {% if profile.rejection_reason %}
+        <div class="alert alert-danger border-0 text-start p-3 mb-4 rounded-3">
+          <h6 class="fw-bold mb-1"><i class="bi bi-chat-left-dots-fill"></i> Feedback / Reason:</h6>
+          <p class="mb-0">{{ profile.rejection_reason }}</p>
+        </div>
+        {% endif %}
+
+        <div class="card bg-light border-0 rounded-3 text-start p-3 mb-4 text-muted small">
+          You can continue using your account to explore products, purchase seeds &amp; plants, and manage your orders. If you have updated documentation or details, you may update your profile or contact administration.
+        </div>
+
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{% url 'marketplace:dashboard' %}" class="btn btn-success px-4 rounded-pill">
+            <i class="bi bi-shop"></i> Back to Marketplace
+          </a>
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

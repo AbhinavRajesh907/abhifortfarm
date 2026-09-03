@@ -20,6 +20,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     path("providers/", include("agrivision.providers.urls", namespace="providers")),
+    path("marketplace/", include("agrivision.marketplace.urls", namespace="marketplace")),
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
