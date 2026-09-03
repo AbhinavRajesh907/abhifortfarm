@@ -22,7 +22,12 @@ class User(AbstractUser):
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
     email = EmailField(_("email address"), unique=True)
-    username = None  # type: ignore[assignment]
+    username = CharField(_("Username"), max_length=150, unique=True, null=True, blank=True)
+    phone_number = CharField(_("Phone Number"), max_length=15, blank=True)
+    street_address = CharField(_("Street Address"), max_length=255, blank=True)
+    city = CharField(_("City"), max_length=100, blank=True)
+    state = CharField(_("State"), max_length=100, blank=True)
+    pincode = CharField(_("Pincode"), max_length=10, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

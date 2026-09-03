@@ -25,9 +25,11 @@ class UserDetailView(LoginRequiredMixin, DetailView):
 user_detail_view = UserDetailView.as_view()
 
 
+from agrivision.users.forms import UserEditProfileForm
+
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
-    fields = ["name"]
+    form_class = UserEditProfileForm
     success_message = _("Information successfully updated")
 
     def get_success_url(self) -> str:

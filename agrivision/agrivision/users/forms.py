@@ -42,3 +42,30 @@ class UserSocialSignupForm(SocialSignupForm):
     Default fields will be added automatically.
     See UserSignupForm otherwise.
     """
+
+
+class UserEditProfileForm(admin_forms.UserChangeForm):
+    password = None  # Explicitly remove password field for profile editing
+
+    class Meta:
+        model = User
+        fields = [
+            "name",
+            "username",
+            "email",
+            "phone_number",
+            "street_address",
+            "city",
+            "state",
+            "pincode",
+        ]
+        labels = {
+            "name": _("Full Name"),
+            "username": _("Username"),
+            "email": _("Email Address"),
+            "phone_number": _("Phone Number"),
+            "street_address": _("Street Address / Location"),
+            "city": _("City"),
+            "state": _("State"),
+            "pincode": _("Pincode"),
+        }
