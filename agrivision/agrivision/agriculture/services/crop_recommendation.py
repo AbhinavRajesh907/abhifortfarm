@@ -364,6 +364,17 @@ def save_crop_recommendation_history(
         for r in result.ranked_crops[:5]
     ]
 
+    def _clean_json_val(val):
+        if isinstance(val, dict):
+            return {k: _clean_json_val(v) for k, v in val.items()}
+        if isinstance(val, list):
+            return [_clean_json_val(v) for v in val]
+        if isinstance(val, Decimal):
+            return float(val)
+        return val
+
+    clean_input_params = _clean_json_val(params)
+
     rec = CropRecommendation.objects.create(
         user=user,
         soil_type=str(params.get("soil_type") or ""),
@@ -375,7 +386,7 @@ def save_crop_recommendation_history(
         n=Decimal(str(params["n"])) if params.get("n") is not None and params["n"] != "" else None,
         p=Decimal(str(params["p"])) if params.get("p") is not None and params["p"] != "" else None,
         k=Decimal(str(params["k"])) if params.get("k") is not None and params["k"] != "" else None,
-        input_params=params,
+        input_params=clean_input_params,
         recommended_crop=result.primary_crop,
         recommended_crops_list=ranked_list,
         explanation=result.explanation,

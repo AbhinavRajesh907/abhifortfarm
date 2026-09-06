@@ -24,9 +24,13 @@
 <body>
 
 <!-- ====== NAVBAR ====== -->
+{% url 'marketplace:dashboard' as mkt_dash_url %}
+{% url 'marketplace:product_list' as mkt_prod_url %}
+{% url 'marketplace:cart' as mkt_cart_url %}
+{% url 'marketplace:my_orders' as mkt_orders_url %}
 <nav class="navbar navbar-expand-lg agri-navbar sticky-top">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'marketplace:dashboard' %}">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ mkt_dash_url|default:'#' }}">
       <span class="brand-icon">🌿</span>
       <span class="brand-text">AgriSmart</span>
     </a>
@@ -38,19 +42,19 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link {% block nav_home %}{% endblock %}"
-             href="{% url 'marketplace:dashboard' %}">
+             href="{{ mkt_dash_url|default:'#' }}">
             <i class="bi bi-house-door"></i> Home
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% block nav_products %}{% endblock %}"
-             href="{% url 'marketplace:product_list' %}">
+             href="{{ mkt_prod_url|default:'#' }}">
             <i class="bi bi-grid"></i> Products
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% block nav_seeds %}{% endblock %}"
-             href="{% url 'marketplace:product_list' %}?category=Seeds">
+             href="{{ mkt_prod_url|default:'#' }}?category=Seeds">
             🌱 Seeds
           </a>
         </li>
@@ -77,7 +81,7 @@
       <ul class="navbar-nav ms-auto align-items-center gap-2">
         <!-- Cart -->
         <li class="nav-item">
-          <a class="nav-link cart-btn position-relative" href="{% url 'marketplace:cart' %}">
+          <a class="nav-link cart-btn position-relative" href="{{ mkt_cart_url|default:'#' }}">
             <i class="bi bi-cart3 fs-5"></i>
             {% if cart_count and cart_count > 0 %}
               <span class="cart-badge badge rounded-pill bg-danger">{{ cart_count }}</span>
@@ -87,7 +91,7 @@
         <!-- My Orders -->
         <li class="nav-item">
           <a class="nav-link {% block nav_orders %}{% endblock %}"
-             href="{% url 'marketplace:my_orders' %}">
+             href="{{ mkt_orders_url|default:'#' }}">
             <i class="bi bi-receipt"></i> My Orders
           </a>
         </li>

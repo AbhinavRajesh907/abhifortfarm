@@ -74,8 +74,9 @@
             <li class="nav-item active">
               <a class="nav-link" href="{% url 'home' %}">Home <span class="visually-hidden">(current)</span></a>
             </li>
+            {% url 'marketplace:product_list' as marketplace_list_url %}
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'marketplace:product_list' %}">Marketplace</a>
+              <a class="nav-link" href="{{ marketplace_list_url|default:'#' }}">Marketplace</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'agriculture:disease_detection' %}">AI Disease Detection</a>
