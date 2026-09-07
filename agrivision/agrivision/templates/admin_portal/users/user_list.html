@@ -1,0 +1,164 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}User Management | AgriVision Admin{% endblock title %}
+{% block page_title %}User Accounts & Access Control{% endblock page_title %}
+{% block page_subtitle %}Manage farmer, customer, provider, and administrator user accounts across the AgriVision platform{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search by user name or email address..." />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="role" class="form-select" onchange="this.form.submit()">
+        <option value="">All User Roles</option>
+        <option value="customer" {% if role_filter == 'customer' %}selected{% endif %}>Farmers / Customers</option>
+        <option value="provider" {% if role_filter == 'provider' %}selected{% endif %}>Providers</option>
+        <option value="staff" {% if role_filter == 'staff' %}selected{% endif %}>Staff Members</option>
+        <option value="superuser" {% if role_filter == 'superuser' %}selected{% endif %}>Superusers</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive / Banned</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-admin-primary w-100">Filter Users</button>
+    </div>
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-users text-primary"></i> Registered Platform Users
+    </h5>
+    <span class="badge bg-light text-dark border">{{ total_user_count }} Users Registered</span>
+  </div>
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User Account</th>
+          <th>Role / Classification</th>
+          <th>Account Status</th>
+          <th>Date Joined</th>
+          <th class="text-end">Administrative Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="admin-avatar">
+                  {{ u.email|slice:":1"|upper }}
+                </div>
+                <div>
+                  <a href="{% url 'admin_portal:user_detail' u.pk %}" class="fw-bold text-dark text-decoration-none hover-primary">
+                    {{ u.name|default:u.email }}
+                  </a>
+                  <div class="text-muted small">{{ u.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              {% if u.is_superuser %}
+                <span class="badge bg-danger">Super Administrator</span>
+              {% elif u.is_staff %}
+                <span class="badge bg-primary">Admin Staff</span>
+              {% elif u.provider_profile %}
+                <span class="badge bg-success">Provider ({{ u.provider_profile.farm_name }})</span>
+              {% else %}
+                <span class="badge bg-secondary">Farmer / Buyer</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" action="{% url 'admin_portal:user_toggle_active' u.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm {% if u.is_active %}btn-outline-success{% else %}btn-outline-danger{% endif %}" title="Toggle Account Status" {% if u == request.user %}disabled{% endif %}>
+                  {% if u.is_active %}
+                    <i class="fa-solid fa-circle-check me-1"></i> Active
+                  {% else %}
+                    <i class="fa-solid fa-circle-xmark me-1"></i> Inactive
+                  {% endif %}
+                </button>
+              </form>
+            </td>
+            <td><small class="text-muted">{{ u.date_joined|date:"M d, Y" }}</small></td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'admin_portal:user_detail' u.pk %}" class="btn btn-light border" title="View Profile">
+                  <i class="fa-solid fa-eye text-primary"></i>
+                </a>
+                <a href="{% url 'admin_portal:user_edit' u.pk %}" class="btn btn-light border" title="Edit Permissions">
+                  <i class="fa-solid fa-user-pen text-warning"></i>
+                </a>
+                {% if u != request.user %}
+                  <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ u.pk }}" title="Delete User">
+                    <i class="fa-solid fa-trash text-danger"></i>
+                  </button>
+                {% endif %}
+              </div>
+
+              <!-- Delete Confirmation Modal -->
+              {% if u != request.user %}
+                <div class="modal fade" id="deleteUserModal{{ u.pk }}" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered text-start">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-danger">Delete User Account</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to permanently delete user <strong>{{ u.email }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="post" action="{% url 'admin_portal:user_delete' u.pk %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5 text-muted">No users found matching your search.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <div class="p-3 border-top d-flex justify-content-center">
+      <nav>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

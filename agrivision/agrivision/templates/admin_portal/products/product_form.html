@@ -1,0 +1,122 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}{% if object %}Edit {{ object.name }}{% else %}Add New Product{% endif %} | AgriVision Admin{% endblock title %}
+{% block page_title %}{% if object %}Edit Product{% else %}Add New Product{% endif %}{% endblock page_title %}
+{% block page_subtitle %}Manage product details, pricing, inventory stock, and media for the marketplace{% endblock page_subtitle %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'admin_portal:product_list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Catalog
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-box-archive text-success"></i>
+          {% if object %}Edit Product: {{ object.name }}{% else %}Create New Marketplace Product{% endif %}
+        </h5>
+      </div>
+      <div class="admin-card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              <i class="fa-solid fa-circle-exclamation me-1"></i> Please correct the errors below.
+              {{ form.errors }}
+            </div>
+          {% endif %}
+
+          <div class="row g-3 mb-4">
+            <!-- Product Name -->
+            <div class="col-md-8">
+              <label class="form-label fw-bold">Product Name *</label>
+              {{ form.name }}
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Category *</label>
+              {{ form.category }}
+            </div>
+
+            <!-- Provider Name -->
+            <div class="col-md-12">
+              <label class="form-label fw-bold">Provider / Nursery Source</label>
+              {{ form.provider_name }}
+              <div class="form-text">e.g. GreenRoots Nursery, Sahyadri Organic Seeds, or leave empty for AgriVision Direct.</div>
+            </div>
+
+            <!-- Description -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Product Description & Cultivation Guide *</label>
+              {{ form.description }}
+            </div>
+          </div>
+
+          <hr class="my-4" />
+
+          <!-- Financials & Stock -->
+          <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-indian-rupee-sign text-success me-1"></i> Pricing & Inventory Control</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Procurement / Cost Price (₹)</label>
+              {{ form.cost_price }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold text-success">Marketplace Retail Price (₹) *</label>
+              {{ form.price }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Current Stock (Units) *</label>
+              {{ form.stock }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Low Stock Alert Threshold</label>
+              {{ form.low_stock_threshold }}
+            </div>
+          </div>
+
+          <hr class="my-4" />
+
+          <!-- Media & Visibility -->
+          <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-image text-primary me-1"></i> Product Imagery & Visibility</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Upload Product Image</label>
+              {{ form.image }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Or Direct Image URL</label>
+              {{ form.image_url }}
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch mt-2">
+                {{ form.is_active }}
+                <label class="form-check-label fw-bold" for="{{ form.is_active.id_for_label }}">Active in Marketplace (Visible to buyers)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch mt-2">
+                {{ form.is_featured }}
+                <label class="form-check-label fw-bold" for="{{ form.is_featured.id_for_label }}">Featured on Store Homepage</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{% url 'admin_portal:product_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-admin-primary px-4">
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

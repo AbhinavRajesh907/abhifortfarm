@@ -3,7 +3,8 @@ from django.contrib.auth import admin as auth_admin
 from django.utils.translation import gettext_lazy as _
 
 from .forms import UserAdminChangeForm, UserAdminCreationForm
-from .models import User, ProviderProfile
+from .models import User
+from agrivision.providers.models import ProviderProfile
 
 
 class ProviderProfileInline(admin.StackedInline):
@@ -41,10 +42,3 @@ class UserAdmin(auth_admin.UserAdmin):
     list_filter = ["role", "is_staff", "is_superuser", "is_active"]
     search_fields = ["username", "name", "email", "phone"]
     ordering = ["id"]
-
-
-@admin.register(ProviderProfile)
-class ProviderProfileAdmin(admin.ModelAdmin):
-    list_display = ["farm_name", "user", "provider_type", "license_number", "verification_status"]
-    list_filter = ["verification_status", "provider_type"]
-    search_fields = ["farm_name", "license_number", "user__username", "user__email"]

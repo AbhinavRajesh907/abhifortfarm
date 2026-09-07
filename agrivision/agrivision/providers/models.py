@@ -1,18 +1,14 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from agrivision.marketplace.models import Category, Product
 
 
 class ProviderProfile(models.Model):
     """
-    Extended profile for a user who has applied to become a Provider.
-
-    Relationship:
-        User (1) ──── (1) ProviderProfile
-                              │
-                              ├── verification_status  (PENDING / APPROVED / REJECTED)
-                              ├── farm details
-                              └── ProviderRequest(s)   (product listings submitted by this provider)
+    Unified profile for registered agricultural providers, nurseries, and seed producers.
+    Compatible with Joyal's Provider Dashboard, Santhana's Admin Portal, and Abhinav's Registration.
     """
 
     class VerificationStatus(models.TextChoices):
@@ -51,13 +47,14 @@ class ProviderProfile(models.Model):
         _("License Document"), upload_to="licenses/", blank=True, null=True
     )
 
-    # Approval Status — default is PENDING (not APPROVED)
+    # Approval Status
     verification_status = models.CharField(
         _("Verification Status"),
         max_length=20,
         choices=VerificationStatus.choices,
         default=VerificationStatus.PENDING,
     )
+    verification_date = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(_("Rejection Reason"), blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,9 +66,38 @@ class ProviderProfile(models.Model):
         verbose_name_plural = "Provider Profiles"
 
     def __str__(self):
-        return f"{self.farm_name} ({self.user.email})"
+        return f"{self.farm_name} ({getattr(self.user, 'email', '')})"
 
-    # ── Convenience properties ──────────────────────────────────────────────
+    # ── Compatibility Properties ─────────────────────────────────────────────
+
+    @property
+    def contact_person(self):
+        return getattr(self.user, "name", "") or getattr(self.user, "username", "") or "Provider Representative"
+
+    @property
+    def phone(self):
+        return self.phone_number or getattr(self.user, "phone", "") or getattr(self.user, "phone_number", "")
+
+    @property
+    def email(self):
+        return getattr(self.user, "email", "")
+
+    @property
+    def pin_code(self):
+        return self.pincode
+
+    @property
+    def is_verified(self):
+        return self.verification_status == self.VerificationStatus.APPROVED
+
+    @is_verified.setter
+    def is_verified(self, value):
+        if value:
+            self.verification_status = self.VerificationStatus.APPROVED
+            self.verification_date = timezone.now()
+        else:
+            self.verification_status = self.VerificationStatus.PENDING
+            self.verification_date = None
 
     @property
     def is_approved(self):
@@ -86,28 +112,45 @@ class ProviderProfile(models.Model):
         return self.verification_status == self.VerificationStatus.REJECTED
 
     @property
-    def total_products_count(self):
-        """Number of product listings (ProviderRequests) submitted by this provider."""
+    def requests(self):
+        """Alias for Santhana's admin portal."""
+        return self.product_requests
+
+    @property
+    def supplied_products(self):
+        """Alias for Santhana's admin portal."""
+        return self.marketplace_products
+
+    @property
+    def total_requests_count(self):
         return self.product_requests.count()
 
     @property
-    def approved_products_count(self):
-        """Number of product listings approved by admin."""
+    def total_products_count(self):
+        return self.product_requests.count()
+
+    @property
+    def pending_requests_count(self):
         return self.product_requests.filter(
-            status=ProviderRequest.Status.APPROVED
+            models.Q(status="Pending") | models.Q(status="pending") | models.Q(status="PENDING")
         ).count()
 
     @property
     def pending_products_count(self):
-        """Number of product listings still pending admin review."""
+        return self.pending_requests_count
+
+    @property
+    def approved_requests_count(self):
         return self.product_requests.filter(
-            status=ProviderRequest.Status.PENDING
+            models.Q(status="Approved") | models.Q(status="approved") | models.Q(status="APPROVED")
         ).count()
 
     @property
+    def approved_products_count(self):
+        return self.approved_requests_count
+
+    @property
     def marketplace_products(self):
-        """Marketplace Products that originated from this provider's approved requests."""
-        from agrivision.marketplace.models import Product
         return Product.objects.filter(provider=self)
 
     @property
@@ -115,44 +158,54 @@ class ProviderProfile(models.Model):
         return self.marketplace_products.count()
 
 
+# Backward-compatible model alias for Santhana's admin portal
+Provider = ProviderProfile
+
+
 class ProviderRequest(models.Model):
     """
     A seed or plant product submission by a Provider, pending Admin review.
-
-    When Admin APPROVES a ProviderRequest, Admin creates/links a marketplace.Product
-    and sets `created_product`.  The product is then visible in the marketplace.
-
-    Status flow:  PENDING  →  APPROVED  (product listed)
-                           →  REJECTED  (product not listed)
     """
 
-    class Category(models.TextChoices):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    STATUS_CHOICES = [
+        (PENDING, "Pending Review"),
+        (APPROVED, "Approved & Listed"),
+        (REJECTED, "Rejected"),
+    ]
+
+    class CategoryChoices(models.TextChoices):
         SEEDS = "Seeds", _("🌱 Seeds")
         PLANTS = "Plants", _("🌿 Plants")
-
-    class Status(models.TextChoices):
-        PENDING = "Pending", _("Pending Review")
-        APPROVED = "Approved", _("Approved & Listed")
-        REJECTED = "Rejected", _("Rejected")
 
     provider = models.ForeignKey(
         ProviderProfile,
         on_delete=models.CASCADE,
-        related_name="product_requests",   # changed from "requests" to avoid confusion
+        related_name="product_requests",
     )
-    category = models.CharField(
-        _("Category"),
-        max_length=20,
-        choices=Category.choices,
-        default=Category.SEEDS,
+    item_name = models.CharField(_("Product Name"), max_length=200, default="")
+    product_name = models.CharField(_("Product Name (Alt)"), max_length=200, blank=True, default="")
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        related_name="provider_requests",
+        null=True,
+        blank=True,
     )
-    item_name = models.CharField(_("Product Name"), max_length=200)
+    category_name = models.CharField(
+        _("Category Name"),
+        max_length=50,
+        blank=True,
+        default="Seeds",
+    )
     description = models.TextField(_("Description & Variety Notes"), blank=True)
 
     # Quantity & Pricing
     quantity = models.PositiveIntegerField(_("Quantity Available"), default=10)
     expected_price = models.DecimalField(
-        _("Expected Unit Price (₹)"), max_digits=10, decimal_places=2
+        _("Expected Unit Price (₹)"), max_digits=10, decimal_places=2, default=0.00
     )
     selling_price = models.DecimalField(
         _("Marketplace Selling Price (₹)"),
@@ -175,14 +228,24 @@ class ProviderRequest(models.Model):
     status = models.CharField(
         _("Approval Status"),
         max_length=20,
-        choices=Status.choices,
-        default=Status.PENDING,
+        choices=STATUS_CHOICES,
+        default=PENDING,
     )
     admin_notes = models.TextField(_("Admin Feedback"), blank=True)
+    rejection_reason = models.TextField(_("Rejection Reason"), blank=True)
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_provider_requests",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
 
     # Linked Marketplace Product (set when request is approved)
     created_product = models.ForeignKey(
-        "marketplace.Product",
+        Product,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -197,25 +260,32 @@ class ProviderRequest(models.Model):
         verbose_name = "Provider Product Request"
         verbose_name_plural = "Provider Product Requests"
 
-    def __str__(self):
-        return (
-            f"{self.item_name} ({self.category}) by "
-            f"{self.provider.farm_name} — {self.get_status_display()}"
-        )
+    def save(self, *args, **kwargs):
+        if not self.item_name and self.product_name:
+            self.item_name = self.product_name
+        elif not self.product_name and self.item_name:
+            self.product_name = self.item_name
+        super().save(*args, **kwargs)
 
     @property
     def display_image(self):
-        """Return the best available image URL for display."""
         if self.image:
             return self.image.url
         if self.image_url:
             return self.image_url
-        if self.category == self.Category.SEEDS:
-            return (
-                "https://images.unsplash.com/photo-1592417817098-8f3d6eb22509"
-                "?w=400&auto=format&fit=crop&q=60"
-            )
-        return (
-            "https://images.unsplash.com/photo-1485955900006-10f4d324d411"
-            "?w=400&auto=format&fit=crop&q=60"
-        )
+        if self.category and self.category.name == "Seeds":
+            return "https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?w=400&auto=format&fit=crop&q=60"
+        return "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&auto=format&fit=crop&q=60"
+
+
+class ProviderProduct(models.Model):
+    """Historical mapping of products associated with providers."""
+
+    provider = models.ForeignKey(ProviderProfile, on_delete=models.CASCADE, related_name="supplied_product_links")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="provider_links")
+    supplied_quantity = models.PositiveIntegerField(default=1)
+    unit_procurement_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.product.name} from {self.provider.farm_name}"

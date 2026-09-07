@@ -11,7 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, TemplateView, CreateView, RedirectView, UpdateView
 
-from agrivision.users.models import User, ProviderProfile
+from agrivision.users.models import User
+from agrivision.providers.models import ProviderProfile
 from agrivision.users.forms import UserLoginForm, UserRegistrationForm, ProviderRegistrationForm
 
 if TYPE_CHECKING:

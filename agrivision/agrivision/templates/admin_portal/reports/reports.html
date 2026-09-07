@@ -1,0 +1,195 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Reports & Business Intelligence | AgriVision Admin{% endblock title %}
+{% block page_title %}Platform Performance & Business Intelligence{% endblock page_title %}
+{% block page_subtitle %}Comprehensive sales figures, provider contribution metrics, inventory turnover, and downloadable CSV audits{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Executive Summary Row -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-card-inner">
+        <div>
+          <div class="kpi-title">Gross Revenue Realized</div>
+          <div class="kpi-value">₹{{ total_revenue|floatformat:2 }}</div>
+          <div class="kpi-subtext text-success"><i class="fa-solid fa-circle-check"></i> Paid & Settled Orders</div>
+        </div>
+        <div class="kpi-icon-box"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-card-inner">
+        <div>
+          <div class="kpi-title">Total Orders Placed</div>
+          <div class="kpi-value">{{ total_orders }}</div>
+          <div class="kpi-subtext text-primary"><i class="fa-solid fa-cart-shopping"></i> Platform lifetime orders</div>
+        </div>
+        <div class="kpi-icon-box"><i class="fa-solid fa-truck-fast"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-card-inner">
+        <div>
+          <div class="kpi-title">Average Order Value</div>
+          <div class="kpi-value">₹{{ avg_order_value|floatformat:2 }}</div>
+          <div class="kpi-subtext text-secondary"><i class="fa-solid fa-receipt"></i> Per customer cart</div>
+        </div>
+        <div class="kpi-icon-box"><i class="fa-solid fa-scale-balanced"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="kpi-card kpi-amber">
+      <div class="kpi-card-inner">
+        <div>
+          <div class="kpi-title">Active Supply Partners</div>
+          <div class="kpi-value">{{ total_providers }}</div>
+          <div class="kpi-subtext text-warning"><i class="fa-solid fa-handshake"></i> Verified nurseries & farms</div>
+        </div>
+        <div class="kpi-icon-box"><i class="fa-solid fa-users-viewfinder"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Download Data Exports Action Hub -->
+<div class="admin-card mb-4">
+  <div class="admin-card-header bg-light">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-file-csv text-success"></i> Instant Data Export & Audits (.CSV)
+    </h5>
+  </div>
+  <div class="admin-card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-file-invoice-dollar text-success me-2"></i>Sales & Revenue Report</h6>
+            <p class="text-muted small">Complete record of all orders, payment methods, delivery addresses, and revenue breakdowns.</p>
+          </div>
+          <a href="{% url 'admin_portal:export_sales_csv' %}" class="btn btn-outline-success w-100">
+            <i class="fa-solid fa-download me-1"></i> Download Sales CSV
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-boxes-packing text-primary me-2"></i>Line Item Orders Audit</h6>
+            <p class="text-muted small">Detailed item-by-item customer transaction logs with quantities sold and fulfillment stages.</p>
+          </div>
+          <a href="{% url 'admin_portal:export_orders_csv' %}" class="btn btn-outline-primary w-100">
+            <i class="fa-solid fa-download me-1"></i> Download Orders CSV
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="p-3 border rounded h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-warehouse text-warning me-2"></i>Product Inventory Valuation</h6>
+            <p class="text-muted small">Full stock count, procurement prices, retail selling prices, and replenishment indicators.</p>
+          </div>
+          <a href="{% url 'admin_portal:export_products_csv' %}" class="btn btn-outline-warning text-dark w-100">
+            <i class="fa-solid fa-download me-1"></i> Download Inventory CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Two-Column Report Tables -->
+<div class="row g-4">
+  <!-- Top Selling Products Leaderboard -->
+  <div class="col-lg-6">
+    <div class="admin-card h-100">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-ranking-star text-warning"></i> Best-Selling Products Leaderboard
+        </h5>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Rank & Product</th>
+              <th>Units Sold</th>
+              <th class="text-end">Revenue Generated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in top_products %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge {% if forloop.counter == 1 %}bg-warning text-dark{% elif forloop.counter == 2 %}bg-secondary{% elif forloop.counter == 3 %}bg-bronze text-white{% else %}bg-light text-dark border{% endif %} rounded-circle px-2 py-1">
+                      {{ forloop.counter }}
+                    </span>
+                    <span class="fw-bold text-dark">{{ p.product_name|default:"Product" }}</span>
+                  </div>
+                </td>
+                <td><span class="fw-bold fs-6">{{ p.total_qty }}</span> units</td>
+                <td class="text-end fw-bold text-success fs-6">₹{{ p.total_sales|floatformat:2 }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center py-4 text-muted">No sales recorded yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider Contributions & Approval Rates -->
+  <div class="col-lg-6">
+    <div class="admin-card h-100">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-handshake-angle text-emerald-600" style="color: #059669;"></i> Provider Contribution Analytics
+        </h5>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Farm / Provider</th>
+              <th>Submitted Proposals</th>
+              <th class="text-end">Approved & Listed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for prov in provider_stats %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ prov.farm_name }}</div>
+                  <small class="text-muted">{{ prov.city }}, {{ prov.district }}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ prov.total_req }} proposals</span></td>
+                <td class="text-end">
+                  <span class="badge bg-success fs-6">{{ prov.approved_req }} approved</span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center py-4 text-muted">No provider statistics recorded yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

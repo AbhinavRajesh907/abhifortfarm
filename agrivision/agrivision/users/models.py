@@ -71,38 +71,3 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
-
-from django.db import models
-
-class ProviderProfile(models.Model):
-    class VerificationStatus(TextChoices):
-        PENDING = "PENDING", _("Pending")
-        APPROVED = "APPROVED", _("Approved")
-        REJECTED = "REJECTED", _("Rejected")
-
-    user = OneToOneField(User, on_delete=CASCADE, related_name="provider_profile")
-    farm_name = CharField(_("Farm/Business Name"), max_length=255)
-    farm_address = CharField(_("Farm Address"), max_length=255)
-    provider_type = CharField(_("Type of Provider"), max_length=100)
-    experience_years = CharField(_("Years of Experience"), max_length=50)
-    description = TextField(_("Description"), blank=True)
-    
-    # License Details
-    license_number = CharField(_("License Number"), max_length=100)
-    license_type = CharField(_("License Type"), max_length=100)
-    issuing_authority = CharField(_("Issuing Authority"), max_length=255)
-    issue_date = DateField(_("Issue Date"), null=True, blank=True)
-    expiry_date = DateField(_("Expiry Date"), null=True, blank=True)
-    license_document = FileField(_("License Document"), upload_to="licenses/")
-    
-    # Verification Status
-    verification_status = CharField(
-        _("Verification Status"), 
-        max_length=20, 
-        choices=VerificationStatus.choices, 
-        default=VerificationStatus.PENDING
-    )
-    rejection_reason = TextField(_("Rejection Reason"), blank=True)
-
-    def __str__(self):
-        return f"{self.farm_name} ({self.user.email})"
