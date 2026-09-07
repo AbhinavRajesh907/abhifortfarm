@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Add Request{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Add Seed/Plant Information</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-success mt-3">Submit Request</button>
+                <a href="{% url 'providers:dashboard' %}" class="btn btn-secondary mt-3">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

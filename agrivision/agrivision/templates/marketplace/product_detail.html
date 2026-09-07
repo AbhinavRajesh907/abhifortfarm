@@ -72,15 +72,16 @@
         <div class="alert alert-warning">This product is currently out of stock.</div>
         <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success">← Back to Products</a>
       {% endif %}
-
       {% if product.provider %}
       <div class="card mt-4 shadow-sm border-0 bg-light">
         <div class="card-body">
           <h5 class="card-title text-success mb-3"><i class="bi bi-shop me-2"></i>Provider Information</h5>
-          <p class="mb-1"><strong>{{ product.provider.business_name }}</strong> ({{ product.provider.name }})</p>
-          <p class="mb-1 text-muted small"><i class="bi bi-geo-alt-fill me-1"></i>{{ product.provider.branch_name }} — {{ product.provider.branch_location }}</p>
-          <p class="mb-1 text-muted small"><i class="bi bi-envelope-fill me-1"></i>{{ product.provider.email }} &nbsp;|&nbsp; <i class="bi bi-telephone-fill me-1"></i>{{ product.provider.phone }}</p>
-          <p class="mb-0 text-muted small"><i class="bi bi-building me-1"></i>{{ product.provider.branch_address }}</p>
+          <p class="mb-1"><strong>{{ product.provider.farm_name }}</strong></p>
+          <p class="mb-1 text-muted small"><i class="bi bi-geo-alt-fill me-1"></i>{{ product.provider.city }}, {{ product.provider.district }} - {{ product.provider.pincode }}</p>
+          <p class="mb-1 text-muted small"><i class="bi bi-envelope-fill me-1"></i>{{ product.provider.user.email }} &nbsp;|&nbsp; <i class="bi bi-telephone-fill me-1"></i>{{ product.provider.phone_number }}</p>
+          {% if product.provider.address %}
+            <p class="mb-0 text-muted small"><i class="bi bi-building me-1"></i>{{ product.provider.address }}</p>
+          {% endif %}
         </div>
       </div>
       {% endif %}

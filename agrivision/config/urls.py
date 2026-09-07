@@ -26,6 +26,10 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # User Marketplace
     path("marketplace/", include("agrivision.marketplace.urls", namespace="marketplace")),
+    # Provider Portal
+    path("providers/", include("agrivision.providers.urls", namespace="providers")),
+    # Admin Portal
+    path("admin-portal/", include("agrivision.admin_portal.urls", namespace="admin_portal")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

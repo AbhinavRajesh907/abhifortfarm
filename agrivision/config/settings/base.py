@@ -79,7 +79,9 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "agrivision.users",
-    "agrivision.marketplace",  # User Marketplace Module
+    "agrivision.marketplace",
+    "agrivision.providers",
+    "agrivision.admin_portal",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -185,6 +187,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "agrivision.users.context_processors.allauth_settings",
+                "agrivision.providers.context_processors.provider_context",
             ],
         },
     },

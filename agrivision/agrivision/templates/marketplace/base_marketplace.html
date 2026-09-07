@@ -79,27 +79,60 @@
             <i class="bi bi-receipt"></i> My Orders
           </a>
         </li>
-        <!-- User dropdown -->
+        <!-- User dropdown / Quick links -->
+        {% if request.user.is_authenticated %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle user-avatar" href="#" role="button"
              data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-person-circle fs-5"></i>
             {{ request.user.name|default:request.user.email }}
           </a>
-          <ul class="dropdown-menu dropdown-menu-end">
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
             <li>
               <a class="dropdown-item" href="{% url 'users:detail' request.user.pk %}">
-                <i class="bi bi-person"></i> Profile
+                <i class="bi bi-person"></i> My Profile
               </a>
             </li>
             <li><hr class="dropdown-divider"/></li>
+            {% if request.user.provider_profile and request.user.provider_profile.verification_status == 'APPROVED' %}
+              <li>
+                <a class="dropdown-item text-success fw-semibold" href="{% url 'providers:dashboard' %}">
+                  <i class="bi bi-speedometer2"></i> Provider Dashboard
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'providers:product_list' %}">
+                  <i class="bi bi-box-seam"></i> My Products
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'providers:orders' %}">
+                  <i class="bi bi-receipt"></i> Provider Orders
+                </a>
+              </li>
+            {% elif request.user.provider_profile %}
+              <li>
+                <a class="dropdown-item text-warning" href="{% url 'providers:status' %}">
+                  <i class="bi bi-hourglass-split"></i> Provider Application (Pending)
+                </a>
+              </li>
+            {% endif %}
+            <li><hr class="dropdown-divider"/></li>
             <li>
-              <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+              <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
                 <i class="bi bi-box-arrow-right"></i> Logout
               </a>
             </li>
           </ul>
         </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'users:login' %}">Sign In</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-sm btn-success rounded-pill px-3" href="{% url 'users:register' %}">Sign Up</a>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>

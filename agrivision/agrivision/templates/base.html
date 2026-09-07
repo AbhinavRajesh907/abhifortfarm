@@ -74,6 +74,35 @@
                   <i class="bi bi-info-circle me-1 d-lg-none"></i> About
                 </a>
               </li>
+              {% if request.user.is_authenticated %}
+                {% if request.user.role == 'USER' %}
+                  <li class="nav-item">
+                    <a class="nav-link nav-link-agri" href="{% url 'marketplace:dashboard' %}">
+                      <i class="bi bi-shop me-1"></i> Marketplace
+                    </a>
+                  </li>
+                {% elif request.user.role == 'PROVIDER' %}
+                  {% if request.user.provider_profile and request.user.provider_profile.verification_status == 'APPROVED' %}
+                    <li class="nav-item">
+                      <a class="nav-link nav-link-agri" href="{% url 'providers:dashboard' %}">
+                        <i class="bi bi-flower1 me-1"></i> Provider Dashboard
+                      </a>
+                    </li>
+                  {% else %}
+                    <li class="nav-item">
+                      <a class="nav-link nav-link-agri" href="{% url 'providers:status' %}">
+                        <i class="bi bi-hourglass-split me-1"></i> Verification Status
+                      </a>
+                    </li>
+                  {% endif %}
+                {% elif request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+                  <li class="nav-item">
+                    <a class="nav-link nav-link-agri" href="{% url 'admin_portal:dashboard' %}">
+                      <i class="bi bi-shield-lock me-1"></i> Admin Portal
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
             </ul>
 
             <!-- Auth Buttons -->

@@ -35,7 +35,7 @@ def dashboard(request):
     query = request.GET.get("q", "").strip()
     category_filter = request.GET.get("category", "").strip()
 
-    products = Product.objects.filter(is_active=True).select_related("category")
+    products = Product.objects.filter(is_active=True).select_related("category", "provider")
 
     if query:
         products = products.filter(
@@ -68,7 +68,7 @@ def product_list(request):
     query = request.GET.get("q", "").strip()
     category_filter = request.GET.get("category", "").strip()
 
-    products = Product.objects.filter(is_active=True).select_related("category")
+    products = Product.objects.filter(is_active=True).select_related("category", "provider")
 
     if query:
         products = products.filter(
@@ -98,7 +98,7 @@ def product_list(request):
 
 @login_required
 def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk, is_active=True)
+    product = get_object_or_404(Product.objects.select_related("category", "provider"), pk=pk, is_active=True)
     cart = _get_or_create_cart(request.user)
     cart_count = cart.get_item_count()
 
@@ -116,7 +116,7 @@ def product_detail(request, pk):
 @login_required
 def cart_view(request):
     cart = _get_or_create_cart(request.user)
-    items = cart.items.select_related("product", "product__category").all()
+    items = cart.items.select_related("product", "product__category", "product__provider").all()
     total = cart.get_total()
     cart_count = cart.get_item_count()
 
@@ -183,7 +183,7 @@ def checkout(request):
 
     if not items.exists():
         messages.warning(request, "Your cart is empty.")
-        return redirect("marketplace:cart")
+        return redirect("marketplace:product_list")
 
     total = cart.get_total()
     cart_count = cart.get_item_count()
@@ -200,10 +200,9 @@ def checkout(request):
 
     # Pre-fill form fields from user profile if available
     initial_name = getattr(user, "name", "") or ""
-    initial_email = user.email
+    initial_email = user.email or ""
 
     if request.method == "POST":
-        # Validate required fields
         full_name = request.POST.get("full_name", "").strip()
         phone = request.POST.get("phone", "").strip()
         email = request.POST.get("email", "").strip()
@@ -213,9 +212,9 @@ def checkout(request):
         pin_code = request.POST.get("pin_code", "").strip()
 
         if not all([full_name, phone, email, delivery_address, city, district, pin_code]):
-            messages.error(request, "Please fill in all delivery details.")
+            messages.error(request, "Please fill in all required delivery fields.")
         else:
-            # Save delivery info to session for the payment step
+            # Store in session and move to payment step
             request.session["checkout_data"] = {
                 "full_name": full_name,
                 "phone": phone,
@@ -254,16 +253,16 @@ def payment(request):
 
     if not items.exists():
         messages.warning(request, "Your cart is empty.")
-        return redirect("marketplace:cart")
+        return redirect("marketplace:product_list")
 
     total = cart.get_total()
     cart_count = cart.get_item_count()
 
     context = {
+        "checkout_data": checkout_data,
         "items": items,
         "total": total,
         "cart_count": cart_count,
-        "checkout_data": checkout_data,
     }
     return render(request, "marketplace/payment.html", context)
 
@@ -287,15 +286,13 @@ def place_order(request):
 
     if not items.exists():
         messages.warning(request, "Your cart is empty.")
-        return redirect("marketplace:cart")
+        return redirect("marketplace:product_list")
 
-    payment_method = request.POST.get("payment_method", "cod")
-    if payment_method not in ["cod", "online"]:
-        payment_method = "cod"
+    payment_method = request.POST.get("payment_method", Order.COD)
+    payment_status = Order.PAID if payment_method == Order.ONLINE else Order.PENDING
 
     # Generate unique order number
-    order_number = "AGV" + uuid.uuid4().hex[:8].upper()
-
+    order_number = f"ORD-{uuid.uuid4().hex[:8].upper()}"
     total = cart.get_total()
 
     # Create Order
@@ -311,8 +308,8 @@ def place_order(request):
         district=checkout_data["district"],
         pin_code=checkout_data["pin_code"],
         payment_method=payment_method,
-        payment_status=Order.PENDING,
-        order_status=Order.ORDER_PENDING,
+        payment_status=payment_status,
+        order_status=Order.CONFIRMED if payment_status == Order.PAID else Order.ORDER_PENDING,
     )
 
     # Create OrderItems and deduct stock
@@ -320,20 +317,19 @@ def place_order(request):
         OrderItem.objects.create(
             order=order,
             product=item.product,
+            product_name=item.product.name,
             quantity=item.quantity,
             price=item.product.price,
             subtotal=item.get_subtotal(),
         )
         # Deduct stock
-        product = item.product
-        product.stock = max(0, product.stock - item.quantity)
-        product.save(update_fields=["stock"])
+        item.product.stock = max(0, item.product.stock - item.quantity)
+        item.product.save(update_fields=["stock"])
 
-    # Clear cart
+    # Clear cart and session
     cart.items.all().delete()
-
-    # Clear session checkout data
-    del request.session["checkout_data"]
+    if "checkout_data" in request.session:
+        del request.session["checkout_data"]
 
     messages.success(request, f"Order #{order_number} placed successfully!")
     return redirect("marketplace:order_success", order_number=order_number)
@@ -380,7 +376,7 @@ def my_orders(request):
 @login_required
 def order_detail(request, order_number):
     order = get_object_or_404(Order, order_number=order_number, user=request.user)
-    order_items = order.items.select_related("product").all()
+    order_items = order.items.select_related("product", "product__category", "product__provider").all()
     cart = _get_or_create_cart(request.user)
     cart_count = cart.get_item_count()
 
