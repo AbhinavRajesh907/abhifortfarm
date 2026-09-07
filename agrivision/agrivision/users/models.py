@@ -53,6 +53,8 @@ class User(AbstractUser):
     objects: ClassVar[UserManager] = UserManager()
 
     def save(self, *args, **kwargs):
+        if not self.username and self.email:
+            self.username = self.email
         if not self.phone and self.phone_number:
             self.phone = self.phone_number
         elif not self.phone_number and self.phone:

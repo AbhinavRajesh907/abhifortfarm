@@ -18,6 +18,7 @@ urlpatterns = [
     path("providers/", views.ProviderListView.as_view(), name="provider_list"),
     path("providers/<int:pk>/", views.ProviderDetailView.as_view(), name="provider_detail"),
     path("providers/<int:pk>/verify-toggle/", views.ProviderVerifyToggleView.as_view(), name="provider_verify_toggle"),
+    path("providers/<int:pk>/approve/", views.ProviderVerifyToggleView.as_view(), name="provider_approve"),
     
     # Provider Request Flow (Admin Review & Approval/Rejection)
     path("provider-requests/", views.ProviderRequestListView.as_view(), name="request_list"),

@@ -59,7 +59,7 @@ def approved_provider_required(view_func):
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect(f"{reverse_lazy('account_login')}?next={request.path}")
+            return redirect(f"{reverse_lazy('users:login')}?next={request.path}")
         profile = _get_provider_profile_or_none(request.user)
         if profile is None or not profile.is_approved:
             return redirect("providers:status")

@@ -240,7 +240,7 @@ class ProviderListView(AdminRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = Provider.objects.select_related("user").annotate(
-            req_count=Count("requests")
+            req_count=Count("product_requests")
         ).order_by("-created_at")
 
         search = self.request.GET.get("q")
@@ -249,14 +249,14 @@ class ProviderListView(AdminRequiredMixin, ListView):
         if search:
             qs = qs.filter(
                 Q(farm_name__icontains=search)
-                | Q(contact_person__icontains=search)
-                | Q(email__icontains=search)
+                | Q(user__name__icontains=search)
+                | Q(user__email__icontains=search)
                 | Q(city__icontains=search)
             )
         if verification == "verified":
-            qs = qs.filter(is_verified=True)
+            qs = qs.filter(verification_status="APPROVED")
         elif verification == "unverified":
-            qs = qs.filter(is_verified=False)
+            qs = qs.filter(Q(verification_status="PENDING") | Q(verification_status="REJECTED"))
 
         return qs
 
@@ -265,7 +265,7 @@ class ProviderListView(AdminRequiredMixin, ListView):
         context["search"] = self.request.GET.get("q", "")
         context["verification_filter"] = self.request.GET.get("verification", "")
         context["total_providers"] = Provider.objects.count()
-        context["verified_providers"] = Provider.objects.filter(is_verified=True).count()
+        context["verified_providers"] = Provider.objects.filter(verification_status="APPROVED").count()
         return context
 
 
@@ -278,7 +278,7 @@ class ProviderDetailView(AdminRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         provider = self.get_object()
         context["requests"] = provider.requests.select_related("category", "created_product").order_by("-created_at")
-        context["supplied_products"] = provider.supplied_products.select_related("product").all()
+        context["supplied_products"] = provider.supplied_products.select_related("category").all()
         return context
 
 
@@ -293,7 +293,10 @@ class ProviderVerifyToggleView(AdminRequiredMixin, View):
         provider.save()
         status_str = "verified and approved" if provider.is_verified else "unverified"
         messages.success(request, f"Provider '{provider.farm_name}' is now marked as {status_str}.")
-        return redirect(request.META.get("HTTP_REFERER", "admin_portal:provider_list"))
+        referer = request.META.get("HTTP_REFERER")
+        if referer:
+            return redirect(referer)
+        return redirect("admin_portal:provider_list")
 
 
 # -----------------------------------------------------------------------------
@@ -768,8 +771,8 @@ class AdminReportsView(AdminRequiredMixin, TemplateView):
 
         # Provider statistics
         provider_stats = Provider.objects.annotate(
-            total_req=Count("requests"),
-            approved_req=Count("requests", filter=Q(requests__status=ProviderRequest.APPROVED)),
+            total_req=Count("product_requests"),
+            approved_req=Count("product_requests", filter=Q(product_requests__status=ProviderRequest.APPROVED)),
         ).order_by("-total_req")[:10]
 
         # Category sales distribution

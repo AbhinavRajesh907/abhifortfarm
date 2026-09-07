@@ -74,17 +74,35 @@ class ProviderProfile(models.Model):
     def contact_person(self):
         return getattr(self.user, "name", "") or getattr(self.user, "username", "") or "Provider Representative"
 
+    @contact_person.setter
+    def contact_person(self, value):
+        if hasattr(self, "user") and self.user:
+            self.user.name = value
+
     @property
     def phone(self):
         return self.phone_number or getattr(self.user, "phone", "") or getattr(self.user, "phone_number", "")
+
+    @phone.setter
+    def phone(self, value):
+        self.phone_number = value
 
     @property
     def email(self):
         return getattr(self.user, "email", "")
 
+    @email.setter
+    def email(self, value):
+        if hasattr(self, "user") and self.user:
+            self.user.email = value
+
     @property
     def pin_code(self):
         return self.pincode
+
+    @pin_code.setter
+    def pin_code(self, value):
+        self.pincode = value
 
     @property
     def is_verified(self):
@@ -175,6 +193,11 @@ class ProviderRequest(models.Model):
         (APPROVED, "Approved & Listed"),
         (REJECTED, "Rejected"),
     ]
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending Review")
+        APPROVED = "approved", _("Approved & Listed")
+        REJECTED = "rejected", _("Rejected")
 
     class CategoryChoices(models.TextChoices):
         SEEDS = "Seeds", _("🌱 Seeds")

@@ -36,10 +36,36 @@
             <span class="text-muted small d-block">Email Address</span>
             <span class="fw-semibold"><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ provider.email }}</span>
           </div>
-          <div>
+          <div class="mb-2">
             <span class="text-muted small d-block">Address</span>
             <span><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ provider.address }}, {{ provider.city }}, {{ provider.district }} - {{ provider.pin_code }}</span>
           </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">Provider Type & Experience</span>
+            <span class="fw-semibold">{{ provider.provider_type }} ({{ provider.experience_years|default:"N/A" }})</span>
+          </div>
+          <hr class="my-2">
+          <div class="mb-2">
+            <span class="text-muted small d-block">License / Registration Number</span>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-certificate me-1 text-primary"></i>{{ provider.license_number|default:"Not Provided" }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">License Type & Authority</span>
+            <span>{{ provider.license_type|default:"N/A" }} — {{ provider.issuing_authority|default:"N/A" }}</span>
+          </div>
+          {% if provider.issue_date or provider.expiry_date %}
+            <div class="mb-2">
+              <span class="text-muted small d-block">Validity</span>
+              <span class="small text-muted">{{ provider.issue_date|date:"M d, Y"|default:"N/A" }} to {{ provider.expiry_date|date:"M d, Y"|default:"N/A" }}</span>
+            </div>
+          {% endif %}
+          {% if provider.license_document %}
+            <div class="mt-2">
+              <a href="{{ provider.license_document.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                <i class="fa-solid fa-file-pdf me-1"></i> View License Document
+              </a>
+            </div>
+          {% endif %}
         </div>
 
         <div class="d-grid gap-2">

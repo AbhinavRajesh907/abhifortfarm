@@ -57,7 +57,7 @@ class ProviderWorkflowTests(TestCase):
         for url in urls:
             response = self.client.get(url)
             self.assertEqual(response.status_code, 302)
-            self.assertIn("accounts/login", response.url)
+            self.assertIn("login", response.url)
 
     def test_provider_application_flow(self):
         """A normal registered user can apply to become a Provider and status starts as PENDING."""
@@ -182,7 +182,7 @@ class ProviderWorkflowTests(TestCase):
 
         # Invalid: 0 quantity, negative price
         invalid_data = {
-            "category": "Seeds",
+            "category": self.category_seeds.pk,
             "item_name": "Tomato Seeds",
             "description": "Hybrid variety",
             "quantity": 0,
@@ -194,7 +194,7 @@ class ProviderWorkflowTests(TestCase):
 
         # Valid submission
         valid_data = {
-            "category": "Seeds",
+            "category": self.category_seeds.pk,
             "item_name": "Tomato Seeds (Hybrid 50g)",
             "description": "High yield tomato seeds for summer season.",
             "quantity": 50,
