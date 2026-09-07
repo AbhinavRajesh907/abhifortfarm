@@ -1,0 +1,120 @@
+{% extends "marketplace/base_marketplace.html" %}
+
+{% block title %}Payment — AgriSmart{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title"><i class="bi bi-credit-card me-2"></i>Payment</h1>
+
+  <div class="row g-4">
+    <!-- Payment method selection -->
+    <div class="col-lg-7">
+      <form method="post" action="{% url 'marketplace:place_order' %}" id="paymentForm">
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Select Payment Method</h5>
+          </div>
+          <div class="card-body">
+            <!-- COD -->
+            <div class="payment-option" id="codOption">
+              <label class="d-flex align-items-center gap-3 cursor-pointer">
+                <input type="radio" name="payment_method" value="cod" class="form-check-input payment-radio"
+                       checked id="radioCod"/>
+                <div class="payment-icon cod-icon">
+                  <i class="bi bi-cash-coin fs-2"></i>
+                </div>
+                <div>
+                  <strong class="d-block">Cash on Delivery</strong>
+                  <small class="text-muted">Pay with cash when your order arrives.</small>
+                </div>
+              </label>
+            </div>
+
+            <hr/>
+
+            <!-- Online Payment (placeholder) -->
+            <div class="payment-option" id="onlineOption">
+              <label class="d-flex align-items-center gap-3 cursor-pointer">
+                <input type="radio" name="payment_method" value="online" class="form-check-input payment-radio"
+                       id="radioOnline"/>
+                <div class="payment-icon online-icon">
+                  <i class="bi bi-phone fs-2"></i>
+                </div>
+                <div>
+                  <strong class="d-block">Online Payment</strong>
+                  <small class="text-muted">UPI / Net Banking / Card — Coming Soon</small>
+                </div>
+              </label>
+            </div>
+
+            <!-- Online placeholder info -->
+            <div id="onlinePlaceholder" class="alert alert-info mt-3 d-none">
+              <i class="bi bi-info-circle me-1"></i>
+              Online payment integration (Razorpay / Stripe) will be available soon.
+              Your order will be placed and payment link sent via email.
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery recap -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">
+            <h6 class="mb-0">Delivering to</h6>
+          </div>
+          <div class="card-body text-muted small">
+            <strong>{{ checkout_data.full_name }}</strong> · {{ checkout_data.phone }}<br/>
+            {{ checkout_data.delivery_address }},
+            {{ checkout_data.city }}, {{ checkout_data.district }} — {{ checkout_data.pin_code }}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100" id="placeOrderBtn">
+          <i class="bi bi-bag-check me-1"></i> Place Order
+        </button>
+      </form>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm summary-card">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Order Summary</h5>
+        </div>
+        <div class="card-body">
+          {% for item in items %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <strong>{{ item.product.name }}</strong>
+                <small class="text-muted d-block">× {{ item.quantity }}</small>
+              </div>
+              <span class="fw-bold text-success">₹{{ item.get_subtotal }}</span>
+            </div>
+          {% endfor %}
+          <hr/>
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>Total</span>
+            <span class="text-success">₹{{ total }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.payment-radio').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const onlinePlaceholder = document.getElementById('onlinePlaceholder');
+      if (document.getElementById('radioOnline').checked) {
+        onlinePlaceholder.classList.remove('d-none');
+      } else {
+        onlinePlaceholder.classList.add('d-none');
+      }
+    });
+  });
+</script>
+{% endblock %}

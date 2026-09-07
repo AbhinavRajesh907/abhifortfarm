@@ -38,13 +38,30 @@ class User(AbstractUser):
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
-    email = EmailField(_("email address"), unique=True)
     username = CharField(_("username"), max_length=150, unique=True)
+    phone = CharField(_("Phone Number"), max_length=20, blank=True)
+    phone_number = CharField(_("Phone Number (Alt)"), max_length=20, blank=True)
+    address = CharField(_("Address"), max_length=255, blank=True)
+    street_address = CharField(_("Street Address"), max_length=255, blank=True)
+    city = CharField(_("City"), max_length=100, blank=True)
+    state = CharField(_("State"), max_length=100, blank=True)
+    pincode = CharField(_("Pincode"), max_length=20, blank=True)
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email"]
 
     objects: ClassVar[UserManager] = UserManager()
+
+    def save(self, *args, **kwargs):
+        if not self.phone and self.phone_number:
+            self.phone = self.phone_number
+        elif not self.phone_number and self.phone:
+            self.phone_number = self.phone
+        if not self.address and self.street_address:
+            self.address = self.street_address
+        elif not self.street_address and self.address:
+            self.street_address = self.address
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.

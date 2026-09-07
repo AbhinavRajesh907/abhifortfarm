@@ -49,6 +49,7 @@ class UserLoginForm(forms.Form):
     )
 
 
+<<<<<<< HEAD
 class BaseRegistrationForm(forms.ModelForm):
     name = forms.CharField(
         max_length=255, 
@@ -212,3 +213,34 @@ class ProviderRegistrationForm(BaseRegistrationForm):
             if file.size > 5 * 1024 * 1024:
                 raise forms.ValidationError(_("File size must be under 5MB."))
         return file
+
+
+class UserEditProfileForm(admin_forms.UserChangeForm):
+    password = None  # Explicitly remove password field for profile editing
+
+    class Meta:
+        model = User
+        fields = [
+            "name",
+            "username",
+            "email",
+            "phone",
+            "phone_number",
+            "address",
+            "street_address",
+            "city",
+            "state",
+            "pincode",
+        ]
+        labels = {
+            "name": _("Full Name"),
+            "username": _("Username"),
+            "email": _("Email Address"),
+            "phone": _("Phone Number"),
+            "phone_number": _("Alternate Phone"),
+            "address": _("Address"),
+            "street_address": _("Street Address / Location"),
+            "city": _("City"),
+            "state": _("State"),
+            "pincode": _("Pincode"),
+        }

@@ -32,7 +32,7 @@ class CustomLoginView(View):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return self.redirect_by_role(request.user)
+            return self.redirect_by_role(request, request.user)
         form = self.form_class()
         return render(request, self.template_name, {"form": form})
 
@@ -45,7 +45,7 @@ class CustomLoginView(View):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-                return self.redirect_by_role(user)
+                return self.redirect_by_role(request, user)
             else:
                 messages.error(request, _("Invalid username or password."))
         else:
@@ -54,17 +54,26 @@ class CustomLoginView(View):
         return render(request, self.template_name, {"form": form})
 
     @staticmethod
-    def redirect_by_role(user: User):
+    def redirect_by_role(request, user: User):
         """Role-based login redirection logic."""
         if user.is_superuser or user.is_staff or getattr(user, "role", "") == User.Role.ADMIN:
-            # Redirect Admin to Django Admin or Admin Dashboard
-            return redirect("admin:index")
+            # Redirect Admin to Santhana's Admin Dashboard
+            return redirect("admin_portal:dashboard")
         elif getattr(user, "role", "") == User.Role.PROVIDER:
-            # Redirect Provider to Provider Dashboard
-            return redirect("users:provider_dashboard")
+            profile = getattr(user, "provider_profile", None)
+            if profile and getattr(profile, "verification_status", "") == "APPROVED":
+                # Redirect Approved Provider to Joyal's Provider Dashboard
+                return redirect("providers:dashboard")
+            elif profile and getattr(profile, "verification_status", "") == "REJECTED":
+                messages.error(request, _("Your provider account application was rejected. Reason: %s") % (getattr(profile, "rejection_reason", "") or _("Verification criteria not met.")))
+                return redirect("providers:status")
+            else:
+                # Pending Provider
+                messages.warning(request, _("Your provider account is currently pending admin verification."))
+                return redirect("providers:status")
         else:
-            # Redirect Normal User to User Dashboard
-            return redirect("users:user_dashboard")
+            # Redirect Normal User to Abinto's User Marketplace Dashboard
+            return redirect("marketplace:dashboard")
 
 
 custom_login_view = CustomLoginView.as_view()
@@ -95,11 +104,14 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
     def get_redirect_url(self) -> str:
         user = self.request.user
         if user.is_superuser or user.is_staff or getattr(user, "role", "") == User.Role.ADMIN:
-            return reverse_lazy("admin:index")
+            return reverse_lazy("admin_portal:dashboard")
         elif getattr(user, "role", "") == User.Role.PROVIDER:
-            return reverse_lazy("users:provider_dashboard")
+            profile = getattr(user, "provider_profile", None)
+            if profile and getattr(profile, "verification_status", "") == "APPROVED":
+                return reverse_lazy("providers:dashboard")
+            return reverse_lazy("providers:status")
         else:
-            return reverse_lazy("users:user_dashboard")
+            return reverse_lazy("marketplace:dashboard")
 
 
 user_redirect_view = UserRedirectView.as_view()
@@ -168,7 +180,7 @@ class ProviderRegistrationView(CreateView):
             issue_date=form.cleaned_data["issue_date"],
             expiry_date=form.cleaned_data["expiry_date"],
             license_document=form.cleaned_data["license_document"],
-            verification_status=ProviderProfile.VerificationStatus.PENDING,
+            verification_status="PENDING",
         )
         
         messages.success(
@@ -182,38 +194,29 @@ provider_registration_view = ProviderRegistrationView.as_view()
 
 
 # ==============================================================================
-# DASHBOARD INTEGRATION PLACEHOLDERS (For Teammates)
+# DASHBOARD INTEGRATION REDIRECTS / COMPATIBILITY
 # ==============================================================================
 
 class UserDashboardPlaceholderView(LoginRequiredMixin, TemplateView):
-    """
-    NOTE FOR TEAMMATES:
-    This is the placeholder route for the User Dashboard (users:user_dashboard).
-    The User Dashboard developer should plug their dashboard view/template here.
-    """
-    template_name = "users/user_dashboard_placeholder.html"
+    """Placeholder view redirecting to Abinto's User Marketplace Dashboard."""
+    def get(self, request, *args, **kwargs):
+        return redirect("marketplace:dashboard")
 
 
 user_dashboard_view = UserDashboardPlaceholderView.as_view()
 
 
-class ProviderDashboardPlaceholderView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """
-    NOTE FOR TEAMMATES:
-    This is the placeholder route for the Provider Dashboard (users:provider_dashboard).
-    The Provider Dashboard developer should plug their dashboard view/template here.
-    """
-    template_name = "users/provider_dashboard_placeholder.html"
-
-    def test_func(self):
-        return self.request.user.role == User.Role.PROVIDER or self.request.user.is_staff
+class ProviderDashboardPlaceholderView(LoginRequiredMixin, TemplateView):
+    """Placeholder view redirecting to Joyal's Provider Dashboard."""
+    def get(self, request, *args, **kwargs):
+        return redirect("providers:dashboard")
 
 
 provider_dashboard_view = ProviderDashboardPlaceholderView.as_view()
 
 
 # ==============================================================================
-# EXISTING USER PROFILE & DETAIL VIEWS (Preserved for compatibility)
+# EXISTING USER PROFILE & DETAIL VIEWS
 # ==============================================================================
 
 class UserDetailView(LoginRequiredMixin, DetailView):
@@ -225,9 +228,13 @@ class UserDetailView(LoginRequiredMixin, DetailView):
 user_detail_view = UserDetailView.as_view()
 
 
-class UserUpdateView(LoginRequiredMixin, UpdateView):
+from django.contrib.messages.views import SuccessMessageMixin
+from agrivision.users.forms import UserEditProfileForm
+
+class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
-    fields = ["name", "phone", "address", "city", "state", "pincode"]
+    form_class = UserEditProfileForm
+    success_message = _("Information successfully updated")
 
     def get_success_url(self) -> str:
         assert self.request.user.is_authenticated

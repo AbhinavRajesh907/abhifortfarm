@@ -1,41 +1,88 @@
 {% extends "base.html" %}
 
-{% load static %}
+{% load crispy_forms_tags %}
 
-{% block title %}
-  User: 
-  
-    {{ object.name }}
-  
-  
-{% endblock title %}
+{% block title %}User Profile - {{ object.name }}{% endblock title %}
+
 {% block content %}
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12">
-        <h2>
-        
-        
-          {{ object.name }}
-        
-      </h2>
+<div class="row justify-content-center my-4">
+    <div class="col-md-9 col-lg-8">
+        <div class="card shadow-sm border-0 border-top border-success border-4 rounded-3">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="mb-0" style="color: #198754; font-weight: 700;">
+                        <i class="bi bi-person-circle me-2"></i>User Profile
+                    </h3>
+                    {% if object == request.user %}
+                    <div>
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'account_email' %}">Manage E-Mail</a>
+                        {% if mfa_index %}
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'mfa_index' %}">MFA</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if object == request.user %}
+                <form class="form-horizontal" method="post" action="{% url 'users:update' %}">
+                    {% csrf_token %}
+                    
+                    <h5 class="mb-3 fw-bold" style="color: #2c3e50;">Personal Information</h5>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="Full Name" value="{{ object.name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Username *</label>
+                            <input type="text" name="username" class="form-control" placeholder="Choose Username" value="{{ object.username|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address *</label>
+                            <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ object.email|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number *</label>
+                            <input type="text" name="phone_number" class="form-control" placeholder="Phone Number" value="{{ object.phone_number|default:'' }}">
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3 fw-bold mt-4" style="color: #2c3e50;">
+                        <i class="bi bi-geo-alt" style="color: #198754;"></i> Address Information
+                    </h5>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Street Address *</label>
+                            <input type="text" name="street_address" class="form-control" placeholder="Street Address / Location" value="{{ object.street_address|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">City *</label>
+                            <input type="text" name="city" class="form-control" placeholder="City" value="{{ object.city|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">State *</label>
+                            <input type="text" name="state" class="form-control" placeholder="State" value="{{ object.state|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Pincode *</label>
+                            <input type="text" name="pincode" class="form-control" placeholder="Pincode" value="{{ object.pincode|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold rounded-pill" style="background-color: #198754; border-color: #198754;">
+                            <i class="bi bi-check-circle pe-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <p><strong>Name:</strong> {{ object.name }}</p>
+                <p><strong>Email:</strong> {{ object.email }}</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
-  </div>
-  {% if object == request.user %}
-    <!-- Action buttons -->
-    <div class="row">
-      <div class="col-sm-12">
-        <a class="btn btn-primary" href="{% url 'users:update' %}" role="button">My Info</a>
-        <a class="btn btn-primary"
-           href="{% url 'account_email' %}"
-           role="button">E-Mail</a>
-        <a class="btn btn-primary"
-           href="{% url 'mfa_index' %}"
-           role="button">MFA</a>
-        <!-- Your Stuff: Custom user template urls -->
-      </div>
-    </div>
-    <!-- End Action buttons -->
-  {% endif %}
 </div>
 {% endblock content %}
