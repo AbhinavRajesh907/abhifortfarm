@@ -1,0 +1,151 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Provider Requests Management | AgriVision Admin{% endblock title %}
+{% block page_title %}Provider Seed & Plant Requests{% endblock page_title %}
+{% block page_subtitle %}Review incoming inventory proposals from registered nursery and seed providers{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Status Filter Pills & Search Bar -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search by item name, farm or contact..." />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending Review ({{ pending_count }})</option>
+        <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved & Listed ({{ approved_count }})</option>
+        <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected ({{ rejected_count }})</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="category" class="form-select" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if current_category == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-admin-primary flex-grow-1">Filter</button>
+      {% if search or current_status or current_category %}
+        <a href="{% url 'admin_portal:request_list' %}" class="btn btn-outline-secondary" title="Clear Filters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Requests Table -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-list-check text-success"></i> Provider Submissions
+    </h5>
+    <div class="d-flex gap-2">
+      <span class="badge bg-warning text-dark px-3 py-2">Pending: {{ pending_count }}</span>
+      <span class="badge bg-success px-3 py-2">Approved: {{ approved_count }}</span>
+      <span class="badge bg-danger px-3 py-2">Rejected: {{ rejected_count }}</span>
+    </div>
+  </div>
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Item / Variety</th>
+          <th>Provider & Location</th>
+          <th>Category</th>
+          <th>Quantity</th>
+          <th>Expected Unit Price</th>
+          <th>Status</th>
+          <th>Submission Date</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <img src="{{ req.display_image }}" alt="{{ req.product_name }}" class="prod-thumb" />
+                <div>
+                  <a href="{% url 'admin_portal:request_detail' req.pk %}" class="fw-bold text-dark text-decoration-none hover-primary">
+                    {{ req.product_name }}
+                  </a>
+                  <div class="text-muted small text-truncate" style="max-width: 240px;">{{ req.description }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="fw-semibold">
+                <a href="{% url 'admin_portal:provider_detail' req.provider.pk %}" class="text-decoration-none text-dark">
+                  {{ req.provider.farm_name }}
+                </a>
+              </div>
+              <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ req.provider.city }}, {{ req.provider.district }}</small>
+            </td>
+            <td><span class="badge bg-light text-dark border">{{ req.category.name }}</span></td>
+            <td><span class="fw-bold fs-6">{{ req.quantity }}</span> units</td>
+            <td><span class="fw-bold text-success fs-6">₹{{ req.expected_price }}</span></td>
+            <td>
+              {% if req.status == 'pending' %}
+                <span class="status-pill status-pending">Pending Review</span>
+              {% elif req.status == 'approved' %}
+                <span class="status-pill status-approved">Approved</span>
+                {% if req.created_product %}
+                  <div class="small mt-1">
+                    <a href="{% url 'admin_portal:product_list' %}?q={{ req.created_product.name }}" class="text-success text-decoration-none">
+                      <i class="fa-solid fa-link me-1"></i>In Store (₹{{ req.created_product.price }})
+                    </a>
+                  </div>
+                {% endif %}
+              {% else %}
+                <span class="status-pill status-rejected">Rejected</span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted">{{ req.created_at|date:"M d, Y H:i" }}</small></td>
+            <td class="text-end">
+              <a href="{% url 'admin_portal:request_detail' req.pk %}" class="btn btn-sm {% if req.status == 'pending' %}btn-admin-primary{% else %}btn-outline-secondary{% endif %}">
+                {% if req.status == 'pending' %}
+                  <i class="fa-solid fa-gavel me-1"></i> Review
+                {% else %}
+                  <i class="fa-solid fa-eye me-1"></i> View
+                {% endif %}
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-inbox fs-2 text-muted d-block mb-2"></i>
+              No provider requests matching your criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <div class="p-3 border-top d-flex justify-content-center">
+      <nav>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

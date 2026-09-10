@@ -1,0 +1,166 @@
+{% load static i18n %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}AgriVision Admin Management Control Center{% endblock title %}</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" />
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  
+  <!-- Project & Admin Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/admin_portal.css' %}" />
+  
+  {% block extra_css %}{% endblock extra_css %}
+</head>
+<body class="admin-body">
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="admin-brand">
+        <div class="admin-brand-icon">
+          <i class="fa-solid fa-leaf"></i>
+        </div>
+        <div class="admin-brand-text">
+          <h5>AgriVision</h5>
+          <span>Admin Command Center</span>
+        </div>
+      </div>
+
+      <div class="admin-nav">
+        <div class="admin-nav-section">Overview</div>
+        <a href="{% url 'admin_portal:dashboard' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard & KPIs</span>
+        </a>
+        <a href="{% url 'admin_portal:reports' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>Reports & Analytics</span>
+        </a>
+
+        <div class="admin-nav-section">Providers & Approvals</div>
+        <a href="{% url 'admin_portal:request_list' %}" class="admin-nav-link {% if 'request' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-clipboard-check"></i>
+          <span>Provider Requests</span>
+        </a>
+        <a href="{% url 'admin_portal:provider_list' %}" class="admin-nav-link {% if 'provider' in request.resolver_match.url_name and 'request' not in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-handshake-angle"></i>
+          <span>Providers Directory</span>
+        </a>
+
+        <div class="admin-nav-section">Store & Catalog</div>
+        <a href="{% url 'admin_portal:product_list' %}" class="admin-nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Products Catalog</span>
+        </a>
+        <a href="{% url 'admin_portal:category_list' %}" class="admin-nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Categories</span>
+        </a>
+        <a href="{% url 'admin_portal:inventory_list' %}" class="admin-nav-link {% if 'inventory' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-warehouse"></i>
+          <span>Inventory Control</span>
+        </a>
+
+        <div class="admin-nav-section">Sales & Operations</div>
+        <a href="{% url 'admin_portal:order_list' %}" class="admin-nav-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span>Customer Orders</span>
+        </a>
+        <a href="{% url 'admin_portal:payment_list' %}" class="admin-nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-credit-card"></i>
+          <span>Payments Log</span>
+        </a>
+
+        <div class="admin-nav-section">User Management</div>
+        <a href="{% url 'admin_portal:user_list' %}" class="admin-nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-users-gear"></i>
+          <span>All Users & Roles</span>
+        </a>
+      </div>
+
+      <!-- Admin User Footer -->
+      <div class="admin-user-footer">
+        <div class="admin-avatar">
+          {{ request.user.email|slice:":1"|upper }}
+        </div>
+        <div class="flex-grow-1 text-truncate" style="font-size: 0.85rem;">
+          <div class="fw-bold text-white text-truncate">{{ request.user.name|default:request.user.email }}</div>
+          <div class="text-emerald-400" style="color: #34d399; font-size: 0.72rem;">Administrator</div>
+        </div>
+        <a href="{% url 'account_logout' %}" class="text-white-50 hover-text-white" title="Sign Out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="admin-main">
+      <!-- Top Header -->
+      <header class="admin-header">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-sm btn-outline-secondary d-lg-none" id="sidebarToggleBtn" type="button">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="admin-header-title">
+            <h4>{% block page_title %}AgriVision Administration{% endblock page_title %}</h4>
+            <p>{% block page_subtitle %}Central Management & Governance Cockpit{% endblock page_subtitle %}</p>
+          </div>
+        </div>
+        <div class="admin-header-actions">
+          <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary" target="_blank" title="View Public Marketplace">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Public Site
+          </a>
+          <a href="{% url 'admin_portal:request_list' %}?status=pending" class="btn btn-sm btn-light border position-relative" title="Pending Provider Submissions">
+            <i class="fa-solid fa-bell text-warning"></i>
+            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+              <span class="visually-hidden">Pending alerts</span>
+            </span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <main class="admin-container">
+        <!-- Toast / Flash Messages -->
+        {% if messages %}
+          <div class="mb-4">
+            {% for message in messages %}
+              <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check text-success{% elif message.tags == 'error' %}fa-circle-exclamation text-danger{% else %}fa-circle-info text-primary{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock content %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  
+  <script>
+    document.getElementById('sidebarToggleBtn')?.addEventListener('click', function() {
+      document.getElementById('adminSidebar').classList.toggle('show');
+    });
+  </script>
+  
+  {% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

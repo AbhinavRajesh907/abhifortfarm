@@ -1,0 +1,142 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Provider: {{ provider.farm_name }} | AgriVision Admin{% endblock title %}
+{% block page_title %}Provider Profile: {{ provider.farm_name }}{% endblock page_title %}
+{% block page_subtitle %}Review supplier track record, contact details, submitted plant proposals, and supply volume{% endblock page_subtitle %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'admin_portal:provider_list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Providers
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Provider Profile Card -->
+  <div class="col-lg-4">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title"><i class="fa-solid fa-store text-success"></i> Farm Profile</h5>
+        {% if provider.is_verified %}
+          <span class="badge bg-success">Verified Partner</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">Pending Verification</span>
+        {% endif %}
+      </div>
+      <div class="admin-card-body">
+        <h4 class="fw-bold text-dark mb-1">{{ provider.farm_name }}</h4>
+        <div class="text-muted mb-3"><i class="fa-solid fa-user me-1"></i>{{ provider.contact_person }}</div>
+
+        <div class="p-3 bg-light rounded border mb-3">
+          <div class="mb-2">
+            <span class="text-muted small d-block">Contact Phone</span>
+            <span class="fw-semibold"><i class="fa-solid fa-phone me-1 text-muted"></i>{{ provider.phone }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">Email Address</span>
+            <span class="fw-semibold"><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ provider.email }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">Address</span>
+            <span><i class="fa-solid fa-location-dot me-1 text-danger"></i>{{ provider.address }}, {{ provider.city }}, {{ provider.district }} - {{ provider.pin_code }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">Provider Type & Experience</span>
+            <span class="fw-semibold">{{ provider.provider_type }} ({{ provider.experience_years|default:"N/A" }})</span>
+          </div>
+          <hr class="my-2">
+          <div class="mb-2">
+            <span class="text-muted small d-block">License / Registration Number</span>
+            <span class="fw-bold text-dark"><i class="fa-solid fa-certificate me-1 text-primary"></i>{{ provider.license_number|default:"Not Provided" }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small d-block">License Type & Authority</span>
+            <span>{{ provider.license_type|default:"N/A" }} — {{ provider.issuing_authority|default:"N/A" }}</span>
+          </div>
+          {% if provider.issue_date or provider.expiry_date %}
+            <div class="mb-2">
+              <span class="text-muted small d-block">Validity</span>
+              <span class="small text-muted">{{ provider.issue_date|date:"M d, Y"|default:"N/A" }} to {{ provider.expiry_date|date:"M d, Y"|default:"N/A" }}</span>
+            </div>
+          {% endif %}
+          {% if provider.license_document %}
+            <div class="mt-2">
+              <a href="{{ provider.license_document.url }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                <i class="fa-solid fa-file-pdf me-1"></i> View License Document
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="d-grid gap-2">
+          <form method="post" action="{% url 'admin_portal:provider_verify_toggle' provider.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn {% if provider.is_verified %}btn-outline-danger{% else %}btn-success{% endif %} w-100">
+              {% if provider.is_verified %}
+                <i class="fa-solid fa-ban me-1"></i> Revoke Verification Status
+              {% else %}
+                <i class="fa-solid fa-circle-check me-1"></i> Grant Verified Partner Status
+              {% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Submitted Requests by this Provider -->
+  <div class="col-lg-8">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title"><i class="fa-solid fa-list-check text-primary"></i> Inventory Proposals by this Provider</h5>
+        <span class="badge bg-light text-dark border">{{ requests|length }} Requests</span>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Item Name</th>
+              <th>Category</th>
+              <th>Quantity</th>
+              <th>Expected Price</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ req.product_name }}</div>
+                  <small class="text-muted">{{ req.created_at|date:"M d, Y" }}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ req.category.name }}</span></td>
+                <td>{{ req.quantity }} units</td>
+                <td class="fw-bold text-success">₹{{ req.expected_price }}</td>
+                <td>
+                  {% if req.status == 'pending' %}
+                    <span class="status-pill status-pending">Pending Review</span>
+                  {% elif req.status == 'approved' %}
+                    <span class="status-pill status-approved">Approved</span>
+                  {% else %}
+                    <span class="status-pill status-rejected">Rejected</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'admin_portal:request_detail' req.pk %}" class="btn btn-sm btn-light border">
+                    <i class="fa-solid fa-arrow-right"></i> Review
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">No requests submitted by this provider yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

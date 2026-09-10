@@ -1,0 +1,115 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}User Profile: {{ target_user.email }} | AgriVision Admin{% endblock title %}
+{% block page_title %}User Account Overview{% endblock page_title %}
+{% block page_subtitle %}Detailed profile statistics, purchase history, and linked provider details{% endblock page_subtitle %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'admin_portal:user_list' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Users List
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: User Profile Details -->
+  <div class="col-lg-5">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title"><i class="fa-solid fa-id-badge text-primary"></i> Account Information</h5>
+        <a href="{% url 'admin_portal:user_edit' target_user.pk %}" class="btn btn-sm btn-outline-warning">
+          <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+        </a>
+      </div>
+      <div class="admin-card-body text-center pb-4">
+        <div class="admin-avatar mx-auto mb-3" style="width: 70px; height: 70px; font-size: 1.8rem;">
+          {{ target_user.email|slice:":1"|upper }}
+        </div>
+        <h5 class="fw-bold mb-1">{{ target_user.name|default:"(No Name Set)" }}</h5>
+        <div class="text-muted mb-3">{{ target_user.email }}</div>
+
+        <div class="d-flex justify-content-center gap-2 mb-3">
+          {% if target_user.is_superuser %}
+            <span class="badge bg-danger">Super Administrator</span>
+          {% elif target_user.is_staff %}
+            <span class="badge bg-primary">Admin Staff</span>
+          {% else %}
+            <span class="badge bg-secondary">Farmer / Customer</span>
+          {% endif %}
+
+          {% if target_user.is_active %}
+            <span class="status-pill status-approved">Active Account</span>
+          {% else %}
+            <span class="status-pill status-rejected">Account Inactive / Banned</span>
+          {% endif %}
+        </div>
+
+        <div class="text-start border-top pt-3">
+          <div class="mb-2">
+            <span class="text-muted small">Registered Date:</span>
+            <div class="fw-semibold">{{ target_user.date_joined|date:"F d, Y H:i" }}</div>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted small">Last Login:</span>
+            <div class="fw-semibold">{{ target_user.last_login|default:"Never logged in" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if provider %}
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h5 class="admin-card-title"><i class="fa-solid fa-store text-success"></i> Linked Provider Account</h5>
+        </div>
+        <div class="admin-card-body">
+          <div class="fw-bold fs-6 mb-1">{{ provider.farm_name }}</div>
+          <div class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1"></i>{{ provider.city }}, {{ provider.district }}</div>
+          <a href="{% url 'admin_portal:provider_detail' provider.pk %}" class="btn btn-sm btn-outline-success w-100">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Provider Dashboard
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: User Order History -->
+  <div class="col-lg-7">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title"><i class="fa-solid fa-clock-rotate-left text-success"></i> Order History</h5>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+              <tr>
+                <td class="fw-bold">#{{ o.order_number }}</td>
+                <td>{{ o.created_at|date:"M d, Y" }}</td>
+                <td class="fw-bold text-success">₹{{ o.total_amount }}</td>
+                <td><span class="status-pill {% if o.order_status == 'delivered' %}status-delivered{% else %}status-pending{% endif %}">{{ o.get_order_status_display }}</span></td>
+                <td>
+                  <a href="{% url 'admin_portal:order_detail' o.pk %}" class="btn btn-sm btn-light border"><i class="fa-solid fa-eye"></i></a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No orders placed by this user yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,13 +1,460 @@
-/* These styles are generated from project.scss. */
+/* ==========================================================================
+   AgriFarm Design System - Modern Agricultural & Nature Palette
+   ========================================================================== */
 
-.alert-debug {
-  color: black;
-  background-color: white;
-  border-color: #d6e9c6;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --agri-dark: #133926;
+  --agri-forest: #1b5336;
+  --agri-primary: #257949;
+  --agri-primary-hover: #1b6038;
+  --agri-light: #eaf5ee;
+  --agri-surface: #f4faf6;
+  --agri-mint: #d1ebd9;
+  --agri-accent: #c28842;
+  --agri-accent-light: #fdf5ea;
+  --agri-text-main: #14281d;
+  --agri-text-muted: #556c5e;
+  --agri-border: #e0eee4;
+  --agri-card-bg: #ffffff;
+  --agri-shadow-sm: 0 2px 8px rgba(19, 57, 38, 0.05);
+  --agri-shadow-md: 0 8px 24px rgba(19, 57, 38, 0.08);
+  --agri-shadow-lg: 0 16px 40px rgba(19, 57, 38, 0.12);
+  --agri-radius-sm: 8px;
+  --agri-radius-md: 14px;
+  --agri-radius-lg: 20px;
+  --agri-radius-xl: 28px;
 }
 
-.alert-error {
-  color: #b94a48;
-  background-color: #f2dede;
-  border-color: #eed3d7;
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--agri-text-main);
+  background-color: #fbfcfa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--agri-dark);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   Navigation Bar
+   ========================================================================== */
+.navbar-agri {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--agri-border);
+  transition: all 0.3s ease;
+  z-index: 1040;
+}
+
+.navbar-brand-agri {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--agri-dark) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.navbar-brand-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--agri-primary) 0%, var(--agri-dark) 100%);
+  color: white;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 121, 73, 0.25);
+}
+
+.nav-link-agri {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--agri-text-muted) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--agri-radius-sm);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.nav-link-agri:hover,
+.nav-link-agri.active {
+  color: var(--agri-primary) !important;
+  background-color: var(--agri-light);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.btn-agri-primary {
+  background: linear-gradient(135deg, var(--agri-primary) 0%, var(--agri-forest) 100%);
+  color: #ffffff !important;
+  font-weight: 600;
+  padding: 0.65rem 1.6rem;
+  border-radius: 50px;
+  border: none;
+  box-shadow: 0 4px 14px rgba(37, 121, 73, 0.25);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-agri-primary:hover {
+  background: linear-gradient(135deg, var(--agri-primary-hover) 0%, var(--agri-dark) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 121, 73, 0.35);
+}
+
+.btn-agri-outline {
+  background: transparent;
+  color: var(--agri-forest) !important;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--agri-forest);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-agri-outline:hover {
+  background: var(--agri-light);
+  color: var(--agri-dark) !important;
+  border-color: var(--agri-primary);
+  transform: translateY(-2px);
+}
+
+.btn-agri-ghost {
+  background: var(--agri-light);
+  color: var(--agri-forest) !important;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: 50px;
+  border: none;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.btn-agri-ghost:hover {
+  background: var(--agri-mint);
+  color: var(--agri-dark) !important;
+}
+
+/* ==========================================================================
+   Hero Section
+   ========================================================================== */
+.hero-section {
+  background: radial-gradient(circle at 10% 20%, #eff7f2 0%, #fbfcfa 90%);
+  position: relative;
+  padding: 5rem 0 4rem 0;
+  overflow: hidden;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--agri-light);
+  color: var(--agri-forest);
+  padding: 0.35rem 0.95rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid var(--agri-mint);
+}
+
+.hero-title {
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--agri-dark);
+  margin-top: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--agri-primary);
+  margin-top: 0.5rem;
+}
+
+.hero-desc {
+  font-size: 1.125rem;
+  color: var(--agri-text-muted);
+  line-height: 1.65;
+  max-width: 540px;
+}
+
+.hero-image-wrapper {
+  position: relative;
+  border-radius: var(--agri-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--agri-shadow-lg);
+  border: 4px solid #ffffff;
+}
+
+.hero-image-wrapper img {
+  width: 100%;
+  height: 440px;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-image-wrapper:hover img {
+  transform: scale(1.03);
+}
+
+.hero-floating-stat {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 1rem 1.4rem;
+  border-radius: var(--agri-radius-md);
+  box-shadow: var(--agri-shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  max-width: 260px;
+}
+
+.hero-stat-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--agri-light);
+  color: var(--agri-primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Feature / Pillar Cards
+   ========================================================================== */
+.feature-card {
+  background: var(--agri-card-bg);
+  border: 1px solid var(--agri-border);
+  border-radius: var(--agri-radius-lg);
+  padding: 2.2rem 1.8rem;
+  height: 100%;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--agri-shadow-sm);
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--agri-shadow-lg);
+  border-color: var(--agri-mint);
+}
+
+.feature-icon-box {
+  width: 56px;
+  height: 56px;
+  background: var(--agri-light);
+  color: var(--agri-forest);
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-box {
+  background: var(--agri-primary);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+/* ==========================================================================
+   About Section on Home
+   ========================================================================== */
+.about-section {
+  padding: 5.5rem 0;
+  background-color: #ffffff;
+}
+
+.about-banner {
+  border-radius: var(--agri-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--agri-shadow-lg);
+  height: 380px;
+}
+
+.about-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   Cards, Forms & Authentication
+   ========================================================================== */
+.auth-card {
+  background: #ffffff;
+  border: 1px solid var(--agri-border);
+  border-radius: var(--agri-radius-xl);
+  box-shadow: var(--agri-shadow-lg);
+  padding: 2.5rem;
+}
+
+.form-control, .form-select {
+  border: 1.5px solid var(--agri-border);
+  border-radius: var(--agri-radius-sm);
+  padding: 0.68rem 1rem;
+  font-size: 0.95rem;
+  color: var(--agri-text-main);
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--agri-primary);
+  box-shadow: 0 0 0 4px rgba(37, 121, 73, 0.12);
+  outline: none;
+}
+
+.form-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--agri-text-main);
+  margin-bottom: 0.35rem;
+}
+
+.role-card {
+  background: #ffffff;
+  border: 2px solid var(--agri-border);
+  border-radius: var(--agri-radius-xl);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  display: block;
+  color: inherit;
+  box-shadow: var(--agri-shadow-sm);
+  height: 100%;
+}
+
+.role-card:hover {
+  border-color: var(--agri-primary);
+  transform: translateY(-8px);
+  box-shadow: var(--agri-shadow-lg);
+  color: inherit;
+}
+
+.role-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem auto;
+  border-radius: 50%;
+  background: var(--agri-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  color: var(--agri-primary);
+  transition: all 0.3s ease;
+}
+
+.role-card:hover .role-icon-wrapper {
+  background: var(--agri-primary);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.section-divider-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--agri-forest);
+  margin: 1.8rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1.5px solid var(--agri-border);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer-agri {
+  background-color: var(--agri-dark);
+  color: #c9ded3;
+  padding: 4rem 0 2rem 0;
+  margin-top: auto;
+}
+
+.footer-brand {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+
+.footer-link {
+  color: #b5d1c1;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.footer-link:hover {
+  color: #ffffff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.5rem;
+  margin-top: 3rem;
+  font-size: 0.85rem;
+  color: #8dafa0;
+}
+
+/* Alerts */
+.alert-agri {
+  border-radius: var(--agri-radius-md);
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  border: none;
+  box-shadow: var(--agri-shadow-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  .hero-image-wrapper img {
+    height: 320px;
+  }
+  .about-banner {
+    height: 280px;
+  }
 }

@@ -1,0 +1,146 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Orders Management | AgriVision Admin{% endblock title %}
+{% block page_title %}Customer Orders & Shipments{% endblock page_title %}
+{% block page_subtitle %}Track customer purchases, fulfillment stages, shipping details, and invoice summaries{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search Order #, customer name, email, or phone..." />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Order Statuses</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+        <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+        <option value="shipped" {% if status_filter == 'shipped' %}selected{% endif %}>Shipped</option>
+        <option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="payment_status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Payment Statuses</option>
+        <option value="paid" {% if payment_status_filter == 'paid' %}selected{% endif %}>Paid</option>
+        <option value="pending" {% if payment_status_filter == 'pending' %}selected{% endif %}>Payment Pending</option>
+        <option value="failed" {% if payment_status_filter == 'failed' %}selected{% endif %}>Payment Failed</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-admin-primary flex-grow-1">Filter</button>
+      <a href="{% url 'admin_portal:export_orders_csv' %}" class="btn btn-outline-success" title="Export Orders CSV">
+        <i class="fa-solid fa-download"></i>
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Orders Table -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-cart-flatbed text-primary"></i> Placed Orders
+    </h5>
+    <span class="badge bg-light text-dark border">{{ total_orders_count }} Orders</span>
+  </div>
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Order Number</th>
+          <th>Customer Details</th>
+          <th>Delivery City</th>
+          <th>Total Amount</th>
+          <th>Payment</th>
+          <th>Fulfillment Status</th>
+          <th>Date Placed</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+          <tr>
+            <td>
+              <a href="{% url 'admin_portal:order_detail' o.pk %}" class="fw-bold text-dark text-decoration-none hover-primary">
+                #{{ o.order_number }}
+              </a>
+              <div class="text-muted small">{{ o.item_count }} items</div>
+            </td>
+            <td>
+              <div class="fw-semibold">{{ o.full_name }}</div>
+              <small class="text-muted">{{ o.email }} | {{ o.phone }}</small>
+            </td>
+            <td>
+              <div>{{ o.city }}</div>
+              <small class="text-muted">{{ o.district }}</small>
+            </td>
+            <td>
+              <span class="fw-bold text-success fs-6">₹{{ o.total_amount }}</span>
+            </td>
+            <td>
+              {% if o.payment_status == 'paid' %}
+                <span class="status-pill status-paid">Paid ({{ o.get_payment_method_display }})</span>
+              {% elif o.payment_status == 'pending' %}
+                <span class="status-pill status-pending">Pending ({{ o.get_payment_method_display }})</span>
+              {% else %}
+                <span class="status-pill status-failed">{{ o.get_payment_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if o.order_status == 'delivered' %}
+                <span class="status-pill status-delivered">Delivered</span>
+              {% elif o.order_status == 'shipped' %}
+                <span class="status-pill status-shipped">Shipped</span>
+              {% elif o.order_status == 'processing' %}
+                <span class="status-pill status-processing">Processing</span>
+              {% elif o.order_status == 'confirmed' %}
+                <span class="status-pill status-approved">Confirmed</span>
+              {% elif o.order_status == 'cancelled' %}
+                <span class="status-pill status-cancelled">Cancelled</span>
+              {% else %}
+                <span class="status-pill status-pending">Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              <small class="text-muted">{{ o.created_at|date:"M d, Y H:i" }}</small>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'admin_portal:order_detail' o.pk %}" class="btn btn-sm btn-light border">
+                <i class="fa-solid fa-eye me-1"></i> View Order
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">No orders found matching the filter.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <div class="p-3 border-top d-flex justify-content-center">
+      <nav>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_status_filter %}&payment_status={{ payment_status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

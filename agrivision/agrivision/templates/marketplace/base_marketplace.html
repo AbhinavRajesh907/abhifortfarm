@@ -24,13 +24,9 @@
 <body>
 
 <!-- ====== NAVBAR ====== -->
-{% url 'marketplace:dashboard' as mkt_dash_url %}
-{% url 'marketplace:product_list' as mkt_prod_url %}
-{% url 'marketplace:cart' as mkt_cart_url %}
-{% url 'marketplace:my_orders' as mkt_orders_url %}
 <nav class="navbar navbar-expand-lg agri-navbar sticky-top">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ mkt_dash_url|default:'#' }}">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'marketplace:dashboard' %}">
       <span class="brand-icon">🌿</span>
       <span class="brand-text">AgriSmart</span>
     </a>
@@ -42,20 +38,26 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link {% block nav_home %}{% endblock %}"
-             href="{{ mkt_dash_url|default:'#' }}">
+             href="{% url 'marketplace:dashboard' %}">
             <i class="bi bi-house-door"></i> Home
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% block nav_products %}{% endblock %}"
-             href="{{ mkt_prod_url|default:'#' }}">
+             href="{% url 'marketplace:product_list' %}">
             <i class="bi bi-grid"></i> Products
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% block nav_seeds %}{% endblock %}"
-             href="{{ mkt_prod_url|default:'#' }}?category=Seeds">
+             href="{% url 'marketplace:product_list' %}?category=Seeds">
             🌱 Seeds
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% block nav_plants %}{% endblock %}"
+             href="{% url 'marketplace:product_list' %}?category=Plants">
+            🌿 Plants
           </a>
         </li>
         <li class="nav-item">
@@ -81,7 +83,7 @@
       <ul class="navbar-nav ms-auto align-items-center gap-2">
         <!-- Cart -->
         <li class="nav-item">
-          <a class="nav-link cart-btn position-relative" href="{{ mkt_cart_url|default:'#' }}">
+          <a class="nav-link cart-btn position-relative" href="{% url 'marketplace:cart' %}">
             <i class="bi bi-cart3 fs-5"></i>
             {% if cart_count and cart_count > 0 %}
               <span class="cart-badge badge rounded-pill bg-danger">{{ cart_count }}</span>
@@ -91,31 +93,64 @@
         <!-- My Orders -->
         <li class="nav-item">
           <a class="nav-link {% block nav_orders %}{% endblock %}"
-             href="{{ mkt_orders_url|default:'#' }}">
+             href="{% url 'marketplace:my_orders' %}">
             <i class="bi bi-receipt"></i> My Orders
           </a>
         </li>
-        <!-- User dropdown -->
+        <!-- User dropdown / Quick links -->
+        {% if request.user.is_authenticated %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle user-avatar" href="#" role="button"
              data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-person-circle fs-5"></i>
             {{ request.user.name|default:request.user.email }}
           </a>
-          <ul class="dropdown-menu dropdown-menu-end">
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
             <li>
               <a class="dropdown-item" href="{% url 'users:detail' request.user.pk %}">
-                <i class="bi bi-person"></i> Profile
+                <i class="bi bi-person"></i> My Profile
               </a>
             </li>
             <li><hr class="dropdown-divider"/></li>
+            {% if request.user.provider_profile and request.user.provider_profile.verification_status == 'APPROVED' %}
+              <li>
+                <a class="dropdown-item text-success fw-semibold" href="{% url 'providers:dashboard' %}">
+                  <i class="bi bi-speedometer2"></i> Provider Dashboard
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'providers:product_list' %}">
+                  <i class="bi bi-box-seam"></i> My Products
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'providers:orders' %}">
+                  <i class="bi bi-receipt"></i> Provider Orders
+                </a>
+              </li>
+            {% elif request.user.provider_profile %}
+              <li>
+                <a class="dropdown-item text-warning" href="{% url 'providers:status' %}">
+                  <i class="bi bi-hourglass-split"></i> Provider Application (Pending)
+                </a>
+              </li>
+            {% endif %}
+            <li><hr class="dropdown-divider"/></li>
             <li>
-              <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+              <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
                 <i class="bi bi-box-arrow-right"></i> Logout
               </a>
             </li>
           </ul>
         </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'users:login' %}">Sign In</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-sm btn-success rounded-pill px-3" href="{% url 'users:register' %}">Sign Up</a>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>

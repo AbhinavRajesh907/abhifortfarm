@@ -1,0 +1,126 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Payments & Transactions | AgriVision Admin{% endblock title %}
+{% block page_title %}Payment Transactions & Reconciliation{% endblock page_title %}
+{% block page_subtitle %}Audit financial logs, verify online payment gateways, and reconcile cash-on-delivery settlements{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Metrics & Filter Bar -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="kpi-card kpi-emerald">
+      <div class="kpi-card-inner">
+        <div>
+          <div class="kpi-title">Total Settled Payments</div>
+          <div class="kpi-value">₹{{ total_payments_amount|floatformat:2 }}</div>
+          <div class="kpi-subtext text-success"><i class="fa-solid fa-circle-check"></i> Successfully reconciled</div>
+        </div>
+        <div class="kpi-icon-box"><i class="fa-solid fa-wallet"></i></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="admin-filter-bar h-100 d-flex align-items-center">
+      <form method="get" class="row g-2 align-items-center w-100">
+        <div class="col-md-7">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+            <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search TXN ID, order # or email..." />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-admin-primary w-100">Filter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Payments Table -->
+<div class="admin-card">
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Order Number</th>
+          <th>Customer Email</th>
+          <th>Amount</th>
+          <th>Payment Method</th>
+          <th>Status</th>
+          <th>Timestamp</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+          <tr>
+            <td>
+              <code class="fw-bold text-dark">{{ p.transaction_id }}</code>
+            </td>
+            <td>
+              <a href="{% url 'admin_portal:order_detail' p.order.pk %}" class="fw-semibold text-dark text-decoration-none">
+                #{{ p.order.order_number }}
+              </a>
+            </td>
+            <td>{{ p.user.email }}</td>
+            <td><span class="fw-bold text-success fs-6">₹{{ p.amount }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ p.payment_method }}</span></td>
+            <td>
+              {% if p.status == 'paid' %}
+                <span class="status-pill status-paid">Paid</span>
+              {% elif p.status == 'pending' %}
+                <span class="status-pill status-pending">Pending</span>
+              {% else %}
+                <span class="status-pill status-failed">{{ p.status|title }}</span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted">{{ p.payment_date|date:"M d, Y H:i" }}</small></td>
+            <td class="text-end">
+              {% if p.status != 'paid' %}
+                <form method="post" action="{% url 'admin_portal:payment_mark_paid' p.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">
+                    <i class="fa-solid fa-check me-1"></i> Mark as Paid
+                  </button>
+                </form>
+              {% else %}
+                <span class="text-success small fw-semibold"><i class="fa-solid fa-check-double me-1"></i> Settled</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">No payment transactions found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <div class="p-3 border-top d-flex justify-content-center">
+      <nav>
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

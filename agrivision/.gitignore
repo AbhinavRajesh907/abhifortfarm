@@ -52,6 +52,8 @@ coverage.xml
 
 # Django stuff:
 staticfiles/
+*.sqlite3
+db.sqlite3
 
 # Sphinx documentation
 docs/_build/
@@ -274,3 +276,6 @@ agrivision/media/
 .ipython/
 .env
 .envs/*
+
+db.sqlite3
+requirements.txt

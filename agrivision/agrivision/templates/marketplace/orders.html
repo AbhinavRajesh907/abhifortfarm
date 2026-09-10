@@ -1,0 +1,68 @@
+{% extends "marketplace/base_marketplace.html" %}
+
+{% block title %}My Orders — AgriSmart{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title"><i class="bi bi-receipt me-2"></i>My Orders</h1>
+
+  {% if orders %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle orders-table">
+        <thead class="table-success">
+          <tr>
+            <th>Order #</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td><strong class="text-success">#{{ order.order_number }}</strong></td>
+              <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
+              <td><strong>₹{{ order.total_amount }}</strong></td>
+              <td>
+                <span class="badge
+                  {% if order.payment_status == 'paid' %}bg-success
+                  {% elif order.payment_status == 'failed' %}bg-danger
+                  {% else %}bg-warning text-dark{% endif %}">
+                  {{ order.get_payment_status_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge
+                  {% if order.order_status == 'delivered' %}bg-success
+                  {% elif order.order_status == 'cancelled' %}bg-danger
+                  {% elif order.order_status == 'shipped' %}bg-info text-dark
+                  {% elif order.order_status == 'processing' %}bg-primary
+                  {% elif order.order_status == 'confirmed' %}bg-secondary
+                  {% else %}bg-warning text-dark{% endif %}">
+                  {{ order.get_order_status_display }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'marketplace:order_detail' order.order_number %}"
+                   class="btn btn-outline-success btn-sm">
+                  View →
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state text-center py-5">
+      <div class="empty-icon">📦</div>
+      <h4>No orders yet.</h4>
+      <p class="text-muted">Start shopping and your orders will appear here.</p>
+      <a href="{% url 'marketplace:product_list' %}" class="btn btn-success mt-2">Browse Products</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

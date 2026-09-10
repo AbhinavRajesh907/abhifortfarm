@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}Provider Registration - AgriFarm{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+      <div class="auth-card">
+        <!-- Header -->
+        <div class="text-center mb-4">
+          <div class="role-icon-wrapper mb-3" style="width: 56px; height: 56px; font-size: 1.5rem;">
+            <i class="bi bi-shop"></i>
+          </div>
+          <h2 class="h3 fw-bold mb-1">Provider Registration</h2>
+          <p class="text-muted small">Register your nursery, seed business, or farm to connect with growers</p>
+        </div>
+
+        <div class="alert alert-agri alert-info mb-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-lock-fill fs-5 text-success"></i>
+            <div>
+              <strong>Verification Process:</strong> Your provider account will be registered under <em>Pending Verification</em>. Once your license information is approved, you will have full access.
+            </div>
+          </div>
+        </div>
+
+        <!-- Provider Registration Form -->
+        <form method="POST" action="{% url 'users:register_provider' %}" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-4 py-2">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <!-- Step 1: Personal / Contact Details -->
+          <div class="section-divider-title">
+            <i class="bi bi-person-circle"></i> 1. Personal & Contact Details
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="id_name">Full Name <span class="text-danger">*</span></label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_username">Username <span class="text-danger">*</span></label>
+              {{ form.username }}
+              {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_email">Email Address <span class="text-danger">*</span></label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_phone">Phone Number <span class="text-danger">*</span></label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_password">Password <span class="text-danger">*</span></label>
+              {{ form.password }}
+              {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_confirm_password">Confirm Password <span class="text-danger">*</span></label>
+              {{ form.confirm_password }}
+              {% if form.confirm_password.errors %}<div class="text-danger small mt-1">{{ form.confirm_password.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="id_address">Personal / Residential Address <span class="text-danger">*</span></label>
+              {{ form.address }}
+              {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="id_city">City <span class="text-danger">*</span></label>
+              {{ form.city }}
+              {% if form.city.errors %}<div class="text-danger small mt-1">{{ form.city.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="id_state">State <span class="text-danger">*</span></label>
+              {{ form.state }}
+              {% if form.state.errors %}<div class="text-danger small mt-1">{{ form.state.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="id_pincode">Pincode <span class="text-danger">*</span></label>
+              {{ form.pincode }}
+              {% if form.pincode.errors %}<div class="text-danger small mt-1">{{ form.pincode.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Step 2: Farm & Business Details -->
+          <div class="section-divider-title mt-4">
+            <i class="bi bi-buildings"></i> 2. Farm & Business Details
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="id_farm_name">Farm / Business Name <span class="text-danger">*</span></label>
+              {{ form.farm_name }}
+              {% if form.farm_name.errors %}<div class="text-danger small mt-1">{{ form.farm_name.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_provider_type">Provider Type <span class="text-danger">*</span></label>
+              {{ form.provider_type }}
+              {% if form.provider_type.errors %}<div class="text-danger small mt-1">{{ form.provider_type.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label" for="id_farm_address">Farm / Facility Address <span class="text-danger">*</span></label>
+              {{ form.farm_address }}
+              {% if form.farm_address.errors %}<div class="text-danger small mt-1">{{ form.farm_address.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="id_experience_years">Years of Experience <span class="text-danger">*</span></label>
+              {{ form.experience_years }}
+              {% if form.experience_years.errors %}<div class="text-danger small mt-1">{{ form.experience_years.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="id_description">Short Description / Products Overview</label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Step 3: License & Verification -->
+          <div class="section-divider-title mt-4">
+            <i class="bi bi-file-earmark-check"></i> 3. License & Verification Details
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="id_license_number">License / Registration Number <span class="text-danger">*</span></label>
+              {{ form.license_number }}
+              {% if form.license_number.errors %}<div class="text-danger small mt-1">{{ form.license_number.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_license_type">License Type <span class="text-danger">*</span></label>
+              {{ form.license_type }}
+              {% if form.license_type.errors %}<div class="text-danger small mt-1">{{ form.license_type.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="id_issuing_authority">Issuing Authority <span class="text-danger">*</span></label>
+              {{ form.issuing_authority }}
+              {% if form.issuing_authority.errors %}<div class="text-danger small mt-1">{{ form.issuing_authority.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_issue_date">Issue Date <span class="text-danger">*</span></label>
+              {{ form.issue_date }}
+              {% if form.issue_date.errors %}<div class="text-danger small mt-1">{{ form.issue_date.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="id_expiry_date">Expiry Date <span class="text-danger">*</span></label>
+              {{ form.expiry_date }}
+              {% if form.expiry_date.errors %}<div class="text-danger small mt-1">{{ form.expiry_date.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="id_license_document">
+                Upload License Document / Photo <span class="text-danger">*</span>
+                <span class="text-muted small fw-normal">(JPG, JPEG, PNG, PDF &mdash; Max 5MB)</span>
+              </label>
+              {{ form.license_document }}
+              {% if form.license_document.errors %}<div class="text-danger small mt-1">{{ form.license_document.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="d-grid mt-5 pt-2">
+            <button class="btn-agri-primary btn-lg" type="submit">
+              <i class="bi bi-file-earmark-arrow-up"></i> Submit Provider Registration
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top">
+          <p class="text-muted small mb-0">
+            Already registered? 
+            <a href="{% url 'users:login' %}" class="fw-bold text-decoration-none" style="color: var(--agri-primary);">
+              Sign In here
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

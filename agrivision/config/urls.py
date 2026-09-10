@@ -4,7 +4,10 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
+from django.views.generic import RedirectView
 from django.views.generic import TemplateView
+
+from agrivision.users.views import custom_login_view, custom_logout_view
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -13,6 +16,9 @@ urlpatterns = [
         TemplateView.as_view(template_name="pages/about.html"),
         name="about",
     ),
+    # Top-level direct login / logout
+    path("login/", custom_login_view, name="login"),
+    path("logout/", custom_logout_view, name="logout"),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
@@ -20,8 +26,12 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # AI & Agriculture Module — Member 4
     path("agriculture/", include("agrivision.agriculture.urls", namespace="agriculture")),
-    # Your stuff: custom urls includes go here
-    # ...
+    # User Marketplace
+    path("marketplace/", include("agrivision.marketplace.urls", namespace="marketplace")),
+    # Provider Portal
+    path("providers/", include("agrivision.providers.urls", namespace="providers")),
+    # Admin Portal
+    path("admin-portal/", include("agrivision.admin_portal.urls", namespace="admin_portal")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

@@ -1,0 +1,283 @@
+/* ================================================================
+   AgriSmart Marketplace — Custom CSS
+   Green / Natural agriculture theme
+   ================================================================ */
+
+:root {
+  --agri-green: #2d7a3a;
+  --agri-green-light: #4caf60;
+  --agri-green-pale: #e8f5e9;
+  --agri-yellow: #f9a825;
+  --agri-text: #1a1a2e;
+  --agri-text-muted: #6c757d;
+  --font-main: 'Inter', sans-serif;
+  --radius: 12px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: var(--font-main);
+  color: var(--agri-text);
+  background: #f5f9f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- NAVBAR ---- */
+.agri-navbar {
+  background: #ffffff;
+  border-bottom: 2px solid var(--agri-green-pale);
+  box-shadow: 0 2px 12px rgba(45, 122, 58, 0.1);
+}
+
+.agri-navbar .navbar-brand {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--agri-green) !important;
+}
+
+.brand-icon { font-size: 1.5rem; }
+.brand-text { color: var(--agri-green); }
+
+.agri-navbar .nav-link {
+  color: #444 !important;
+  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.agri-navbar .nav-link:hover,
+.agri-navbar .nav-link.active {
+  background: var(--agri-green-pale);
+  color: var(--agri-green) !important;
+}
+
+.cart-btn { font-size: 1.1rem; }
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  font-size: 0.65rem;
+  padding: 2px 5px;
+}
+
+/* ---- MAIN ---- */
+.agri-main { flex: 1; }
+
+/* ---- HERO ---- */
+.agri-hero {
+  background: linear-gradient(135deg, var(--agri-green) 0%, #4caf50 60%, #8bc34a 100%);
+  color: #fff;
+}
+
+.hero-title { font-size: 2rem; font-weight: 700; }
+.hero-subtitle { font-size: 1.1rem; opacity: 0.9; }
+
+.hero-search .search-input {
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.9);
+}
+
+.hero-search .search-input:focus {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+.hero-illustration { font-size: 8rem; opacity: 0.9; line-height: 1; }
+
+/* ---- SECTION TITLE ---- */
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--agri-green);
+  margin-bottom: 1.25rem;
+}
+
+/* ---- CATEGORY CARDS ---- */
+.category-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow);
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(45,122,58,0.15);
+  border-color: var(--agri-green-light);
+}
+
+.category-seeds { border-top: 4px solid var(--agri-yellow); }
+.category-plants { border-top: 4px solid var(--agri-green-light); }
+
+.category-icon { font-size: 3.5rem; margin-bottom: 0.5rem; }
+.category-name { font-size: 1.4rem; font-weight: 700; color: var(--agri-text); }
+.category-desc { color: var(--agri-text-muted); }
+
+/* ---- PRODUCT CARDS ---- */
+.product-card {
+  background: #fff;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid #e8f5e9;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(45,122,58,0.15);
+}
+
+.product-img-wrap {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: var(--agri-green-pale);
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  background: var(--agri-green-pale);
+}
+
+.product-category-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.7rem;
+}
+
+.product-card-body {
+  padding: 1rem;
+}
+
+.product-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-desc { font-size: 0.8rem; margin-bottom: 0.5rem; }
+.product-price { font-size: 1.1rem; font-weight: 700; color: var(--agri-green); }
+
+/* ---- PRODUCT DETAIL ---- */
+.product-detail-img-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--agri-green-pale);
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-detail-placeholder {
+  font-size: 8rem;
+  padding: 2rem;
+}
+
+.product-detail-title { font-size: 1.8rem; font-weight: 700; }
+.product-detail-desc { line-height: 1.7; }
+.product-detail-price { font-size: 2rem; font-weight: 700; color: var(--agri-green); }
+
+.qty-input { width: 60px !important; text-align: center; }
+
+/* ---- CART & ORDERS TABLE ---- */
+.cart-table, .orders-table { font-size: 0.93rem; }
+
+.cart-item-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  background: var(--agri-green-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  overflow: hidden;
+}
+
+.cart-item-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.qty-badge {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.btn-xs { padding: 0.15rem 0.45rem; font-size: 0.8rem; }
+
+/* ---- FILTER CARD ---- */
+.filter-card {
+  border: 1px solid #d4edda;
+  border-radius: var(--radius);
+}
+
+/* ---- SUMMARY CARD ---- */
+.summary-card { border-radius: var(--radius); }
+
+/* ---- ORDER SUCCESS ---- */
+.success-card {
+  border-radius: var(--radius);
+  border: 2px solid #c8e6c9;
+}
+
+.success-icon { font-size: 4rem; }
+
+.order-info-box {
+  background: var(--agri-green-pale);
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: left;
+}
+
+/* ---- PAYMENT ---- */
+.payment-option {
+  padding: 1rem;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.payment-option:hover { background: var(--agri-green-pale); }
+
+.payment-icon { color: var(--agri-green); }
+.cursor-pointer { cursor: pointer; }
+
+/* ---- EMPTY STATE ---- */
+.empty-state .empty-icon { font-size: 4rem; }
+
+/* ---- FOOTER ---- */
+.agri-footer {
+  background: #fff;
+  border-top: 1px solid #d4edda;
+}
+
+/* ---- RESPONSIVE TWEAKS ---- */
+@media (max-width: 576px) {
+  .hero-title { font-size: 1.4rem; }
+  .hero-subtitle { font-size: 0.95rem; }
+  .product-detail-title { font-size: 1.3rem; }
+  .product-detail-price { font-size: 1.5rem; }
+}

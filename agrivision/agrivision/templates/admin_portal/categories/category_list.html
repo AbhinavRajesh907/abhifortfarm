@@ -1,0 +1,156 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Categories Management | AgriVision Admin{% endblock title %}
+{% block page_title %}Product Categories{% endblock page_title %}
+{% block page_subtitle %}Organize seeds, plants, fertilizers, pesticides, and farming tools into structured catalogs{% endblock page_subtitle %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left: Category List -->
+  <div class="col-lg-7">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-layer-group text-success"></i> Existing Categories
+        </h5>
+        <span class="badge bg-light text-dark border">{{ categories|length }} Categories</span>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Category Name</th>
+              <th>Description</th>
+              <th>Products Linked</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in categories %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded bg-light border text-success">
+                      <i class="fa-solid {{ cat.icon|default:'fa-seedling' }}"></i>
+                    </div>
+                    <div class="fw-bold text-dark">{{ cat.name }}</div>
+                  </div>
+                </td>
+                <td>
+                  <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">{{ cat.description|default:"No description provided" }}</small>
+                </td>
+                <td>
+                  <a href="{% url 'admin_portal:product_list' %}?category={{ cat.pk }}" class="badge bg-success-subtle text-success text-decoration-none">
+                    {{ cat.product_count }} products
+                  </a>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#editCatModal{{ cat.pk }}" title="Edit">
+                      <i class="fa-solid fa-pen text-primary"></i>
+                    </button>
+                    <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#deleteCatModal{{ cat.pk }}" title="Delete">
+                      <i class="fa-solid fa-trash text-danger"></i>
+                    </button>
+                  </div>
+
+                  <!-- Edit Modal -->
+                  <div class="modal fade" id="editCatModal{{ cat.pk }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered text-start">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title fw-bold">Edit Category: {{ cat.name }}</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="post" action="{% url 'admin_portal:category_update' cat.pk %}">
+                          {% csrf_token %}
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Category Name *</label>
+                              <input type="text" name="name" value="{{ cat.name }}" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Icon Class (FontAwesome)</label>
+                              <input type="text" name="icon" value="{{ cat.icon }}" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold">Description</label>
+                              <textarea name="description" class="form-control" rows="3">{{ cat.description }}</textarea>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-admin-primary">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade" id="deleteCatModal{{ cat.pk }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered text-start">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title fw-bold text-danger">Delete Category</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          Are you sure you want to delete category <strong>{{ cat.name }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <form method="post" action="{% url 'admin_portal:category_delete' cat.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">No categories created yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Create Category Form -->
+  <div class="col-lg-5">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-plus-circle text-primary"></i> Add New Category
+        </h5>
+      </div>
+      <div class="admin-card-body">
+        <form method="post" action="{% url 'admin_portal:category_create' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category Name *</label>
+            {{ form.name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">FontAwesome Icon</label>
+            {{ form.icon }}
+            <div class="form-text">e.g. fa-seedling, fa-leaf, fa-flask, fa-shield-halved, fa-wrench</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Description</label>
+            {{ form.description }}
+          </div>
+          <button type="submit" class="btn btn-admin-primary w-100 py-2 fw-bold">
+            <i class="fa-solid fa-plus me-1"></i> Create Category
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
