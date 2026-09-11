@@ -26,6 +26,7 @@ def create_test_image():
 
 def test_views_require_login(client):
     urls = [
+        reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
         reverse("agriculture:crop_recommendation"),
@@ -36,12 +37,13 @@ def test_views_require_login(client):
     for url in urls:
         response = client.get(url)
         assert response.status_code == HTTPStatus.FOUND
-        assert reverse("account_login") in response.url
+        assert "/login/" in response.url
 
 
 def test_authenticated_views_load(client, user):
     client.force_login(user)
     urls = [
+        reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
         reverse("agriculture:crop_recommendation"),
@@ -52,6 +54,7 @@ def test_authenticated_views_load(client, user):
     for url in urls:
         response = client.get(url)
         assert response.status_code == HTTPStatus.OK
+
 
 
 @patch("agrivision.agriculture.services.disease_detection.MLServiceClient.predict")

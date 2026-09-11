@@ -325,6 +325,52 @@ def api_agri_info(request) -> JsonResponse:
     return api_success_response({"crops": crops_data, "diseases": diseases_data})
 
 
+from agrivision.agriculture.services.chatbot import AgriChatbotService
+from agrivision.agriculture.services.disease_detection import DiseaseDetectionService
+from agrivision.agriculture.services.market_price import get_market_prices
+
+logger = logging.getLogger(__name__)
+
+
+@require_POST
+def api_agri_chatbot(request) -> JsonResponse:
+    """Conversational AI Agronomist Chatbot endpoint.
+
+    Accepts text prompt and/or image upload:
+    - multipart/form-data: message (text), image (file)
+    - application/json: {"message": "..."}
+    """
+    message = ""
+    image_file = None
+
+    if request.content_type == "application/json":
+        try:
+            payload = json.loads(request.body)
+            message = payload.get("message", "")
+        except Exception:
+            return api_error_response("Invalid JSON payload.")
+    else:
+        message = request.POST.get("message", "")
+        if "image" in request.FILES:
+            image_file = request.FILES["image"]
+
+    try:
+        chatbot = AgriChatbotService()
+        bot_res = chatbot.process_message(request.user, message=message, image_file=image_file)
+
+        return api_success_response({
+            "reply_text": bot_res.reply_text,
+            "intent": bot_res.intent,
+            "data": bot_res.data,
+            "quick_replies": bot_res.quick_replies,
+            "created_record_id": bot_res.created_record_id,
+            "record_type": bot_res.record_type,
+        })
+    except Exception as exc:
+        logger.exception(f"API Agri Chatbot error: {exc}")
+        return api_error_response(f"Chatbot processing error: {str(exc)}", status_code=500)
+
+
 @require_GET
 def api_crop_recommendations_history(request) -> JsonResponse:
     """Retrieve user's crop recommendation history."""

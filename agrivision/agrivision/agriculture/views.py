@@ -223,3 +223,10 @@ def agriculture_info(request):
             "total_diseases": diseases.count(),
         },
     )
+
+
+@login_required
+def agri_chatbot(request):
+    """Interactive AI Agronomist Chatbot interface."""
+    return render(request, "agriculture/chatbot.html")
+

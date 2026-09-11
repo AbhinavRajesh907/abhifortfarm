@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Agronomist Chatbot — AgriVision{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header Banner -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2">
+        <i class="bi bi-robot me-1"></i> Interactive AI Agronomist
+      </span>
+      <h1 class="h2 fw-bold text-dark mb-1">AgriBot — AI Agriculture Assistant 🌱🤖</h1>
+      <p class="text-muted mb-0">Ask questions, upload plant leaf photos for disease diagnosis, or get soil-based crop recommendations.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'agriculture:disease_detection' %}" class="btn btn-outline-success rounded-pill btn-sm px-3">
+        <i class="bi bi-camera me-1"></i> Form Diagnosis
+      </a>
+      <a href="{% url 'agriculture:crop_recommendation' %}" class="btn btn-outline-secondary rounded-pill btn-sm px-3">
+        <i class="bi bi-flower1 me-1"></i> Form Advisory
+      </a>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Chat Interface Card -->
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: #ffffff;">
+        <!-- Card Header -->
+        <div class="card-header bg-success text-white py-3 px-4 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; font-size: 1.4rem;">
+              🌱
+            </div>
+            <div>
+              <h5 class="mb-0 fw-bold">AgriBot Assistant</h5>
+              <small class="text-white-50"><i class="bi bi-circle-fill text-warning me-1" style="font-size: 0.5rem;"></i> Online • Powered by AgriVision ML</small>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-light rounded-pill px-3" id="clearChatBtn">
+            <i class="bi bi-trash me-1"></i> Clear Chat
+          </button>
+        </div>
+
+        <!-- Chat Stream Body -->
+        <div class="card-body p-4" id="chatStream" style="height: 520px; overflow-y: auto; background-color: #f8faf8;">
+          <!-- Welcome Message -->
+          <div class="d-flex gap-3 mb-4">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">
+              🤖
+            </div>
+            <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+              <h6 class="fw-bold text-success mb-2">Hello, Farmer! 👋</h6>
+              <p class="mb-2">I am your **AI Agronomist Assistant**. I can help you with:</p>
+              <ul class="mb-2 ps-3 small text-secondary">
+                <li>📸 **Disease Detection**: Upload a leaf photo to diagnose diseases, treatments, and prevention steps.</li>
+                <li>🌱 **Crop Advisory**: Ask for optimal crop recommendations based on your soil pH, N-P-K, or season.</li>
+                <li>📈 **Market Prices**: Query current commodity market rates for Rice, Wheat, Cotton, etc.</li>
+              </ul>
+              <p class="mb-0 text-muted small">Choose a quick action below or type your question!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Chips Bar -->
+        <div class="bg-light px-4 py-2 border-top border-bottom overflow-x-auto text-nowrap" id="quickChipsBar">
+          <span class="text-muted small fw-semibold me-2">Quick Prompts:</span>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="📸 Upload a leaf photo for disease diagnosis">
+            📸 Disease Diagnosis
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Recommend best crops for Kharif season">
+            🍂 Kharif Season Crops
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Recommend crops for Clay soil with pH 6.5">
+            🪴 Clay Soil Advisory
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Check current market price for Rice and Wheat">
+            📈 Market Prices
+          </button>
+        </div>
+
+        <!-- Selected Image Preview Indicator -->
+        <div id="attachedImagePreview" class="px-4 py-2 bg-success-subtle border-top d-none align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-image text-success fs-5"></i>
+            <span class="small text-success-emphasis fw-semibold" id="attachedImageName">leaf_photo.jpg</span>
+          </div>
+          <button type="button" class="btn-close btn-close-sm" id="removeAttachedImageBtn"></button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="card-footer bg-white p-3 border-0">
+          <form id="chatForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" id="chatImageInput" name="image" class="d-none" accept="image/jpeg,image/png,image/webp,image/jpg" />
+            <div class="input-group">
+              <button type="button" class="btn btn-light border-secondary-subtle px-3 text-secondary" id="attachPhotoBtn" title="Attach Leaf Photo for Disease Analysis">
+                <i class="bi bi-camera-fill fs-5 text-success"></i>
+              </button>
+              <input type="text" id="chatMessageInput" class="form-control form-control-lg border-secondary-subtle px-3 fs-6" placeholder="Ask AgriBot or attach a plant leaf photo..." autocomplete="off" />
+              <button type="submit" class="btn btn-success px-4 fw-bold" id="sendMessageBtn">
+                <i class="bi bi-send-fill me-1"></i> Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chatStream = document.getElementById('chatStream');
+    const chatForm = document.getElementById('chatForm');
+    const chatMessageInput = document.getElementById('chatMessageInput');
+    const chatImageInput = document.getElementById('chatImageInput');
+    const attachPhotoBtn = document.getElementById('attachPhotoBtn');
+    const attachedImagePreview = document.getElementById('attachedImagePreview');
+    const attachedImageName = document.getElementById('attachedImageName');
+    const removeAttachedImageBtn = document.getElementById('removeAttachedImageBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const quickPromptBtns = document.querySelectorAll('.quick-prompt-btn');
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Attach Photo Trigger
+    attachPhotoBtn.addEventListener('click', () => chatImageInput.click());
+
+    chatImageInput.addEventListener('change', () => {
+      if (chatImageInput.files && chatImageInput.files[0]) {
+        const file = chatImageInput.files[0];
+        attachedImageName.textContent = `Attached photo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        attachedImagePreview.classList.remove('d-none');
+        attachedImagePreview.classList.add('d-flex');
+      }
+    });
+
+    removeAttachedImageBtn.addEventListener('click', () => {
+      chatImageInput.value = '';
+      attachedImagePreview.classList.remove('d-flex');
+      attachedImagePreview.classList.add('d-none');
+    });
+
+    clearChatBtn.addEventListener('click', () => {
+      chatStream.innerHTML = `
+        <div class="d-flex gap-3 mb-4">
+          <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">🌱</div>
+          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+            <p class="mb-0 text-muted">Chat cleared. Ask AgriBot a new question or attach a leaf photo!</p>
+          </div>
+        </div>`;
+    });
+
+    quickPromptBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.getAttribute('data-prompt');
+        if (prompt.includes('📸 Upload')) {
+          chatImageInput.click();
+        } else {
+          chatMessageInput.value = prompt;
+          chatForm.requestSubmit();
+        }
+      });
+    });
+
+    // Handle Submit
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const messageText = chatMessageInput.value.trim();
+      const hasImage = chatImageInput.files && chatImageInput.files[0];
+
+      if (!messageText && !hasImage) return;
+
+      // Render User Message in stream
+      renderUserMessage(messageText, hasImage ? chatImageInput.files[0] : null);
+
+      // Prepare FormData
+      const formData = new FormData();
+      if (messageText) formData.append('message', messageText);
+      if (hasImage) formData.append('image', chatImageInput.files[0]);
+
+      // Reset Inputs
+      chatMessageInput.value = '';
+      chatImageInput.value = '';
+      attachedImagePreview.classList.remove('d-flex');
+      attachedImagePreview.classList.add('d-none');
+
+      // Show Typing Indicator
+      const typingElem = renderTypingIndicator();
+
+      try {
+        const response = await fetch("{% url 'agriculture:api_agri_chatbot' %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        });
+
+        const resData = await response.json();
+        typingElem.remove();
+
+        if (resData.status === "success") {
+          renderBotMessage(resData.data);
+        } else {
+          renderBotErrorMessage(resData.message || "An unexpected error occurred.");
+        }
+      } catch (err) {
+        typingElem.remove();
+        renderBotErrorMessage("Failed to communicate with AgriBot server: " + err.message);
+      }
+    });
+
+    function renderUserMessage(text, imageFile) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'd-flex justify-content-end mb-4';
+
+      let imgHtml = '';
+      if (imageFile) {
+        const imgUrl = URL.createObjectURL(imageFile);
+        imgHtml = `<img src="${imgUrl}" class="img-fluid rounded-3 mb-2 d-block shadow-sm" style="max-height: 180px; object-fit: cover;" />`;
+      }
+
+      msgDiv.innerHTML = `
+        <div class="bg-success text-white p-3 rounded-4 shadow-sm" style="max-width: 78%;">
+          ${imgHtml}
+          <div>${escapeHtml(text || 'Uploaded leaf photo for AI analysis')}</div>
+        </div>`;
+
+      chatStream.appendChild(msgDiv);
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    function renderBotMessage(botData) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'd-flex gap-3 mb-4';
+
+      const formattedText = formatMarkdown(botData.reply_text);
+
+      let quickRepliesHtml = '';
+      if (botData.quick_replies && botData.quick_replies.length > 0) {
+        quickRepliesHtml = `
+          <div class="mt-3 pt-2 border-top d-flex flex-wrap gap-2">
+            ${botData.quick_replies.map(qr => `
+              <button class="btn btn-xs btn-outline-success rounded-pill py-1 px-3 text-nowrap dynamic-qr-btn" data-qr="${escapeHtml(qr)}">
+                ${escapeHtml(qr)}
+              </button>
+            `).join('')}
+          </div>`;
+      }
+
+      msgDiv.innerHTML = `
+        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">🤖</div>
+        <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+          <div class="markdown-body">${formattedText}</div>
+          ${quickRepliesHtml}
+        </div>`;
+
+      chatStream.appendChild(msgDiv);
+
+      // Bind dynamic QR buttons
+      msgDiv.querySelectorAll('.dynamic-qr-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qrText = btn.getAttribute('data-qr');
+          if (qrText.includes('📸 Upload')) {
+            chatImageInput.click();
+          } else {
+            chatMessageInput.value = qrText;
+            chatForm.requestSubmit();
+          }
+        });
+      });
+
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    function renderBotErrorMessage(errMsg) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'd-flex gap-3 mb-4';
+      msgDiv.innerHTML = `
+        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">⚠️</div>
+        <div class="bg-danger-subtle text-danger p-3 rounded-4 shadow-sm border border-danger-subtle" style="max-width: 82%;">
+          ${escapeHtml(errMsg)}
+        </div>`;
+      chatStream.appendChild(msgDiv);
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    function renderTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'd-flex gap-3 mb-4';
+      typingDiv.innerHTML = `
+        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">🤖</div>
+        <div class="bg-white p-3 rounded-4 shadow-sm border border-light d-flex align-items-center gap-2">
+          <div class="spinner-grow spinner-grow-sm text-success" role="status"></div>
+          <span class="text-muted small">AgriBot is thinking and analyzing...</span>
+        </div>`;
+      chatStream.appendChild(typingDiv);
+      chatStream.scrollTop = chatStream.scrollHeight;
+      return typingDiv;
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+      let html = escapeHtml(text);
+      // Headings
+      html = html.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-success mt-2 mb-1">$1</h6>');
+      // Bold
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Italics
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      // Inline Code
+      html = html.replace(/`(.*?)`/g, '<code class="bg-light text-success px-1 rounded">$1</code>');
+      // Bullet points
+      html = html.replace(/^- (.*$)/gim, '• $1<br>');
+      // Newlines
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+    }
+  });
+</script>
+{% endblock %}
