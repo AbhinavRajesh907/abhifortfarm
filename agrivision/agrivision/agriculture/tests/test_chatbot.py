@@ -121,3 +121,24 @@ def test_api_agri_chatbot_endpoint(client, user):
     assert data["status"] == "success"
     assert data["data"]["intent"] == "crop_recommendation"
     assert len(data["data"]["quick_replies"]) > 0
+
+
+def test_chatbot_service_non_plant_image_rejection(user):
+    # Create synthetic indoor dining room image (beige background + brown table)
+    import numpy as np
+    room_arr = np.zeros((100, 100, 3), dtype=np.uint8)
+    room_arr[:70, :] = [230, 220, 205]  # Beige cream wall
+    room_arr[70:, :] = [140, 90, 50]    # Wooden table
+    room_img = Image.fromarray(room_arr)
+
+    buf = BytesIO()
+    room_img.save(buf, format="JPEG")
+    uploaded_file = SimpleUploadedFile("room.jpg", buf.getvalue(), content_type="image/jpeg")
+
+    service = AgriChatbotService()
+    res = service.process_message(user, message="", image_file=uploaded_file)
+
+    assert res.intent == "disease_detection_error"
+    assert "Non-Plant" in res.reply_text or "Indoor Room" in res.reply_text
+    assert res.created_record_id is None
+

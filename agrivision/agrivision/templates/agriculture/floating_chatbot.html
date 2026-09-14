@@ -93,9 +93,9 @@
   <button id="agriChatbotToggleBtn" 
           type="button" 
           class="btn btn-success rounded-circle shadow-lg d-flex align-items-center justify-content-center border border-2 border-white transition-all position-relative"
-          style="width: 60px; height: 60px; font-size: 1.6rem; background-color: #138844;"
+          style="width: 60px; height: 60px; font-size: 1.5rem; background-color: #138844;"
           title="Open AI Agronomist Chatbot">
-    <i class="bi bi-robot" id="agriChatbotIcon"></i>
+    <i class="bi bi-chat-dots-fill" id="agriChatbotIcon"></i>
     <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
       <span class="visually-hidden">AI Active</span>
     </span>
@@ -218,15 +218,12 @@
       quickChips.scrollLeft = scrollLeftPos - walk;
     });
 
-    // Welcome Message HTML
+    // Welcome Message HTML (Without Robot Face Avatar)
     function getWelcomeMessageHtml() {
       const displayName = "{{ request.user.name|default:request.user.email|escapejs }}";
       return `
-        <div class="d-flex gap-2 mb-3" id="welcomeMessageDiv">
-          <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; font-size: 1rem; background-color: #138844 !important;">
-            🤖
-          </div>
-          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 85%; font-size: 0.88rem;">
+        <div class="d-flex mb-3" id="welcomeMessageDiv">
+          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 92%; font-size: 0.88rem;">
             <h6 class="fw-bold text-success mb-2" style="color: #138844 !important; font-size: 0.95rem;">Hello, ${escapeHtml(displayName)}! 👋</h6>
             <p class="mb-2 text-dark">I am your <strong>AI Agronomist Chatbot</strong>. How can I help you today?</p>
             <ul class="mb-2 ps-3 text-secondary" style="font-size: 0.82rem;">
@@ -431,7 +428,7 @@
       }
 
       const msgDiv = document.createElement('div');
-      msgDiv.className = 'd-flex gap-2 mb-3';
+      msgDiv.className = 'd-flex mb-3';
 
       const formattedText = formatMarkdown(botData.reply_text || '');
 
@@ -448,8 +445,7 @@
       }
 
       msgDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; font-size: 1rem; background-color: #138844 !important;">🤖</div>
-        <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 85%; font-size: 0.88rem;">
+        <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 92%; font-size: 0.88rem;">
           <div class="markdown-body">${formattedText}</div>
           ${quickRepliesHtml}
         </div>`;
@@ -477,10 +473,9 @@
 
     function renderBotErrorMessage(errMsg, save = true) {
       const msgDiv = document.createElement('div');
-      msgDiv.className = 'd-flex gap-2 mb-3';
+      msgDiv.className = 'd-flex mb-3';
       msgDiv.innerHTML = `
-        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 34px; height: 34px;">⚠️</div>
-        <div class="bg-danger-subtle text-danger p-2 px-3 rounded-4 shadow-sm border border-danger-subtle" style="max-width: 85%; font-size: 0.85rem;">
+        <div class="bg-danger-subtle text-danger p-2 px-3 rounded-4 shadow-sm border border-danger-subtle" style="max-width: 92%; font-size: 0.85rem;">
           ${escapeHtml(errMsg)}
         </div>`;
       chatStream.appendChild(msgDiv);
@@ -493,9 +488,8 @@
 
     function renderTypingIndicator() {
       const typingDiv = document.createElement('div');
-      typingDiv.className = 'd-flex gap-2 mb-3';
+      typingDiv.className = 'd-flex mb-3';
       typingDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background-color: #138844 !important;">🤖</div>
         <div class="bg-white p-2 px-3 rounded-4 shadow-sm border border-light d-flex align-items-center gap-2" style="font-size: 0.82rem;">
           <div class="spinner-grow spinner-grow-sm text-success" role="status" style="color: #138844 !important;"></div>
           <span class="text-muted">AgriBot analyzing dataset & AI models...</span>

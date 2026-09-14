@@ -215,6 +215,66 @@ class ModelAdapter:
         }
 
 
+def validate_plant_or_seed_image(image: Image.Image) -> Tuple[bool, str]:
+    """Validate if the uploaded PIL image is a plant leaf, crop, or seed photo."""
+    try:
+        rgb_img = image.convert("RGB").resize((120, 120))
+        arr = np.array(rgb_img, dtype=np.float32) / 255.0
+
+        r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        total_pixels = float(r.size)
+
+        max_c = np.maximum(r, np.maximum(g, b))
+        min_c = np.minimum(r, np.minimum(g, b))
+        delta = max_c - min_c
+
+        s = np.zeros_like(max_c)
+        mask_max_non_zero = max_c > 0
+        s[mask_max_non_zero] = delta[mask_max_non_zero] / max_c[mask_max_non_zero]
+        v = max_c
+
+        h = np.zeros_like(max_c)
+        mask_r = (max_c == r) & (delta > 0)
+        h[mask_r] = (60.0 * ((g[mask_r] - b[mask_r]) / delta[mask_r]) + 360.0) % 360.0
+
+        mask_g = (max_c == g) & (delta > 0)
+        h[mask_g] = (60.0 * ((b[mask_g] - r[mask_g]) / delta[mask_g]) + 120.0) % 360.0
+
+        mask_b = (max_c == b) & (delta > 0)
+        h[mask_b] = (60.0 * ((r[mask_b] - g[mask_b]) / delta[mask_b]) + 240.0) % 360.0
+
+        # Plant & Seed Pixel Masks
+        green_mask = (h >= 35) & (h <= 165) & (s >= 0.15) & (v >= 0.15) & (g > b)
+        yellow_leaf_mask = (h >= 20) & (h < 35) & (s >= 0.20) & (v >= 0.20) & (g >= b - 0.05) & (r > b)
+        brown_leaf_mask = (h >= 10) & (h < 25) & (s >= 0.15) & (s <= 0.85) & (v >= 0.12) & (v <= 0.80) & (r > b)
+        seed_mask = (h >= 12) & (h <= 55) & (s >= 0.15) & (v >= 0.20) & (r >= b + 0.05)
+
+        plant_seed_mask = green_mask | yellow_leaf_mask | brown_leaf_mask | seed_mask
+        plant_seed_pixel_count = int(np.sum(plant_seed_mask))
+        plant_seed_ratio = plant_seed_pixel_count / total_pixels
+
+        low_sat_pixels = int(np.sum(s < 0.18))
+        low_sat_ratio = low_sat_pixels / total_pixels
+
+        blue_pixels = int(np.sum((b > g + 0.10) & (b > r + 0.10)))
+        blue_ratio = blue_pixels / total_pixels
+
+        green_ratio = int(np.sum(green_mask)) / total_pixels
+
+        if plant_seed_ratio < 0.32:
+            return False, "Non-plant image detected. Only images of plants, leaves, crops, and seeds are accepted for disease diagnosis."
+
+        if low_sat_ratio > 0.65 and green_ratio < 0.20:
+            return False, "Indoor/furniture photo detected. Please upload a clear photo focusing on a plant leaf, crop, or seed."
+
+        if blue_ratio > 0.45:
+            return False, "Non-agricultural image detected. Only images of plants, leaves, crops, and seeds are accepted for disease diagnosis."
+
+        return True, ""
+    except Exception as exc:
+        return True, ""
+
+
 # Global model adapter instance (initialized eagerly for robust testing and instant readiness)
 model_adapter: ModelAdapter = ModelAdapter()
 
@@ -335,6 +395,14 @@ async def predict_disease_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file is corrupted or not a valid image.",
         ) from exc
+
+    # Validate whether image is a plant, leaf, crop, or seed photo
+    is_valid_plant, error_reason = validate_plant_or_seed_image(pil_image)
+    if not is_valid_plant:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_reason,
+        )
 
     if model_adapter is None:
         raise HTTPException(

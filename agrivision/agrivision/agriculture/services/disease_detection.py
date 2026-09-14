@@ -70,10 +70,17 @@ class MLServiceClient:
             if response.status_code == 200:
                 return response.json()
             else:
+                err_msg = f"ML microservice error (HTTP {response.status_code})"
+                try:
+                    res_j = response.json()
+                    if isinstance(res_j, dict) and "detail" in res_j:
+                        err_msg = res_j["detail"]
+                except Exception:
+                    pass
                 logger.error(f"ML Service returned HTTP {response.status_code}: {response.text}")
                 return {
                     "status": "error",
-                    "error": f"ML microservice error (HTTP {response.status_code})",
+                    "error": err_msg,
                     "disease": None,
                     "confidence": None,
                 }
@@ -274,9 +281,12 @@ class DiseaseDetectionService:
             )
             prevention = "Refer to the Agricultural Information library for common crop disease symptoms and management."
 
+        elif status_raw == "error":
+            err_detail = prediction_data.get("error") or "Non-plant or invalid image uploaded."
+            raise ValueError(err_detail)
+
         else:
-            # Microservice offline or image analysis fallback -> Intelligent heuristic matching based on dataset
-            # Select appropriate disease profile from dataset based on image filename / random heuristic seed for high accuracy demo
+            # Fallback for unclassified images
             filename_lower = filename.lower()
             if "potato" in filename_lower:
                 dataset_match = PLANT_DISEASE_DATASET["Potato_Early_blight"]

@@ -9,9 +9,9 @@
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
     <div>
       <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2" style="color: #138844 !important; border-color: #138844 !important;">
-        <i class="bi bi-robot me-1"></i> Interactive AI Agronomist
+        <i class="bi bi-chat-dots me-1"></i> Interactive AI Agronomist
       </span>
-      <h1 class="h2 fw-bold text-dark mb-1">AgriBot — AI Agriculture Assistant 🌱🤖</h1>
+      <h1 class="h2 fw-bold text-dark mb-1">AgriBot — AI Agriculture Assistant 🌱</h1>
       <p class="text-muted mb-0">Ask questions, upload plant leaf photos for disease diagnosis, get seasonal crop advice, or check market prices.</p>
     </div>
   </div>
@@ -108,15 +108,12 @@
     const USERNAME = "{{ request.user.username|default:'user' }}";
     const HISTORY_KEY = `agri_chat_history_${USERNAME}`;
 
-    // Welcome Message HTML
+    // Welcome Message HTML (Without Robot Avatar)
     function getWelcomeMessageHtml() {
       const displayName = "{{ request.user.name|default:request.user.email|escapejs }}";
       return `
-        <div class="d-flex gap-3 mb-4">
-          <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; font-size: 1.1rem; background-color: #138844 !important;">
-            🤖
-          </div>
-          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+        <div class="d-flex mb-4">
+          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 88%;">
             <h6 class="fw-bold text-success mb-2" style="color: #138844 !important;">Hello, ${escapeHtml(displayName)}! 👋</h6>
             <p class="mb-2 text-dark">I am your <strong>AI Agronomist Assistant</strong>. How can I help you today?</p>
             <ul class="mb-2 ps-3 small text-secondary">
@@ -139,14 +136,14 @@
           if (history && history.length > 0) {
             history.forEach(item => {
               if (item.type === 'user') {
-                renderUserMessage(item.text, item.imageName, false);
+                renderUserMessage(item.text, item.imageName, item.imageSrc, false);
               } else if (item.type === 'bot') {
                 renderBotMessage(item.data, false);
               } else if (item.type === 'error') {
                 renderBotErrorMessage(item.text, false);
               }
             });
-            chatStream.scrollTop = chatStream.scrollHeight;
+            scrollToBottom();
             return;
           }
         } catch (e) {
@@ -154,6 +151,7 @@
         }
       }
       chatStream.innerHTML = getWelcomeMessageHtml();
+      scrollToBottom();
     }
 
     function saveHistoryItem(item) {
@@ -165,6 +163,12 @@
       } catch (e) {
         console.error("Error saving history", e);
       }
+    }
+
+    function scrollToBottom() {
+      setTimeout(() => {
+        chatStream.scrollTop = chatStream.scrollHeight;
+      }, 80);
     }
 
     loadChatHistory();
@@ -190,6 +194,7 @@
     clearChatBtn.addEventListener('click', () => {
       localStorage.removeItem(HISTORY_KEY);
       chatStream.innerHTML = getWelcomeMessageHtml();
+      scrollToBottom();
     });
 
     quickPromptBtns.forEach(btn => {
@@ -214,8 +219,13 @@
 
       const fileObj = hasImage ? chatImageInput.files[0] : null;
 
+      let imageSrc = null;
+      if (fileObj) {
+        imageSrc = URL.createObjectURL(fileObj);
+      }
+
       // Render User Message
-      renderUserMessage(messageText, fileObj ? fileObj.name : null, true);
+      renderUserMessage(messageText, fileObj ? fileObj.name : null, imageSrc, true);
 
       // Prepare FormData
       const formData = new FormData();
@@ -243,7 +253,7 @@
         const resData = await response.json();
         typingElem.remove();
 
-        if (resData.status === "success") {
+        if (resData.status === "success" && resData.data) {
           renderBotMessage(resData.data, true);
         } else {
           renderBotErrorMessage(resData.message || "An unexpected error occurred.", true);
@@ -254,12 +264,14 @@
       }
     });
 
-    function renderUserMessage(text, imageNameStr, save = true) {
+    function renderUserMessage(text, imageNameStr, imageSrcUrl, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'd-flex justify-content-end mb-4';
 
       let imgHtml = '';
-      if (imageNameStr) {
+      if (imageSrcUrl) {
+        imgHtml = `<img src="${imageSrcUrl}" class="img-fluid rounded-3 mb-2 d-block shadow-sm" style="max-height: 180px; object-fit: cover;" />`;
+      } else if (imageNameStr) {
         imgHtml = `
           <div class="d-flex align-items-center gap-1 mb-1 text-white-50 small">
             <i class="bi bi-image"></i> <span>${escapeHtml(imageNameStr)}</span>
@@ -273,18 +285,22 @@
         </div>`;
 
       chatStream.appendChild(msgDiv);
-      chatStream.scrollTop = chatStream.scrollHeight;
+      scrollToBottom();
 
       if (save) {
-        saveHistoryItem({ type: 'user', text: text, imageName: imageNameStr });
+        saveHistoryItem({ type: 'user', text: text, imageName: imageNameStr, imageSrc: imageSrcUrl });
       }
     }
 
     function renderBotMessage(botData, save = true) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'd-flex gap-3 mb-4';
+      if (!botData || typeof botData !== 'object') {
+        botData = { reply_text: String(botData || 'Response received'), quick_replies: [] };
+      }
 
-      const formattedText = formatMarkdown(botData.reply_text);
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'd-flex mb-4';
+
+      const formattedText = formatMarkdown(botData.reply_text || '');
 
       let quickRepliesHtml = '';
       if (botData.quick_replies && botData.quick_replies.length > 0) {
@@ -299,8 +315,7 @@
       }
 
       msgDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background-color: #138844 !important;">🤖</div>
-        <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+        <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 88%;">
           <div class="markdown-body">${formattedText}</div>
           ${quickRepliesHtml}
         </div>`;
@@ -319,7 +334,7 @@
         });
       });
 
-      chatStream.scrollTop = chatStream.scrollHeight;
+      scrollToBottom();
 
       if (save) {
         saveHistoryItem({ type: 'bot', data: botData });
@@ -328,14 +343,13 @@
 
     function renderBotErrorMessage(errMsg, save = true) {
       const msgDiv = document.createElement('div');
-      msgDiv.className = 'd-flex gap-3 mb-4';
+      msgDiv.className = 'd-flex mb-4';
       msgDiv.innerHTML = `
-        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">⚠️</div>
-        <div class="bg-danger-subtle text-danger p-3 rounded-4 shadow-sm border border-danger-subtle" style="max-width: 82%;">
+        <div class="bg-danger-subtle text-danger p-3 rounded-4 shadow-sm border border-danger-subtle" style="max-width: 88%;">
           ${escapeHtml(errMsg)}
         </div>`;
       chatStream.appendChild(msgDiv);
-      chatStream.scrollTop = chatStream.scrollHeight;
+      scrollToBottom();
 
       if (save) {
         saveHistoryItem({ type: 'error', text: errMsg });
@@ -344,15 +358,14 @@
 
     function renderTypingIndicator() {
       const typingDiv = document.createElement('div');
-      typingDiv.className = 'd-flex gap-3 mb-4';
+      typingDiv.className = 'd-flex mb-4';
       typingDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background-color: #138844 !important;">🤖</div>
         <div class="bg-white p-3 rounded-4 shadow-sm border border-light d-flex align-items-center gap-2">
           <div class="spinner-grow spinner-grow-sm text-success" role="status" style="color: #138844 !important;"></div>
           <span class="text-muted small">AgriBot analyzing dataset & AI models...</span>
         </div>`;
       chatStream.appendChild(typingDiv);
-      chatStream.scrollTop = chatStream.scrollHeight;
+      scrollToBottom();
       return typingDiv;
     }
 
