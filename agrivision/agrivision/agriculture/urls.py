@@ -11,7 +11,8 @@ urlpatterns = [
     # --------------------------------------------------------------------------
     # Web UI Views
     # --------------------------------------------------------------------------
-    path("", views.agriculture_info, name="index"),
+    path("", views.smart_assistant, name="index"),
+    path("smart-assistant/", views.smart_assistant, name="smart_assistant"),
     # AI Agronomist Chatbot
     path("chatbot/", views.agri_chatbot, name="chatbot"),
     path("disease-detection/", views.disease_detection, name="disease_detection"),

@@ -35,6 +35,12 @@ from agrivision.agriculture.services.market_price import get_market_prices
 
 
 @login_required
+def smart_assistant(request):
+    """AI Assistant Portal — Redirects directly to the AI Agronomist Chatbot."""
+    return redirect("agriculture:chatbot")
+
+
+@login_required
 def disease_detection(request):
     """Upload plant image for AI disease diagnosis."""
     if request.method == "POST":

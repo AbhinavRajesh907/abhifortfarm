@@ -8,19 +8,11 @@
   <!-- Header Banner -->
   <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
     <div>
-      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2">
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold mb-2" style="color: #138844 !important; border-color: #138844 !important;">
         <i class="bi bi-robot me-1"></i> Interactive AI Agronomist
       </span>
       <h1 class="h2 fw-bold text-dark mb-1">AgriBot — AI Agriculture Assistant 🌱🤖</h1>
-      <p class="text-muted mb-0">Ask questions, upload plant leaf photos for disease diagnosis, or get soil-based crop recommendations.</p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{% url 'agriculture:disease_detection' %}" class="btn btn-outline-success rounded-pill btn-sm px-3">
-        <i class="bi bi-camera me-1"></i> Form Diagnosis
-      </a>
-      <a href="{% url 'agriculture:crop_recommendation' %}" class="btn btn-outline-secondary rounded-pill btn-sm px-3">
-        <i class="bi bi-flower1 me-1"></i> Form Advisory
-      </a>
+      <p class="text-muted mb-0">Ask questions, upload plant leaf photos for disease diagnosis, get seasonal crop advice, or check market prices.</p>
     </div>
   </div>
 
@@ -28,55 +20,41 @@
     <div class="col-lg-10">
       <!-- Chat Interface Card -->
       <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: #ffffff;">
-        <!-- Card Header -->
-        <div class="card-header bg-success text-white py-3 px-4 d-flex align-items-center justify-content-between">
+        <!-- Card Header (#138844) -->
+        <div class="card-header border-0 py-3 px-4 d-flex align-items-center justify-content-between text-white" style="background-color: #138844;">
           <div class="d-flex align-items-center gap-3">
             <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; font-size: 1.4rem;">
               🌱
             </div>
             <div>
-              <h5 class="mb-0 fw-bold">AgriBot Assistant</h5>
-              <small class="text-white-50"><i class="bi bi-circle-fill text-warning me-1" style="font-size: 0.5rem;"></i> Online • Powered by AgriVision ML</small>
+              <h5 class="mb-0 fw-bold text-white">AgriBot — AI Assistant</h5>
+              <small class="text-white-50 d-flex align-items-center gap-1">
+                <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background-color: #ffc107;"></span> Online • Powered by AgriVision ML
+              </small>
             </div>
           </div>
-          <button class="btn btn-sm btn-outline-light rounded-pill px-3" id="clearChatBtn">
-            <i class="bi bi-trash me-1"></i> Clear Chat
+          <button class="btn btn-sm btn-outline-light rounded-pill px-3" id="clearChatBtn" title="Clear Chat History">
+            <i class="bi bi-trash3 me-1"></i> Clear Chat
           </button>
         </div>
 
         <!-- Chat Stream Body -->
-        <div class="card-body p-4" id="chatStream" style="height: 520px; overflow-y: auto; background-color: #f8faf8;">
-          <!-- Welcome Message -->
-          <div class="d-flex gap-3 mb-4">
-            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">
-              🤖
-            </div>
-            <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
-              <h6 class="fw-bold text-success mb-2">Hello, Farmer! 👋</h6>
-              <p class="mb-2">I am your **AI Agronomist Assistant**. I can help you with:</p>
-              <ul class="mb-2 ps-3 small text-secondary">
-                <li>📸 **Disease Detection**: Upload a leaf photo to diagnose diseases, treatments, and prevention steps.</li>
-                <li>🌱 **Crop Advisory**: Ask for optimal crop recommendations based on your soil pH, N-P-K, or season.</li>
-                <li>📈 **Market Prices**: Query current commodity market rates for Rice, Wheat, Cotton, etc.</li>
-              </ul>
-              <p class="mb-0 text-muted small">Choose a quick action below or type your question!</p>
-            </div>
-          </div>
+        <div class="card-body p-4 overflow-y-auto" id="chatStream" style="height: 520px; max-height: 60vh; background-color: #f8faf8; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
         </div>
 
         <!-- Quick Action Chips Bar -->
-        <div class="bg-light px-4 py-2 border-top border-bottom overflow-x-auto text-nowrap" id="quickChipsBar">
-          <span class="text-muted small fw-semibold me-2">Quick Prompts:</span>
-          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="📸 Upload a leaf photo for disease diagnosis">
+        <div class="bg-light px-4 py-2 border-top border-bottom overflow-x-auto text-nowrap d-flex align-items-center gap-2" id="quickChipsBar" style="scrollbar-width: thin;">
+          <span class="text-muted small fw-semibold me-1">Quick Prompts:</span>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 quick-prompt-btn" style="border-color: #138844; color: #138844;" data-prompt="📸 Upload a leaf photo for disease diagnosis">
             📸 Disease Diagnosis
           </button>
-          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Recommend best crops for Kharif season">
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 quick-prompt-btn" style="border-color: #138844; color: #138844;" data-prompt="Recommend best crops for Kharif season">
             🍂 Kharif Season Crops
           </button>
-          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Recommend crops for Clay soil with pH 6.5">
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 quick-prompt-btn" style="border-color: #138844; color: #138844;" data-prompt="Recommend crops for Clay soil with pH 6.5">
             🪴 Clay Soil Advisory
           </button>
-          <button type="button" class="btn btn-sm btn-outline-success rounded-pill me-2 quick-prompt-btn" data-prompt="Check current market price for Rice and Wheat">
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 quick-prompt-btn" style="border-color: #138844; color: #138844;" data-prompt="Check current market price for Rice and Wheat">
             📈 Market Prices
           </button>
         </div>
@@ -96,11 +74,11 @@
             {% csrf_token %}
             <input type="file" id="chatImageInput" name="image" class="d-none" accept="image/jpeg,image/png,image/webp,image/jpg" />
             <div class="input-group">
-              <button type="button" class="btn btn-light border-secondary-subtle px-3 text-secondary" id="attachPhotoBtn" title="Attach Leaf Photo for Disease Analysis">
-                <i class="bi bi-camera-fill fs-5 text-success"></i>
+              <button type="button" class="btn btn-light border-0 px-3 text-success" id="attachPhotoBtn" title="Attach Leaf Photo for AI Disease Analysis">
+                <i class="bi bi-camera-fill fs-4" style="color: #138844;"></i>
               </button>
-              <input type="text" id="chatMessageInput" class="form-control form-control-lg border-secondary-subtle px-3 fs-6" placeholder="Ask AgriBot or attach a plant leaf photo..." autocomplete="off" />
-              <button type="submit" class="btn btn-success px-4 fw-bold" id="sendMessageBtn">
+              <input type="text" id="chatMessageInput" class="form-control form-control-lg border-0 shadow-none px-3 fs-6" placeholder="Ask AgriBot or attach a plant leaf photo..." autocomplete="off" />
+              <button type="submit" class="btn btn-success px-4 fw-bold rounded-3" id="sendMessageBtn" style="background-color: #138844; border-color: #138844;">
                 <i class="bi bi-send-fill me-1"></i> Send
               </button>
             </div>
@@ -127,6 +105,69 @@
     const quickPromptBtns = document.querySelectorAll('.quick-prompt-btn');
 
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const USERNAME = "{{ request.user.username|default:'user' }}";
+    const HISTORY_KEY = `agri_chat_history_${USERNAME}`;
+
+    // Welcome Message HTML
+    function getWelcomeMessageHtml() {
+      const displayName = "{{ request.user.name|default:request.user.email|escapejs }}";
+      return `
+        <div class="d-flex gap-3 mb-4">
+          <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px; font-size: 1.1rem; background-color: #138844 !important;">
+            🤖
+          </div>
+          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
+            <h6 class="fw-bold text-success mb-2" style="color: #138844 !important;">Hello, ${escapeHtml(displayName)}! 👋</h6>
+            <p class="mb-2 text-dark">I am your <strong>AI Agronomist Assistant</strong>. How can I help you today?</p>
+            <ul class="mb-2 ps-3 small text-secondary">
+              <li class="mb-1">📸 <strong>Disease Detection</strong>: Upload a leaf photo for AI diagnosis.</li>
+              <li class="mb-1">🌱 <strong>Crop Advisory</strong>: Get optimal crop suggestions by soil/season.</li>
+              <li class="mb-1">📈 <strong>Market Prices</strong>: Query live mandi rates for crops.</li>
+            </ul>
+            <p class="mb-0 text-muted small">Tap a prompt below or type your question!</p>
+          </div>
+        </div>`;
+    }
+
+    // Load History
+    function loadChatHistory() {
+      chatStream.innerHTML = '';
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (saved) {
+        try {
+          const history = JSON.parse(saved);
+          if (history && history.length > 0) {
+            history.forEach(item => {
+              if (item.type === 'user') {
+                renderUserMessage(item.text, item.imageName, false);
+              } else if (item.type === 'bot') {
+                renderBotMessage(item.data, false);
+              } else if (item.type === 'error') {
+                renderBotErrorMessage(item.text, false);
+              }
+            });
+            chatStream.scrollTop = chatStream.scrollHeight;
+            return;
+          }
+        } catch (e) {
+          console.error("Error parsing history", e);
+        }
+      }
+      chatStream.innerHTML = getWelcomeMessageHtml();
+    }
+
+    function saveHistoryItem(item) {
+      try {
+        let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        history.push(item);
+        if (history.length > 40) history = history.slice(-40);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      } catch (e) {
+        console.error("Error saving history", e);
+      }
+    }
+
+    loadChatHistory();
 
     // Attach Photo Trigger
     attachPhotoBtn.addEventListener('click', () => chatImageInput.click());
@@ -147,13 +188,8 @@
     });
 
     clearChatBtn.addEventListener('click', () => {
-      chatStream.innerHTML = `
-        <div class="d-flex gap-3 mb-4">
-          <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">🌱</div>
-          <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
-            <p class="mb-0 text-muted">Chat cleared. Ask AgriBot a new question or attach a leaf photo!</p>
-          </div>
-        </div>`;
+      localStorage.removeItem(HISTORY_KEY);
+      chatStream.innerHTML = getWelcomeMessageHtml();
     });
 
     quickPromptBtns.forEach(btn => {
@@ -168,7 +204,7 @@
       });
     });
 
-    // Handle Submit
+    // Handle Form Submit
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const messageText = chatMessageInput.value.trim();
@@ -176,13 +212,15 @@
 
       if (!messageText && !hasImage) return;
 
-      // Render User Message in stream
-      renderUserMessage(messageText, hasImage ? chatImageInput.files[0] : null);
+      const fileObj = hasImage ? chatImageInput.files[0] : null;
+
+      // Render User Message
+      renderUserMessage(messageText, fileObj ? fileObj.name : null, true);
 
       // Prepare FormData
       const formData = new FormData();
       if (messageText) formData.append('message', messageText);
-      if (hasImage) formData.append('image', chatImageInput.files[0]);
+      if (hasImage) formData.append('image', fileObj);
 
       // Reset Inputs
       chatMessageInput.value = '';
@@ -206,37 +244,43 @@
         typingElem.remove();
 
         if (resData.status === "success") {
-          renderBotMessage(resData.data);
+          renderBotMessage(resData.data, true);
         } else {
-          renderBotErrorMessage(resData.message || "An unexpected error occurred.");
+          renderBotErrorMessage(resData.message || "An unexpected error occurred.", true);
         }
       } catch (err) {
         typingElem.remove();
-        renderBotErrorMessage("Failed to communicate with AgriBot server: " + err.message);
+        renderBotErrorMessage("Failed to communicate with AgriBot server: " + err.message, true);
       }
     });
 
-    function renderUserMessage(text, imageFile) {
+    function renderUserMessage(text, imageNameStr, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'd-flex justify-content-end mb-4';
 
       let imgHtml = '';
-      if (imageFile) {
-        const imgUrl = URL.createObjectURL(imageFile);
-        imgHtml = `<img src="${imgUrl}" class="img-fluid rounded-3 mb-2 d-block shadow-sm" style="max-height: 180px; object-fit: cover;" />`;
+      if (imageNameStr) {
+        imgHtml = `
+          <div class="d-flex align-items-center gap-1 mb-1 text-white-50 small">
+            <i class="bi bi-image"></i> <span>${escapeHtml(imageNameStr)}</span>
+          </div>`;
       }
 
       msgDiv.innerHTML = `
-        <div class="bg-success text-white p-3 rounded-4 shadow-sm" style="max-width: 78%;">
+        <div class="text-white p-3 rounded-4 shadow-sm" style="max-width: 78%; background-color: #138844;">
           ${imgHtml}
           <div>${escapeHtml(text || 'Uploaded leaf photo for AI analysis')}</div>
         </div>`;
 
       chatStream.appendChild(msgDiv);
       chatStream.scrollTop = chatStream.scrollHeight;
+
+      if (save) {
+        saveHistoryItem({ type: 'user', text: text, imageName: imageNameStr });
+      }
     }
 
-    function renderBotMessage(botData) {
+    function renderBotMessage(botData, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'd-flex gap-3 mb-4';
 
@@ -247,7 +291,7 @@
         quickRepliesHtml = `
           <div class="mt-3 pt-2 border-top d-flex flex-wrap gap-2">
             ${botData.quick_replies.map(qr => `
-              <button class="btn btn-xs btn-outline-success rounded-pill py-1 px-3 text-nowrap dynamic-qr-btn" data-qr="${escapeHtml(qr)}">
+              <button class="btn btn-xs btn-outline-success rounded-pill py-1 px-3 text-nowrap dynamic-qr-btn" style="border-color: #138844; color: #138844;" data-qr="${escapeHtml(qr)}">
                 ${escapeHtml(qr)}
               </button>
             `).join('')}
@@ -255,7 +299,7 @@
       }
 
       msgDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem;">🤖</div>
+        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-size: 1.1rem; background-color: #138844 !important;">🤖</div>
         <div class="bg-white p-3 rounded-4 shadow-sm border border-light" style="max-width: 82%;">
           <div class="markdown-body">${formattedText}</div>
           ${quickRepliesHtml}
@@ -263,7 +307,6 @@
 
       chatStream.appendChild(msgDiv);
 
-      // Bind dynamic QR buttons
       msgDiv.querySelectorAll('.dynamic-qr-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const qrText = btn.getAttribute('data-qr');
@@ -277,9 +320,13 @@
       });
 
       chatStream.scrollTop = chatStream.scrollHeight;
+
+      if (save) {
+        saveHistoryItem({ type: 'bot', data: botData });
+      }
     }
 
-    function renderBotErrorMessage(errMsg) {
+    function renderBotErrorMessage(errMsg, save = true) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'd-flex gap-3 mb-4';
       msgDiv.innerHTML = `
@@ -289,16 +336,20 @@
         </div>`;
       chatStream.appendChild(msgDiv);
       chatStream.scrollTop = chatStream.scrollHeight;
+
+      if (save) {
+        saveHistoryItem({ type: 'error', text: errMsg });
+      }
     }
 
     function renderTypingIndicator() {
       const typingDiv = document.createElement('div');
       typingDiv.className = 'd-flex gap-3 mb-4';
       typingDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">🤖</div>
+        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background-color: #138844 !important;">🤖</div>
         <div class="bg-white p-3 rounded-4 shadow-sm border border-light d-flex align-items-center gap-2">
-          <div class="spinner-grow spinner-grow-sm text-success" role="status"></div>
-          <span class="text-muted small">AgriBot is thinking and analyzing...</span>
+          <div class="spinner-grow spinner-grow-sm text-success" role="status" style="color: #138844 !important;"></div>
+          <span class="text-muted small">AgriBot analyzing dataset & AI models...</span>
         </div>`;
       chatStream.appendChild(typingDiv);
       chatStream.scrollTop = chatStream.scrollHeight;
@@ -308,17 +359,11 @@
     function formatMarkdown(text) {
       if (!text) return '';
       let html = escapeHtml(text);
-      // Headings
-      html = html.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-success mt-2 mb-1">$1</h6>');
-      // Bold
+      html = html.replace(/^### (.*$)/gim, '<h6 class="fw-bold text-success mt-2 mb-1" style="color: #138844 !important;">$1</h6>');
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // Italics
       html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-      // Inline Code
       html = html.replace(/`(.*?)`/g, '<code class="bg-light text-success px-1 rounded">$1</code>');
-      // Bullet points
       html = html.replace(/^- (.*$)/gim, '• $1<br>');
-      // Newlines
       html = html.replace(/\n/g, '<br>');
       return html;
     }

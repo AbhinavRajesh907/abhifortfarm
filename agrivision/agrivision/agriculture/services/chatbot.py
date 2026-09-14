@@ -249,16 +249,15 @@ class AgriChatbotService:
         )
 
     def _handle_market_price_query(self, query: str) -> ChatbotResponse:
-        """Extract crop name from query and return live market price records."""
-        # Find potential crop name in query
+        """Extract crop names from query and return live market price records."""
         all_crops = CropInformation.objects.values_list("name", flat=True)
-        matched_crop = None
-        for cname in all_crops:
-            if cname.lower() in query.lower():
-                matched_crop = cname
-                break
+        matched_crops = [cname for cname in all_crops if cname.lower() in query.lower()]
 
-        prices = get_market_prices(crop_name=matched_crop or "")
+        if matched_crops:
+            prices = MarketPrice.objects.filter(crop__name__in=matched_crops).select_related("crop")
+        else:
+            prices = get_market_prices(crop_name="")
+
         if not prices.exists():
             return ChatbotResponse(
                 reply_text=f"📈 No current market prices recorded matching '{query}'. Try asking for specific crops like Rice, Wheat, Tomato, or Cotton.",

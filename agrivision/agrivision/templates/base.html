@@ -74,33 +74,6 @@
                   <i class="bi bi-info-circle me-1 d-lg-none"></i> About
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link nav-link-agri {% if request.resolver_match.url_name == 'chatbot' %}active{% endif %}" href="{% url 'agriculture:chatbot' %}">
-                  <i class="bi bi-robot me-1 text-success"></i> AI Chatbot
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link nav-link-agri" href="{% url 'agriculture:disease_detection' %}">
-                  <i class="bi bi-cpu me-1"></i> AI Disease
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link nav-link-agri" href="{% url 'agriculture:crop_recommendation' %}">
-                  <i class="bi bi-patch-check me-1"></i> Crop Advisory
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link nav-link-agri" href="{% url 'agriculture:market_prices' %}">
-                  <i class="bi bi-graph-up me-1"></i> Market Prices
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link nav-link-agri" href="{% url 'agriculture:agriculture_info' %}">
-                  <i class="bi bi-book me-1"></i> Agri Library
-                </a>
-              </li>
-
-              </li>
               {% if request.user.is_authenticated %}
                 {% if request.user.role == 'USER' %}
                   <li class="nav-item">
@@ -226,13 +199,8 @@
         </div>
       </div>
     </footer>
-    <!-- Floating AI Agronomist Chatbot Launcher Widget -->
-    <a href="{% url 'agriculture:chatbot' %}"
-       class="position-fixed bottom-0 end-0 m-4 btn btn-success rounded-circle p-3 shadow-lg d-flex align-items-center justify-content-center border border-2 border-white"
-       style="z-index: 1050; width: 60px; height: 60px;"
-       title="Chat with AI Agronomist Assistant">
-      <i class="bi bi-robot fs-3"></i>
-    </a>
+    <!-- Floating AI Agronomist Chatbot Widget for Logged In Users -->
+    {% include "agriculture/floating_chatbot.html" %}
     {% endblock body %}
 
 

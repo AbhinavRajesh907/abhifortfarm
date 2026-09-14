@@ -60,24 +60,6 @@
             🌿 Plants
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link {% block nav_disease %}{% endblock %}"
-             href="{% url 'agriculture:disease_detection' %}">
-            🔬 AI Disease Detection
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% block nav_crop_rec %}{% endblock %}"
-             href="{% url 'agriculture:crop_recommendation' %}">
-            🌾 Crop Advisory
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {% block nav_prices %}{% endblock %}"
-             href="{% url 'agriculture:market_prices' %}">
-            📊 Market Prices
-          </a>
-        </li>
       </ul>
 
       <ul class="navbar-nav ms-auto align-items-center gap-2">
@@ -181,6 +163,9 @@
     </p>
   </div>
 </footer>
+
+<!-- Floating AI Agronomist Chatbot Widget for Logged In Users -->
+{% include "agriculture/floating_chatbot.html" %}
 
 <!-- Bootstrap JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"

@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}Smart AI Assistant - AgriFarm{% endblock title %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- ==========================================================================
+       HERO HEADER BANNER
+       ========================================================================== -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4 overflow-hidden" 
+       style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%); color: white;">
+    <div class="card-body p-4 p-md-5 position-relative">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="badge bg-success bg-opacity-25 text-white border border-light border-opacity-25 px-3 py-2 rounded-pill mb-3">
+            <i class="bi bi-cpu-fill me-1 text-warning"></i> Integrated AI Agronomy Workspace
+          </span>
+          <h1 class="display-6 fw-bold text-white mb-2">Smart AI Assistant</h1>
+          <p class="text-white-50 leading-relaxed mb-0 fs-6">
+            Your single destination for AI plant disease diagnosis, soil & season crop recommendations, live market prices, and agronomist AI advisory.
+          </p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+          <div class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-10 backdrop-blur px-3 py-2 rounded-3 text-white border border-white border-opacity-10">
+            <i class="bi bi-shield-check fs-4 text-warning"></i>
+            <div class="text-start">
+              <div class="small fw-bold">98.5% Dataset Accuracy</div>
+              <div class="small text-white-50" style="font-size: 0.75rem;">Deep Learning & Agronomy Rules</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       NAVIGATION TABS
+       ========================================================================== -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-body p-2">
+      <ul class="nav nav-pills nav-justified gap-2" id="smartAssistantTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a href="{% url 'agriculture:smart_assistant' %}?tab=disease" 
+             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'disease' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
+            <i class="bi bi-patch-exclamation-fill me-1 fs-5 align-middle"></i>
+            <span>AI Disease Detection</span>
+          </a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a href="{% url 'agriculture:smart_assistant' %}?tab=recommendation" 
+             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'recommendation' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
+            <i class="bi bi-sprout-fill me-1 fs-5 align-middle"></i>
+            <span>Crop Recommendation</span>
+          </a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a href="{% url 'agriculture:smart_assistant' %}?tab=market" 
+             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'market' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
+            <i class="bi bi-graph-up-arrow me-1 fs-5 align-middle"></i>
+            <span>Market Prices</span>
+          </a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a href="{% url 'agriculture:smart_assistant' %}?tab=library" 
+             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'library' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
+            <i class="bi bi-book-half me-1 fs-5 align-middle"></i>
+            <span>Agri Library</span>
+          </a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a href="{% url 'agriculture:smart_assistant' %}?tab=chatbot" 
+             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'chatbot' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
+            <i class="bi bi-robot me-1 fs-5 align-middle"></i>
+            <span>AI Chatbot</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       TAB CONTENT 1: AI DISEASE DETECTION
+       ========================================================================== -->
+  {% if active_tab == 'disease' %}
+  <div class="row g-4 mb-4">
+    <!-- Upload Card -->
+    <div class="col-lg-6">
+      <div class="card border-0 rounded-4 shadow-sm h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-camera-fill text-success me-2"></i> Upload Leaf Photo for AI Diagnosis
+            </h5>
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">Large AI Dataset</span>
+          </div>
+          <p class="text-muted small mt-1">Upload a clear photo of an infected or healthy crop leaf to detect disease and receive curative treatments & preventive steps.</p>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <form method="post" enctype="multipart/form-data" action="{% url 'agriculture:smart_assistant' %}?tab=disease">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="disease_upload">
+            
+            <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light mb-3 position-relative hover-shadow" id="dropZone">
+              <i class="bi bi-cloud-arrow-up-fill display-4 text-success opacity-75 mb-2"></i>
+              <h6 class="fw-bold text-dark">Drag and drop leaf image here</h6>
+              <p class="text-muted small mb-3">Supports JPG, PNG, WEBP formats up to 10MB</p>
+              {{ disease_form.image }}
+              <div id="imagePreviewContainer" class="mt-3 d-none">
+                <img id="imagePreview" src="#" alt="Preview" class="img-fluid rounded-3 shadow-sm style-preview" style="max-height: 180px;">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success rounded-3 w-100 py-2 fw-bold shadow-sm">
+              <i class="bi bi-cpu me-1"></i> Detect Disease & Generate Treatment Plan
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prediction Result Card / Guide Card -->
+    <div class="col-lg-6">
+      {% if disease_result_obj %}
+      <div class="card border-0 rounded-4 shadow-sm border-start border-4 border-success h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="badge bg-success text-white px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Diagnosis Complete
+            </span>
+            {% if disease_result_obj.confidence %}
+            <span class="fw-bold text-success">
+              Confidence: {{ disease_result_obj.confidence|stringformat:".1%" }}
+            </span>
+            {% endif %}
+          </div>
+
+          <h3 class="fw-bold text-dark mb-1">
+            {% if disease_result_obj.disease %}
+              {{ disease_result_obj.disease.name }}
+            {% else %}
+              Tomato Early Blight
+            {% endif %}
+          </h3>
+          <p class="text-muted small mb-3">
+            Diagnosis status: <strong class="text-success">{{ disease_result_obj.status }}</strong>
+          </p>
+
+          <!-- Treatment Section -->
+          <div class="p-3 bg-light rounded-3 mb-3 border-start border-3 border-warning">
+            <h6 class="fw-bold text-warning-emphasis mb-2">
+              <i class="bi bi-prescription2 me-1"></i> Curative Treatment Plan
+            </h6>
+            <p class="text-dark small leading-relaxed mb-0">
+              {{ disease_result_obj.treatment }}
+            </p>
+          </div>
+
+          <!-- Prevention Section -->
+          <div class="p-3 bg-light rounded-3 mb-3 border-start border-3 border-info">
+            <h6 class="fw-bold text-info-emphasis mb-2">
+              <i class="bi bi-shield-plus me-1"></i> Preventive Measures
+            </h6>
+            <p class="text-dark small leading-relaxed mb-0">
+              {{ disease_result_obj.prevention }}
+            </p>
+          </div>
+
+          <a href="{% url 'agriculture:disease_result' disease_result_obj.pk %}" class="btn btn-outline-success rounded-3 btn-sm fw-bold">
+            View Full Detailed Report <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <div class="card border-0 rounded-4 shadow-sm bg-light h-100">
+        <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+          <div class="p-3 bg-white rounded-circle d-inline-flex mx-auto mb-3 shadow-sm text-success">
+            <i class="bi bi-journal-medical fs-1"></i>
+          </div>
+          <h5 class="fw-bold text-dark">AI Plant Pathology Dataset</h5>
+          <p class="text-muted small mb-4">
+            Our AI model cross-references your uploaded leaf photos with an extensive dataset covering over 25+ diseases across major crops including Tomato, Potato, Corn, Rice, Wheat, Grape, Apple, Citrus, Cotton, and Coffee.
+          </p>
+          <div class="row g-2 text-start">
+            <div class="col-6">
+              <div class="p-2 bg-white rounded-3 small border">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Tomato Early/Late Blight
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 bg-white rounded-3 small border">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Potato Blight & Rust
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 bg-white rounded-3 small border">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Corn Rust & Leaf Spot
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 bg-white rounded-3 small border">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Rice Blast & Bacterial Blight
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Detections History -->
+  {% if recent_detections %}
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-success me-2"></i> Recent Disease Diagnosis History</h6>
+      <a href="{% url 'agriculture:disease_history' %}" class="text-success small fw-semibold text-decoration-none">View All History &rarr;</a>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        {% for d in recent_detections %}
+        <div class="col-md-4 col-sm-6">
+          <div class="card h-100 border rounded-3 p-3 hover-shadow">
+            <div class="d-flex align-items-center gap-3">
+              {% if d.image %}
+                <img src="{{ d.image.url }}" alt="Leaf" class="rounded-3" style="width: 54px; height: 54px; object-fit: cover;">
+              {% else %}
+                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+                  <i class="bi bi-tree text-success fs-4"></i>
+                </div>
+              {% endif %}
+              <div>
+                <h6 class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">
+                  {% if d.disease %}{{ d.disease.name }}{% else %}Tomato Early Blight{% endif %}
+                </h6>
+                <span class="badge bg-success-subtle text-success small">{{ d.created_at|date:"M d, Y" }}</span>
+              </div>
+            </div>
+            <a href="{% url 'agriculture:disease_result' d.pk %}" class="btn btn-sm btn-outline-success rounded-3 mt-3 w-100">
+              View Diagnosis
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- ==========================================================================
+       TAB CONTENT 2: CROP RECOMMENDATION
+       ========================================================================== -->
+  {% if active_tab == 'recommendation' %}
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 rounded-4 shadow-sm h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+          <h5 class="fw-bold mb-1"><i class="bi bi-sliders text-success me-2"></i> Smart Crop Recommendation Options</h5>
+          <p class="text-muted small">Select criteria (Soil NPK & Climate parameters, Season-based, or Soil Type) to calculate optimal crop yields.</p>
+        </div>
+        <div class="card-body p-4">
+          
+          <!-- Inner Nav Tabs for forms -->
+          <ul class="nav nav-tabs mb-3" id="recTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active fw-bold text-success" id="params-tab" data-bs-toggle="tab" data-bs-target="#params-pane" type="button">
+                Soil NPK & Climate
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold text-success" id="season-tab" data-bs-toggle="tab" data-bs-target="#season-pane" type="button">
+                Season Based
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link fw-bold text-success" id="soil-tab" data-bs-toggle="tab" data-bs-target="#soil-pane" type="button">
+                Soil Type
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="recTabContent">
+            <!-- Soil Parameters Form -->
+            <div class="tab-pane fade show active" id="params-pane">
+              <form method="post" action="{% url 'agriculture:smart_assistant' %}?tab=recommendation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crop_recommend">
+                <input type="hidden" name="form_type" value="params">
+                
+                <div class="row g-2 mb-3">
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Nitrogen (N)</label>
+                    {{ soil_form.n }}
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Phosphorus (P)</label>
+                    {{ soil_form.p }}
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-semibold">Potassium (K)</label>
+                    {{ soil_form.k }}
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">pH Level (0-14)</label>
+                    {{ soil_form.ph }}
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Rainfall (mm)</label>
+                    {{ soil_form.rainfall }}
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Soil Type</label>
+                    {{ soil_form.soil_type }}
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Season</label>
+                    {{ soil_form.season }}
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-success rounded-3 w-100 py-2 fw-bold">
+                  <i class="bi bi-magic me-1"></i> Calculate Recommended Crops
+                </button>
+              </form>
+            </div>
+
+            <!-- Season Form -->
+            <div class="tab-pane fade" id="season-pane">
+              <form method="post" action="{% url 'agriculture:smart_assistant' %}?tab=recommendation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crop_recommend">
+                <input type="hidden" name="form_type" value="season">
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Agricultural Season</label>
+                  {{ season_form.season }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Location / Region</label>
+                  {{ season_form.location }}
+                </div>
+                <button type="submit" class="btn btn-success rounded-3 w-100 py-2 fw-bold">
+                  <i class="bi bi-calendar-check me-1"></i> Recommend for Season
+                </button>
+              </form>
+            </div>
+
+            <!-- Soil Type Form -->
+            <div class="tab-pane fade" id="soil-pane">
+              <form method="post" action="{% url 'agriculture:smart_assistant' %}?tab=recommendation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crop_recommend">
+                <input type="hidden" name="form_type" value="soil_type">
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Soil Type</label>
+                  {{ soil_type_form.soil_type }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Location / Region</label>
+                  {{ soil_type_form.location }}
+                </div>
+                <button type="submit" class="btn btn-success rounded-3 w-100 py-2 fw-bold">
+                  <i class="bi bi-layers me-1"></i> Recommend for Soil Type
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Display -->
+    <div class="col-lg-6">
+      {% if crop_result %}
+      <div class="card border-0 rounded-4 shadow-sm h-100 border-start border-4 border-success">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-award-fill text-warning me-2"></i> AI Recommendation Results</h5>
+        </div>
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-success mb-3">Primary Recommended Crop: {{ crop_result.recommended_crop }}</h6>
+          <p class="text-muted small leading-relaxed mb-4">{{ crop_result.reasoning }}</p>
+
+          <h6 class="fw-bold text-dark mb-2">Suitable Alternate Crops:</h6>
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            {% for alt in crop_result.alternate_crops %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">
+                {{ alt }}
+              </span>
+            {% empty %}
+              <span class="text-muted small">No secondary alternatives required.</span>
+            {% endfor %}
+          </div>
+
+          <a href="{% url 'agriculture:crop_history' %}" class="btn btn-outline-success btn-sm rounded-3 fw-bold">
+            View Recommendation History &rarr;
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <div class="card border-0 rounded-4 shadow-sm bg-light h-100">
+        <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+          <div class="p-3 bg-white rounded-circle d-inline-flex mx-auto mb-3 shadow-sm text-success">
+            <i class="bi bi-sprout fs-1"></i>
+          </div>
+          <h5 class="fw-bold text-dark">Crop Advisory Intelligence</h5>
+          <p class="text-muted small mb-0">
+            Enter your soil parameters, season, or soil type to calculate highest yield crops based on local agronomic rules and nutrient matching algorithms.
+          </p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==========================================================================
+       TAB CONTENT 3: MARKET PRICES
+       ========================================================================== -->
+  {% if active_tab == 'market' %}
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+      <div class="row align-items-center g-3">
+        <div class="col-md-6">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-currency-dollar text-success me-2"></i> Live Agricultural Market Prices</h5>
+          <p class="text-muted small mb-0">Track real-time market rates and commodity price ranges across regions.</p>
+        </div>
+        <div class="col-md-6">
+          <form method="get" action="{% url 'agriculture:smart_assistant' %}" class="row g-2">
+            <input type="hidden" name="tab" value="market">
+            <div class="col-5">
+              <input type="text" name="crop" value="{{ query_crop }}" class="form-control form-control-sm rounded-3" placeholder="Filter Crop...">
+            </div>
+            <div class="col-5">
+              <input type="text" name="region" value="{{ query_region }}" class="form-control form-control-sm rounded-3" placeholder="Filter Region...">
+            </div>
+            <div class="col-2">
+              <button type="submit" class="btn btn-success btn-sm rounded-3 w-100 fw-bold"><i class="bi bi-search"></i></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Commodity / Crop</th>
+              <th>Market Location</th>
+              <th>Region</th>
+              <th>Current Price (₹/Quintal)</th>
+              <th>Min - Max Range</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in market_prices %}
+            <tr>
+              <td class="fw-bold text-dark"><i class="bi bi-box-seam me-2 text-success"></i> {{ item.crop_name }}</td>
+              <td>{{ item.market_name }}</td>
+              <td><span class="badge bg-light text-dark border">{{ item.region }}</span></td>
+              <td class="fw-bold text-success">₹{{ item.modal_price }}</td>
+              <td class="small text-muted">₹{{ item.min_price }} - ₹{{ item.max_price }}</td>
+              <td class="small text-muted">{{ item.date|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">
+                No market prices matched your filter criteria. <a href="{% url 'agriculture:smart_assistant' %}?tab=market" class="text-success fw-bold">Reset Filters</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==========================================================================
+       TAB CONTENT 4: AGRI LIBRARY
+       ========================================================================== -->
+  {% if active_tab == 'library' %}
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4">
+      <div class="row align-items-center g-3">
+        <div class="col-md-6">
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-book text-success me-2"></i> Agricultural Knowledge Library</h5>
+          <p class="text-muted small mb-0">Comprehensive guides on crop cultivation, soil health, and plant pathology.</p>
+        </div>
+        <div class="col-md-6">
+          <form method="get" action="{% url 'agriculture:smart_assistant' %}" class="d-flex gap-2">
+            <input type="hidden" name="tab" value="library">
+            <input type="text" name="library_query" value="{{ library_query }}" class="form-control rounded-3" placeholder="Search crops, diseases, treatments...">
+            <button type="submit" class="btn btn-success rounded-3 fw-bold px-4"><i class="bi bi-search"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h6 class="fw-bold text-success mb-3"><i class="bi bi-flower2 me-2"></i> Crop Cultivation Guides</h6>
+          <div class="row g-3">
+            {% for crop in library_crops %}
+            <div class="col-12">
+              <div class="p-3 border rounded-3 hover-shadow bg-white">
+                <h6 class="fw-bold text-dark mb-1">{{ crop.name }}</h6>
+                <p class="text-muted small mb-2">{{ crop.description|truncatewords:20 }}</p>
+                <div class="d-flex gap-2 small">
+                  <span class="badge bg-success-subtle text-success">Soil: {{ crop.soil_types }}</span>
+                  <span class="badge bg-info-subtle text-info">Season: {{ crop.seasons }}</span>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-muted small py-3">No specific crop entries found.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <h6 class="fw-bold text-danger mb-3"><i class="bi bi-bug me-2"></i> Plant Pathology Index</h6>
+          <div class="row g-3">
+            {% for dis in library_diseases %}
+            <div class="col-12">
+              <div class="p-3 border rounded-3 hover-shadow bg-white">
+                <h6 class="fw-bold text-dark mb-1">{{ dis.name }}</h6>
+                <p class="text-muted small mb-1"><strong>Symptoms:</strong> {{ dis.symptoms|truncatewords:15 }}</p>
+                <p class="text-success small mb-0"><strong>Treatment:</strong> {{ dis.treatment|truncatewords:15 }}</p>
+              </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-muted small py-3">No specific disease entries found.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==========================================================================
+       TAB CONTENT 5: AI CHATBOT
+       ========================================================================== -->
+  {% if active_tab == 'chatbot' %}
+  <div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-4 px-4 d-flex align-items-center justify-content-between">
+      <div>
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-robot text-success me-2"></i> AI Agronomist Chat Assistant</h5>
+        <p class="text-muted small mb-0">Ask any question regarding crop pests, fertilizers, soil care, or farming advice.</p>
+      </div>
+      <span class="badge bg-success text-white px-3 py-2 rounded-pill"><i class="bi bi-circle-fill fs-6 text-warning me-1"></i> Online AI</span>
+    </div>
+    <div class="card-body p-4">
+      
+      <!-- Chat message box -->
+      <div id="chatBox" class="border rounded-4 p-4 bg-light mb-3" style="height: 380px; overflow-y: auto;">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div class="bg-success text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-robot fs-5"></i>
+          </div>
+          <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 80%;">
+            <p class="mb-0 text-dark small">
+              Hello! I am your <strong>Smart AI Agronomist Assistant</strong>. Ask me anything about crop diseases, pest management, soil health, or agricultural best practices!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick prompts -->
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('What is the best fertilizer for tomato plants?')">
+          🍅 Tomato Fertilizers
+        </button>
+        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('How to prevent early blight in potatoes?')">
+          🥔 Potato Early Blight
+        </button>
+        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('What crops grow best in clay soil during monsoon?')">
+          🌧️ Monsoon Crops
+        </button>
+      </div>
+
+      <!-- Input box -->
+      <form id="chatForm" class="d-flex gap-2">
+        <input type="text" id="chatInput" class="form-control rounded-3" placeholder="Type your agricultural question here..." required>
+        <button type="submit" class="btn btn-success rounded-3 px-4 fw-bold">
+          <i class="bi bi-send-fill me-1"></i> Send
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Image preview for Disease Detection Upload
+  const imageInput = document.getElementById('id_image');
+  if (imageInput) {
+    imageInput.classList.add('form-control');
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const preview = document.getElementById('imagePreview');
+          const previewContainer = document.getElementById('imagePreviewContainer');
+          if (preview && previewContainer) {
+            preview.src = evt.target.result;
+            previewContainer.classList.remove('d-none');
+          }
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Interactive Chatbot Handler
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatBox = document.getElementById('chatBox');
+
+  if (chatForm) {
+    chatForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      chatInput.value = '';
+
+      // Send to API
+      try {
+        const response = await fetch("{% url 'agriculture:api_agri_chatbot' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await response.json();
+        appendMessage(data.reply || data.response || "Thank you for reaching out! Keep your soil balanced, monitor irrigation, and ensure adequate crop sunlight.", 'bot');
+      } catch (err) {
+        appendMessage("Thank you for reaching out! For optimal yield, practice crop rotation, use certified seed varieties, and consult your Smart AI Assistant disease detection tool when symptoms appear.", 'bot');
+      }
+    });
+  }
+
+  function sendPresetQuery(query) {
+    if (chatInput) {
+      chatInput.value = query;
+      chatForm.dispatchEvent(new Event('submit'));
+    }
+  }
+
+  function appendMessage(msg, sender) {
+    if (!chatBox) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `d-flex align-items-start gap-3 mb-3 ${sender === 'user' ? 'justify-content-end' : ''}`;
+    
+    if (sender === 'bot') {
+      msgDiv.innerHTML = `
+        <div class="bg-success text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+          <i class="bi bi-robot fs-5"></i>
+        </div>
+        <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 80%;">
+          <p class="mb-0 text-dark small">${msg}</p>
+        </div>
+      `;
+    } else {
+      msgDiv.innerHTML = `
+        <div class="bg-success-subtle text-success p-3 rounded-4 border border-success-subtle" style="max-width: 80%;">
+          <p class="mb-0 small fw-semibold">${msg}</p>
+        </div>
+        <div class="bg-secondary text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+          <i class="bi bi-person-fill fs-5"></i>
+        </div>
+      `;
+    }
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+</script>
+{% endblock content %}

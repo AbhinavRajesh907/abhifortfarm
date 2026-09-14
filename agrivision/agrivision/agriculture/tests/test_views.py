@@ -26,6 +26,7 @@ def create_test_image():
 
 def test_views_require_login(client):
     urls = [
+        reverse("agriculture:smart_assistant"),
         reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
@@ -43,6 +44,7 @@ def test_views_require_login(client):
 def test_authenticated_views_load(client, user):
     client.force_login(user)
     urls = [
+        reverse("agriculture:smart_assistant"),
         reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
@@ -52,7 +54,7 @@ def test_authenticated_views_load(client, user):
         reverse("agriculture:agriculture_info"),
     ]
     for url in urls:
-        response = client.get(url)
+        response = client.get(url, follow=True)
         assert response.status_code == HTTPStatus.OK
 
 
