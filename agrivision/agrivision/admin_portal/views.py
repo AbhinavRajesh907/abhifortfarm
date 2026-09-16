@@ -706,32 +706,68 @@ class OrderStatusUpdateView(AdminRequiredMixin, View):
         return redirect("admin_portal:order_detail", pk=pk)
 
 
-class PaymentListView(AdminRequiredMixin, ListView):
-    model = Payment
-    template_name = "admin_portal/payments/payment_list.html"
-    context_object_name = "payments"
+class PaymentListView(AdminRequiredMixin, View):
+    """Redirect legacy payments route to the new Admin Order View reporting page."""
+    def get(self, request, *args, **kwargs):
+        return redirect("admin_portal:order_view")
+
+
+class AdminOrderView(AdminRequiredMixin, ListView):
+    """
+    Comprehensive View-Only Order & Sales Report page for Admin.
+    Displays detailed order line items, provider source info, customer contacts,
+    and filterable order summaries for business analytics.
+    """
+    model = Order
+    template_name = "admin_portal/orders/orders_view.html"
+    context_object_name = "orders"
     paginate_by = 15
 
     def get_queryset(self):
-        qs = Payment.objects.select_related("order", "user").order_by("-payment_date")
+        qs = Order.objects.select_related("user").prefetch_related("items__product", "items__product__provider").order_by("-created_at")
         status = self.request.GET.get("status")
+        payment_status = self.request.GET.get("payment_status")
+        payment_method = self.request.GET.get("payment_method")
         search = self.request.GET.get("q")
 
-        if status:
-            qs = qs.filter(status=status)
+        if status == "completed":
+            qs = qs.filter(order_status=Order.DELIVERED)
+        elif status == "pending":
+            qs = qs.filter(order_status__in=[Order.ORDER_PENDING, Order.CONFIRMED, Order.PROCESSING, Order.SHIPPED])
+        elif status == "cancelled":
+            qs = qs.filter(order_status=Order.CANCELLED)
+        elif status:
+            qs = qs.filter(order_status=status)
+
+        if payment_status:
+            qs = qs.filter(payment_status=payment_status)
+        if payment_method:
+            qs = qs.filter(payment_method=payment_method)
         if search:
             qs = qs.filter(
-                Q(transaction_id__icontains=search)
-                | Q(order__order_number__icontains=search)
-                | Q(user__email__icontains=search)
-            )
+                Q(order_number__icontains=search)
+                | Q(full_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(items__product_name__icontains=search)
+            ).distinct()
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["total_payments_amount"] = Payment.objects.filter(status=Order.PAID).aggregate(Sum("amount"))["amount__sum"] or 0
+        all_orders = Order.objects.all()
+
+        context["total_orders_count"] = all_orders.count()
+        context["completed_orders_count"] = all_orders.filter(order_status=Order.DELIVERED).count()
+        context["pending_orders_count"] = all_orders.filter(order_status__in=[Order.ORDER_PENDING, Order.CONFIRMED, Order.PROCESSING, Order.SHIPPED]).count()
+        context["cancelled_orders_count"] = all_orders.filter(order_status=Order.CANCELLED).count()
+
+        total_settled = all_orders.filter(payment_status=Order.PAID).aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+        context["total_settled_revenue"] = total_settled
+
+        context["selected_status"] = self.request.GET.get("status", "all")
+        context["payment_status_filter"] = self.request.GET.get("payment_status", "")
+        context["payment_method_filter"] = self.request.GET.get("payment_method", "")
         context["search"] = self.request.GET.get("q", "")
-        context["status_filter"] = self.request.GET.get("status", "")
         return context
 
 
@@ -744,7 +780,7 @@ class PaymentMarkPaidView(AdminRequiredMixin, View):
             payment.order.payment_status = Order.PAID
             payment.order.save()
         messages.success(request, f"Payment #{payment.transaction_id} marked as PAID.")
-        return redirect(request.META.get("HTTP_REFERER", "admin_portal:payment_list"))
+        return redirect(request.META.get("HTTP_REFERER", "admin_portal:order_view"))
 
 
 # -----------------------------------------------------------------------------

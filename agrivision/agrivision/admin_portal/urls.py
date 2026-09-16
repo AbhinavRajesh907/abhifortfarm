@@ -43,6 +43,7 @@ urlpatterns = [
     
     # Order & Payment Management
     path("orders/", views.OrderListView.as_view(), name="order_list"),
+    path("orders/view/", views.AdminOrderView.as_view(), name="order_view"),
     path("orders/<int:pk>/", views.OrderDetailView.as_view(), name="order_detail"),
     path("orders/<int:pk>/update-status/", views.OrderStatusUpdateView.as_view(), name="order_status_update"),
     path("payments/", views.PaymentListView.as_view(), name="payment_list"),

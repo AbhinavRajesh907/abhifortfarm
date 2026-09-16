@@ -20,6 +20,7 @@ from django.views.generic import UpdateView
 from django.views.generic import ListView
 from django.urls import reverse_lazy
 
+from django.utils import timezone
 from agrivision.marketplace.models import Category
 from agrivision.marketplace.models import Order
 from agrivision.marketplace.models import OrderItem
@@ -28,8 +29,7 @@ from agrivision.marketplace.models import Product
 from .forms import ProviderApplyForm
 from .forms import ProviderProfileForm
 from .forms import ProviderRequestForm
-from .models import ProviderProfile
-from .models import ProviderRequest
+from .models import ProviderProfile, ProviderRequest, ProviderProduct
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -230,25 +230,69 @@ def provider_product_list(request):
     return render(request, "providers/product_list.html", context)
 
 
+def _ensure_default_categories():
+    Category.objects.get_or_create(name="Seeds", defaults={"description": "Seeds for agriculture"})
+    Category.objects.get_or_create(name="Plants", defaults={"description": "Plants and saplings"})
+
+
 @approved_provider_required
 def provider_product_add(request):
     """
-    Approved provider submits a new product request for Admin review.
-    The admin then creates the marketplace.Product and links it back.
+    Approved provider registers a new seed/plant product.
+    Product becomes immediately active & listed in the marketplace without admin approval.
     """
+    _ensure_default_categories()
     profile = request.user.provider_profile
 
     if request.method == "POST":
         form = ProviderRequestForm(request.POST, request.FILES)
         if form.is_valid():
+            # 1. Directly create the active Marketplace Product
+            item_name = form.cleaned_data["item_name"]
+            category = form.cleaned_data["category"]
+            description = form.cleaned_data.get("description", "")
+            quantity = form.cleaned_data.get("quantity", 10)
+            expected_price = form.cleaned_data.get("expected_price", 0.00)
+            image = form.cleaned_data.get("image")
+            image_url = form.cleaned_data.get("image_url")
+
+            product = Product.objects.create(
+                name=item_name,
+                category=category,
+                provider=profile,
+                provider_name=profile.farm_name,
+                provider_user=request.user,
+                description=description,
+                cost_price=expected_price,
+                price=expected_price,
+                stock=quantity,
+                image=image,
+                image_url=image_url,
+                is_active=True,
+            )
+
+            # 2. Record ProviderRequest log as immediately APPROVED
             req = form.save(commit=False)
             req.provider = profile
-            req.status = ProviderRequest.Status.PENDING
+            req.status = ProviderRequest.Status.APPROVED
+            req.selling_price = expected_price
+            req.admin_notes = "Auto-approved upon registration by provider."
+            req.reviewed_by = request.user
+            req.reviewed_at = timezone.now()
+            req.created_product = product
             req.save()
+
+            # 3. Create ProviderProduct mapping log
+            ProviderProduct.objects.create(
+                provider=profile,
+                product=product,
+                supplied_quantity=quantity,
+                unit_procurement_cost=expected_price,
+            )
+
             messages.success(
                 request,
-                f"✅ '{req.item_name}' submitted for Admin review. "
-                "It will appear in the marketplace once approved.",
+                f"✅ '{product.name}' registered successfully! It is now live and available in the Marketplace.",
             )
             return redirect("providers:product_list")
     else:
@@ -368,5 +412,111 @@ def provider_orders(request):
         "profile": profile,
         "provider_orders": provider_orders_list,
         "total_orders": len(provider_orders_list),
+        "order_status_choices": Order.ORDER_STATUS_CHOICES,
+        "payment_status_choices": Order.PAYMENT_STATUS_CHOICES,
     }
     return render(request, "providers/orders.html", context)
+
+
+@approved_provider_required
+def provider_order_status_update(request, order_id):
+    """
+    Allows an approved provider to update the order fulfillment status
+    and payment status for an order containing their products.
+    """
+    if request.method != "POST":
+        return redirect("providers:orders")
+
+    profile = request.user.provider_profile
+
+    # Verify that this order contains products from this provider
+    has_product = OrderItem.objects.filter(order_id=order_id, product__provider=profile).exists()
+    if not has_product:
+        messages.error(request, "You do not have permission to update this order.")
+        return redirect("providers:orders")
+
+    order = get_object_or_404(Order, id=order_id)
+    new_order_status = request.POST.get("order_status")
+    new_payment_status = request.POST.get("payment_status")
+
+    valid_order_statuses = dict(Order.ORDER_STATUS_CHOICES)
+    valid_payment_statuses = dict(Order.PAYMENT_STATUS_CHOICES)
+
+    updated = False
+    if new_order_status in valid_order_statuses:
+        order.order_status = new_order_status
+        updated = True
+
+    if new_payment_status in valid_payment_statuses:
+        order.payment_status = new_payment_status
+        if getattr(order, "payment_record", None):
+            order.payment_record.status = new_payment_status
+            order.payment_record.save()
+        updated = True
+
+    if updated:
+        order.save()
+        messages.success(
+            request,
+            f"✅ Order #{order.order_number} status updated to '{order.get_order_status_display()}' / '{order.get_payment_status_display()}'.",
+        )
+
+    return redirect("providers:orders")
+
+
+@approved_provider_required
+def provider_orders_view(request):
+    """
+    Dedicated view-only Order View Page for Providers.
+    Shows Completed, Pending, and Cancelled orders with tab filters and no management controls.
+    """
+    profile = request.user.provider_profile
+    selected_status = request.GET.get("status", "all")
+
+    # Get all OrderItems for this provider's products
+    my_order_items = (
+        OrderItem.objects.filter(product__provider=profile)
+        .select_related("order", "order__user", "product", "product__category")
+        .order_by("-order__created_at")
+    )
+
+    # Group items by order
+    all_orders_map: dict = {}
+    for item in my_order_items:
+        oid = item.order_id
+        if oid not in all_orders_map:
+            all_orders_map[oid] = {
+                "order": item.order,
+                "items": [],
+                "subtotal": 0,
+            }
+        all_orders_map[oid]["items"].append(item)
+        all_orders_map[oid]["subtotal"] += item.subtotal
+
+    all_orders = list(all_orders_map.values())
+
+    # Count breakdown
+    completed_count = sum(1 for entry in all_orders if entry["order"].order_status == "delivered")
+    cancelled_count = sum(1 for entry in all_orders if entry["order"].order_status == "cancelled")
+    pending_count = sum(1 for entry in all_orders if entry["order"].order_status not in ["delivered", "cancelled"])
+
+    # Filter list based on selected_status
+    if selected_status == "completed":
+        filtered_orders = [e for e in all_orders if e["order"].order_status == "delivered"]
+    elif selected_status == "pending":
+        filtered_orders = [e for e in all_orders if e["order"].order_status not in ["delivered", "cancelled"]]
+    elif selected_status == "cancelled":
+        filtered_orders = [e for e in all_orders if e["order"].order_status == "cancelled"]
+    else:
+        filtered_orders = all_orders
+
+    context = {
+        "profile": profile,
+        "provider_orders": filtered_orders,
+        "selected_status": selected_status,
+        "total_count": len(all_orders),
+        "completed_count": completed_count,
+        "pending_count": pending_count,
+        "cancelled_count": cancelled_count,
+    }
+    return render(request, "providers/orders_view.html", context)

@@ -86,13 +86,46 @@
                   <h6 class="fw-bold text-muted text-uppercase small mb-3">
                     <i class="bi bi-truck"></i> Delivery Information
                   </h6>
-                  <div class="bg-light p-3 rounded-3 small">
+                  <div class="bg-light p-3 rounded-3 small mb-3">
                     <div class="mb-1"><strong>Customer:</strong> {{ order.full_name }}</div>
                     <div class="mb-1"><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-decoration-none">{{ order.phone }}</a></div>
                     <div class="mb-1"><strong>Email:</strong> {{ order.email }}</div>
                     <div class="mb-1">
                       <strong>Address:</strong> {{ order.delivery_address }}, {{ order.city }}, {{ order.district }} - {{ order.pin_code }}
                     </div>
+                  </div>
+
+                  <!-- Order Status Update Form -->
+                  <div class="card border border-success-subtle bg-success-subtle bg-opacity-10 rounded-3 p-3">
+                    <h6 class="fw-bold text-dark small mb-2">
+                      <i class="bi bi-sliders text-success"></i> Update Order &amp; Fulfillment Status
+                    </h6>
+                    <form method="post" action="{% url 'providers:order_status_update' order.id %}">
+                      {% csrf_token %}
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <label class="form-label small text-muted mb-1">Fulfillment Status</label>
+                          <select name="order_status" class="form-select form-select-sm">
+                            {% for code, label in order_status_choices %}
+                              <option value="{{ code }}" {% if order.order_status == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-6">
+                          <label class="form-label small text-muted mb-1">Payment Status</label>
+                          <select name="payment_status" class="form-select form-select-sm">
+                            {% for code, label in payment_status_choices %}
+                              <option value="{{ code }}" {% if order.payment_status == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-12 mt-2">
+                          <button type="submit" class="btn btn-success btn-sm w-100 fw-semibold">
+                            <i class="bi bi-check-circle"></i> Save Status Update
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>

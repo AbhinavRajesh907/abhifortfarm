@@ -1,0 +1,204 @@
+{% extends "providers/base_provider.html" %}
+{% load static %}
+
+{% block title %}Order History & View — {{ profile.farm_name }}{% endblock %}
+{% block nav_orders_view %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+    <div>
+      <h1 class="h3 fw-bold mb-1 text-dark">
+        <i class="bi bi-eye text-success"></i> Customer Orders View
+      </h1>
+      <p class="text-muted mb-0">View-only summary of completed, pending, and cancelled customer orders for {{ profile.farm_name }}.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'providers:orders' %}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+        <i class="bi bi-sliders"></i> Go to Order Management
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <a href="{% url 'providers:orders_view' %}?status=all" class="text-decoration-none">
+        <div class="stat-card border-2 {% if selected_status == 'all' %}border-success bg-success-subtle bg-opacity-10{% endif %}">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-semibold">All Orders</div>
+              <div class="fs-3 fw-bold text-dark mt-1">{{ total_count }}</div>
+            </div>
+            <div class="stat-icon bg-success-subtle text-success">
+              <i class="bi bi-receipt-cutoff"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3">
+      <a href="{% url 'providers:orders_view' %}?status=completed" class="text-decoration-none">
+        <div class="stat-card border-2 {% if selected_status == 'completed' %}border-success bg-success-subtle bg-opacity-10{% endif %}">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-semibold">Completed Orders</div>
+              <div class="fs-3 fw-bold text-success mt-1">{{ completed_count }}</div>
+            </div>
+            <div class="stat-icon bg-success-subtle text-success">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3">
+      <a href="{% url 'providers:orders_view' %}?status=pending" class="text-decoration-none">
+        <div class="stat-card border-2 {% if selected_status == 'pending' %}border-warning bg-warning-subtle bg-opacity-10{% endif %}">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-semibold">Pending / In Progress</div>
+              <div class="fs-3 fw-bold text-warning mt-1">{{ pending_count }}</div>
+            </div>
+            <div class="stat-icon bg-warning-subtle text-warning">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3">
+      <a href="{% url 'providers:orders_view' %}?status=cancelled" class="text-decoration-none">
+        <div class="stat-card border-2 {% if selected_status == 'cancelled' %}border-danger bg-danger-subtle bg-opacity-10{% endif %}">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted small fw-semibold">Cancelled Orders</div>
+              <div class="fs-3 fw-bold text-danger mt-1">{{ cancelled_count }}</div>
+            </div>
+            <div class="stat-icon bg-danger-subtle text-danger">
+              <i class="bi bi-x-circle-fill"></i>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Pills -->
+  <div class="d-flex gap-2 mb-4">
+    <a href="{% url 'providers:orders_view' %}?status=all"
+       class="btn btn-sm rounded-pill px-3 {% if selected_status == 'all' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+      All Orders ({{ total_count }})
+    </a>
+    <a href="{% url 'providers:orders_view' %}?status=completed"
+       class="btn btn-sm rounded-pill px-3 {% if selected_status == 'completed' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi bi-check2-all"></i> Completed ({{ completed_count }})
+    </a>
+    <a href="{% url 'providers:orders_view' %}?status=pending"
+       class="btn btn-sm rounded-pill px-3 {% if selected_status == 'pending' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi bi-clock-history"></i> Pending ({{ pending_count }})
+    </a>
+    <a href="{% url 'providers:orders_view' %}?status=cancelled"
+       class="btn btn-sm rounded-pill px-3 {% if selected_status == 'cancelled' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+      <i class="bi bi-slash-circle"></i> Cancelled ({{ cancelled_count }})
+    </a>
+  </div>
+
+  <!-- Order List (View Only) -->
+  {% if provider_orders %}
+    <div class="row g-4">
+      {% for entry in provider_orders %}
+        {% with order=entry.order items=entry.items subtotal=entry.subtotal %}
+        <div class="col-12">
+          <div class="table-card border shadow-sm rounded-4">
+            <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-3">
+              <div class="d-flex align-items-center gap-3">
+                <span class="fw-bold text-dark fs-5">Order #{{ order.order_number }}</span>
+                <span class="badge {% if order.order_status == 'delivered' %}bg-success{% elif order.order_status == 'pending' %}bg-warning text-dark{% elif order.order_status == 'shipped' %}bg-info text-dark{% elif order.order_status == 'cancelled' %}bg-danger{% else %}bg-primary{% endif %} px-3 py-2 fs-6">
+                  {{ order.get_order_status_display }}
+                </span>
+                <span class="badge {% if order.payment_status == 'paid' %}bg-success-subtle text-success border border-success{% else %}bg-warning-subtle text-dark border border-warning{% endif %} px-3 py-2 fs-6">
+                  Payment: {{ order.get_payment_status_display }} ({{ order.get_payment_method_display }})
+                </span>
+              </div>
+              <div class="text-muted small">
+                <i class="bi bi-clock"></i> {{ order.created_at|date:"F d, Y — h:i A" }}
+              </div>
+            </div>
+
+            <div class="card-body p-4">
+              <div class="row g-4">
+                <!-- Ordered Items -->
+                <div class="col-lg-7">
+                  <h6 class="fw-bold text-muted text-uppercase small mb-3">
+                    <i class="bi bi-box-seam text-success"></i> Items Supplied by Your Farm
+                  </h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Item</th>
+                          <th>Price</th>
+                          <th>Qty</th>
+                          <th class="text-end">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in items %}
+                        <tr>
+                          <td>
+                            <div class="fw-semibold">{{ item.product.name }}</div>
+                            <small class="text-muted">{{ item.product.category.name }}</small>
+                          </td>
+                          <td>₹{{ item.price }}</td>
+                          <td><span class="badge bg-secondary">{{ item.quantity }}</span></td>
+                          <td class="text-end fw-bold text-success">₹{{ item.subtotal }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colspan="3" class="text-end fw-bold">Your Farm Subtotal:</td>
+                          <td class="text-end fw-bold text-success fs-6">₹{{ subtotal }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Customer & Delivery Information (View Only) -->
+                <div class="col-lg-5 border-start-lg ps-lg-4">
+                  <h6 class="fw-bold text-muted text-uppercase small mb-3">
+                    <i class="bi bi-truck text-primary"></i> Delivery Information
+                  </h6>
+                  <div class="bg-light p-3 rounded-3 small">
+                    <div class="mb-1"><strong>Customer:</strong> {{ order.full_name }}</div>
+                    <div class="mb-1"><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-decoration-none">{{ order.phone }}</a></div>
+                    <div class="mb-1"><strong>Email:</strong> {{ order.email }}</div>
+                    <div class="mb-1">
+                      <strong>Address:</strong> {{ order.delivery_address }}, {{ order.city }}, {{ order.district }} - {{ order.pin_code }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="table-card text-center py-5">
+      <div style="font-size: 3.5rem;">📋</div>
+      <h5 class="fw-bold mt-2">No {{ selected_status }} orders found</h5>
+      <p class="text-muted small mb-0">There are currently no orders matching this filter stage.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

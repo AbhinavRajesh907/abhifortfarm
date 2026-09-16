@@ -1,0 +1,257 @@
+{% extends "admin_portal/base_admin.html" %}
+{% load static %}
+
+{% block title %}Order Details & Business Reports — AgriVision Admin{% endblock %}
+{% block page_title %}Order View & Analytics{% endblock %}
+{% block page_subtitle %}Comprehensive order details across all providers to generate reports and monitor sales activity{% endblock %}
+
+{% block content %}
+<!-- Top Action & Export Bar -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-6">
+      <i class="fa-solid fa-file-invoice me-1"></i> Order Reports Active
+    </span>
+  </div>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <a href="{% url 'admin_portal:export_sales_csv' %}" class="btn btn-admin-outline">
+      <i class="fa-solid fa-file-csv me-1 text-success"></i> Export Sales CSV
+    </a>
+    <a href="{% url 'admin_portal:export_orders_csv' %}" class="btn btn-admin-outline">
+      <i class="fa-solid fa-file-arrow-down me-1 text-primary"></i> Export Orders CSV
+    </a>
+    <a href="{% url 'admin_portal:export_products_csv' %}" class="btn btn-admin-outline">
+      <i class="fa-solid fa-boxes-packing me-1 text-info"></i> Export Products CSV
+    </a>
+  </div>
+</div>
+
+<!-- Key Performance Indicators (KPI Cards) -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <a href="{% url 'admin_portal:order_view' %}?status=all" class="text-decoration-none">
+      <div class="admin-card p-3 border-2 {% if selected_status == 'all' %}border-success bg-success-subtle bg-opacity-10{% endif %}">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-bold">TOTAL ORDERS</div>
+            <div class="fs-3 fw-bold text-dark mt-1">{{ total_orders_count }}</div>
+          </div>
+          <div class="admin-stat-icon bg-success-subtle text-success p-3 rounded-3 fs-4">
+            <i class="fa-solid fa-receipt"></i>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-3">
+    <a href="{% url 'admin_portal:order_view' %}?status=completed" class="text-decoration-none">
+      <div class="admin-card p-3 border-2 {% if selected_status == 'completed' %}border-success bg-success-subtle bg-opacity-10{% endif %}">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-bold">DELIVERED / COMPLETED</div>
+            <div class="fs-3 fw-bold text-success mt-1">{{ completed_orders_count }}</div>
+          </div>
+          <div class="admin-stat-icon bg-success-subtle text-success p-3 rounded-3 fs-4">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-3">
+    <a href="{% url 'admin_portal:order_view' %}?status=pending" class="text-decoration-none">
+      <div class="admin-card p-3 border-2 {% if selected_status == 'pending' %}border-warning bg-warning-subtle bg-opacity-10{% endif %}">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted small fw-bold">PENDING / IN PROGRESS</div>
+            <div class="fs-3 fw-bold text-warning mt-1">{{ pending_orders_count }}</div>
+          </div>
+          <div class="admin-stat-icon bg-warning-subtle text-warning p-3 rounded-3 fs-4">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-3">
+    <div class="admin-card p-3 border-2">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <div class="text-muted small fw-bold">SETTLED REVENUE</div>
+          <div class="fs-3 fw-bold text-dark mt-1">₹{{ total_settled_revenue }}</div>
+        </div>
+        <div class="admin-stat-icon bg-primary-subtle text-primary p-3 rounded-3 fs-4">
+          <i class="fa-solid fa-sack-dollar"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="admin-card mb-4">
+  <div class="admin-card-body">
+    <form method="get" action="{% url 'admin_portal:order_view' %}" class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass"></i></span>
+          <input type="text" name="q" class="form-control" placeholder="Search Order #, Customer Name, Email, or Product..." value="{{ search }}" />
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All Order Stages</option>
+          <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Delivered / Completed</option>
+          <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending / In Progress</option>
+          <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="payment_status" class="form-select">
+          <option value="">All Payment Statuses</option>
+          <option value="paid" {% if payment_status_filter == 'paid' %}selected{% endif %}>Paid</option>
+          <option value="pending" {% if payment_status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-admin-primary w-100 fw-bold">Filter</button>
+        {% if search or selected_status != 'all' or payment_status_filter %}
+          <a href="{% url 'admin_portal:order_view' %}" class="btn btn-outline-secondary" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Detailed Orders Reporting View -->
+{% if orders %}
+  <div class="row g-4">
+    {% for order in orders %}
+      <div class="col-12">
+        <div class="admin-card shadow-sm border">
+          <div class="admin-card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 py-3 px-4">
+            <div class="d-flex align-items-center gap-3">
+              <a href="{% url 'admin_portal:order_detail' order.pk %}" class="fw-bold fs-5 text-success text-decoration-none">
+                <i class="fa-solid fa-receipt me-1"></i> Order #{{ order.order_number }}
+              </a>
+              <span class="badge {% if order.order_status == 'delivered' %}bg-success{% elif order.order_status == 'pending' %}bg-warning text-dark{% elif order.order_status == 'shipped' %}bg-info text-dark{% elif order.order_status == 'cancelled' %}bg-danger{% else %}bg-primary{% endif %} px-3 py-2">
+                <i class="fa-solid fa-boxes-packing me-1"></i> {{ order.get_order_status_display }}
+              </span>
+              <span class="badge {% if order.payment_status == 'paid' %}bg-success-subtle text-success border border-success{% else %}bg-warning-subtle text-dark border border-warning{% endif %} px-3 py-2">
+                Payment: {{ order.get_payment_status_display }} ({{ order.get_payment_method_display }})
+              </span>
+            </div>
+            <div class="text-muted small">
+              <i class="fa-solid fa-calendar-days me-1"></i> {{ order.created_at|date:"F d, Y — h:i A" }}
+            </div>
+          </div>
+
+          <div class="admin-card-body px-4 py-3">
+            <div class="row g-4">
+              <!-- Line Items & Provider Attribution -->
+              <div class="col-lg-7">
+                <h6 class="fw-bold text-uppercase text-muted small mb-2">
+                  <i class="fa-solid fa-basket-shopping text-success me-1"></i> Line Items &amp; Provider Origin
+                </h6>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light small">
+                      <tr>
+                        <th>Product Item</th>
+                        <th>Provider / Nursery</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th class="text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody class="small">
+                      {% for item in order.items.all %}
+                        <tr>
+                          <td>
+                            <strong class="text-dark">{{ item.product_name }}</strong>
+                          </td>
+                          <td>
+                            {% if item.product and item.product.provider %}
+                              <span class="badge bg-light text-dark border">
+                                <i class="fa-solid fa-building-wheat text-success me-1"></i> {{ item.product.provider.farm_name }}
+                              </span>
+                            {% else %}
+                              <span class="badge bg-light text-muted">Standard Catalog</span>
+                            {% endif %}
+                          </td>
+                          <td><span class="badge bg-secondary">{{ item.quantity }}</span></td>
+                          <td>₹{{ item.price }}</td>
+                          <td class="text-end fw-bold text-success">₹{{ item.subtotal }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="4" class="text-end fw-bold">Order Total Amount:</td>
+                        <td class="text-end fw-bold text-success fs-6">₹{{ order.total_amount }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Customer & Shipping Information -->
+              <div class="col-lg-5 border-start-lg ps-lg-4">
+                <h6 class="fw-bold text-uppercase text-muted small mb-2">
+                  <i class="fa-solid fa-truck-fast text-primary me-1"></i> Customer &amp; Shipping Details
+                </h6>
+                <div class="bg-light p-3 rounded-3 small">
+                  <div class="mb-1"><strong>Customer:</strong> {{ order.full_name }}</div>
+                  <div class="mb-1"><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-decoration-none">{{ order.phone }}</a></div>
+                  <div class="mb-1"><strong>Email:</strong> {{ order.email }}</div>
+                  <div class="mb-1">
+                    <strong>Address:</strong> {{ order.delivery_address }}, {{ order.city }}, {{ order.district }} - {{ order.pin_code }}
+                  </div>
+                </div>
+
+                <div class="mt-3 text-end">
+                  <a href="{% url 'admin_portal:order_detail' order.pk %}" class="btn btn-sm btn-outline-success">
+                    <i class="fa-solid fa-eye me-1"></i> Inspect Order Detail
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ selected_status }}&q={{ search }}">Previous</a>
+          </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ selected_status }}&q={{ search }}">Next</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% else %}
+  <div class="admin-card text-center py-5">
+    <div style="font-size: 3.5rem;">📋</div>
+    <h5 class="fw-bold mt-2">No Order Details Found</h5>
+    <p class="text-muted small mb-0">No customer orders matching the specified filter criteria were found.</p>
+  </div>
+{% endif %}
+{% endblock %}

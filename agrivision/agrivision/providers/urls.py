@@ -23,4 +23,6 @@ urlpatterns = [
     path("products/<int:pk>/delete/", views.provider_product_delete, name="product_delete"),
     # Orders related to provider's products
     path("orders/", views.provider_orders, name="orders"),
+    path("orders/view/", views.provider_orders_view, name="orders_view"),
+    path("orders/<int:order_id>/status/", views.provider_order_status_update, name="order_status_update"),
 ]

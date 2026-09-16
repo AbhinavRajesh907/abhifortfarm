@@ -129,8 +129,13 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% block nav_orders_view %}{% endblock %}" href="{% url 'providers:orders_view' %}">
+              <i class="bi bi-eye"></i> Order View
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% block nav_orders %}{% endblock %}" href="{% url 'providers:orders' %}">
-              <i class="bi bi-receipt"></i> Orders
+              <i class="bi bi-sliders"></i> Order Management
             </a>
           </li>
           <li class="nav-item">

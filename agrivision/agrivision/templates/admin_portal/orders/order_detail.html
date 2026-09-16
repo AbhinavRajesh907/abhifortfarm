@@ -109,31 +109,30 @@
 
   <!-- Right: Status Management & Payment Log -->
   <div class="col-lg-4">
-    <!-- Fulfillment Control Card -->
+    <!-- Fulfillment Control Card (Managed by Provider) -->
     <div class="admin-card mb-4">
       <div class="admin-card-header">
         <h5 class="admin-card-title">
-          <i class="fa-solid fa-sliders text-warning"></i> Order Status Management
+          <i class="fa-solid fa-truck-ramps text-success"></i> Fulfillment Status
         </h5>
+        <span class="badge bg-light text-dark border">Provider Managed</span>
       </div>
       <div class="admin-card-body">
-        <form method="post" action="{% url 'admin_portal:order_status_update' order.pk %}">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Fulfillment Stage</label>
-            {{ status_form.order_status }}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Payment Status</label>
-            {{ status_form.payment_status }}
-          </div>
-
-          <button type="submit" class="btn btn-admin-primary w-100 py-2 fw-bold">
-            <i class="fa-solid fa-arrows-rotate me-1"></i> Update Order Status
-          </button>
-        </form>
+        <div class="mb-3">
+          <label class="text-muted small d-block mb-1">Fulfillment Stage</label>
+          <span class="badge {% if order.order_status == 'delivered' %}bg-success{% elif order.order_status == 'pending' %}bg-warning text-dark{% elif order.order_status == 'shipped' %}bg-info text-dark{% elif order.order_status == 'cancelled' %}bg-danger{% else %}bg-primary{% endif %} fs-6 px-3 py-2">
+            <i class="fa-solid fa-boxes-packing me-1"></i> {{ order.get_order_status_display }}
+          </span>
+        </div>
+        <div>
+          <label class="text-muted small d-block mb-1">Payment Status</label>
+          <span class="badge {% if order.payment_status == 'paid' %}bg-success-subtle text-success border border-success{% else %}bg-warning-subtle text-dark border border-warning{% endif %} fs-6 px-3 py-2">
+            {{ order.get_payment_status_display }}
+          </span>
+        </div>
+        <div class="mt-3 p-2 bg-light rounded text-muted small fst-italic">
+          <i class="fa-solid fa-circle-info me-1 text-primary"></i> Order fulfillment and status updates are managed directly by the Provider.
+        </div>
       </div>
     </div>
 

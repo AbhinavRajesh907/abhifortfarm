@@ -73,13 +73,13 @@
         </a>
 
         <div class="admin-nav-section">Sales & Operations</div>
-        <a href="{% url 'admin_portal:order_list' %}" class="admin-nav-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'admin_portal:order_list' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">
           <i class="fa-solid fa-cart-shopping"></i>
           <span>Customer Orders</span>
         </a>
-        <a href="{% url 'admin_portal:payment_list' %}" class="admin-nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
-          <i class="fa-solid fa-credit-card"></i>
-          <span>Payments Log</span>
+        <a href="{% url 'admin_portal:order_view' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'order_view' or 'payment' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-file-invoice"></i>
+          <span>Order View</span>
         </a>
 
         <div class="admin-nav-section">User Management</div>
