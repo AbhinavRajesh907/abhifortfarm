@@ -34,26 +34,56 @@
 
             <hr/>
 
-            <!-- Online Payment (placeholder) -->
+            <!-- Online Payment -->
             <div class="payment-option" id="onlineOption">
               <label class="d-flex align-items-center gap-3 cursor-pointer">
                 <input type="radio" name="payment_method" value="online" class="form-check-input payment-radio"
                        id="radioOnline"/>
                 <div class="payment-icon online-icon">
-                  <i class="bi bi-phone fs-2"></i>
+                  <i class="bi bi-credit-card-2-front fs-2 text-success"></i>
                 </div>
                 <div>
-                  <strong class="d-block">Online Payment</strong>
-                  <small class="text-muted">UPI / Net Banking / Card — Coming Soon</small>
+                  <strong class="d-block">Online Payment (Credit / Debit Card)</strong>
+                  <small class="text-muted">Pay securely using Visa, Mastercard, or RuPay card.</small>
                 </div>
               </label>
             </div>
 
-            <!-- Online placeholder info -->
-            <div id="onlinePlaceholder" class="alert alert-info mt-3 d-none">
-              <i class="bi bi-info-circle me-1"></i>
-              Online payment integration (Razorpay / Stripe) will be available soon.
-              Your order will be placed and payment link sent via email.
+            <!-- Card Details Section (Shown when Online Payment is selected) -->
+            <div id="cardPaymentSection" class="mt-3 p-3 border rounded bg-light d-none">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 text-success fw-bold">
+                  <i class="bi bi-shield-lock me-1"></i> Card Payment Details
+                </h6>
+                <div class="d-flex gap-2 align-items-center text-muted fs-5">
+                  <i class="bi bi-credit-card" title="Card Pay"></i>
+                  <span class="badge bg-secondary-subtle text-secondary small" style="font-size: 0.75rem;">🔒 256-bit Encrypted</span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="cardName" class="form-label small fw-semibold">Cardholder Name</label>
+                <input type="text" class="form-control" id="cardName" name="card_name" placeholder="Name on card" autocomplete="cc-name" />
+              </div>
+
+              <div class="mb-3">
+                <label for="cardNumber" class="form-label small fw-semibold">Card / Account Number</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="cardNumber" name="card_number" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" />
+                  <span class="input-group-text bg-white"><i class="bi bi-credit-card-fill text-muted"></i></span>
+                </div>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label for="cardExpiry" class="form-label small fw-semibold">Expiry Date</label>
+                  <input type="text" class="form-control" id="cardExpiry" name="card_expiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" />
+                </div>
+                <div class="col-6">
+                  <label for="cardCvc" class="form-label small fw-semibold">CVC / CVV</label>
+                  <input type="password" class="form-control" id="cardCvc" name="card_cvc" placeholder="123" maxlength="4" autocomplete="cc-csc" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -106,15 +136,55 @@
 
 {% block extra_js %}
 <script>
-  document.querySelectorAll('.payment-radio').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const onlinePlaceholder = document.getElementById('onlinePlaceholder');
-      if (document.getElementById('radioOnline').checked) {
-        onlinePlaceholder.classList.remove('d-none');
+  document.addEventListener('DOMContentLoaded', () => {
+    const cardSection = document.getElementById('cardPaymentSection');
+    const radioOnline = document.getElementById('radioOnline');
+    const radioCod = document.getElementById('radioCod');
+    const cardInputs = ['cardName', 'cardNumber', 'cardExpiry', 'cardCvc'].map(id => document.getElementById(id));
+
+    function toggleCardFields() {
+      if (radioOnline.checked) {
+        cardSection.classList.remove('d-none');
+        cardInputs.forEach(input => input.setAttribute('required', 'required'));
       } else {
-        onlinePlaceholder.classList.add('d-none');
+        cardSection.classList.add('d-none');
+        cardInputs.forEach(input => {
+          input.removeAttribute('required');
+          input.value = '';
+        });
+      }
+    }
+
+    document.querySelectorAll('.payment-radio').forEach(radio => {
+      radio.addEventListener('change', toggleCardFields);
+    });
+
+    // Formatting for Card Number (XXXX XXXX XXXX XXXX)
+    const cardNumberInput = document.getElementById('cardNumber');
+    cardNumberInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\D/g, '').substring(0, 16);
+      let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+      e.target.value = formatted;
+    });
+
+    // Formatting for Expiry Date (MM/YY)
+    const cardExpiryInput = document.getElementById('cardExpiry');
+    cardExpiryInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\D/g, '').substring(0, 4);
+      if (val.length >= 3) {
+        e.target.value = val.substring(0, 2) + '/' + val.substring(2);
+      } else {
+        e.target.value = val;
       }
     });
+
+    // CVC digits only
+    const cardCvcInput = document.getElementById('cardCvc');
+    cardCvcInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+    });
+
+    toggleCardFields();
   });
 </script>
 {% endblock %}

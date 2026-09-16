@@ -298,6 +298,8 @@ def place_order(request):
 
     total = cart.get_total()
 
+    payment_status = Order.PAID if payment_method == "online" else Order.PENDING
+
     # Create Order
     order = Order.objects.create(
         user=request.user,
@@ -311,7 +313,7 @@ def place_order(request):
         district=checkout_data["district"],
         pin_code=checkout_data["pin_code"],
         payment_method=payment_method,
-        payment_status=Order.PENDING,
+        payment_status=payment_status,
         order_status=Order.ORDER_PENDING,
     )
 
