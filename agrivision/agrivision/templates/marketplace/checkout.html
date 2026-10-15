@@ -4,57 +4,85 @@
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="section-title"><i class="bi bi-truck me-2"></i>Checkout</h1>
+  <!-- Breadcrumb & Back navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:cart' %}" class="text-success text-decoration-none">Cart</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+      </ol>
+    </nav>
+    <a href="{% url 'marketplace:cart' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Cart
+    </a>
+  </div>
+
+  <h1 class="section-title"><i class="bi bi-truck me-2"></i>Checkout &amp; Delivery Details</h1>
 
   <div class="row g-4">
     <!-- Delivery Form -->
     <div class="col-lg-7">
-      <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0"><i class="bi bi-geo-alt me-1"></i> Delivery Information</h5>
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt me-1"></i> Delivery Information</h5>
         </div>
-        <div class="card-body">
-          <form method="post" action="" id="checkoutForm">
+        <div class="card-body p-4">
+          <form method="post" action="" id="checkoutForm" novalidate>
             {% csrf_token %}
             <div class="row g-3">
               <div class="col-12">
-                <label class="form-label fw-semibold">Full Name *</label>
-                <input type="text" name="full_name" class="form-control"
-                       placeholder="Your full name" value="{{ initial_name }}" required/>
+                <label class="form-label fw-semibold" for="checkoutFullName">Full Name <span class="text-danger">*</span></label>
+                <input type="text" name="full_name" id="checkoutFullName" class="form-control"
+                       placeholder="Your full name (letters only)" value="{{ initial_name }}" minlength="2" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="fullNameError">Full name should only contain letters and spaces (no numbers or symbols).</div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Phone Number *</label>
-                <input type="tel" name="phone" class="form-control"
+                <label class="form-label fw-semibold" for="checkoutPhone">Phone Number <span class="text-danger">*</span></label>
+                <input type="tel" name="phone" id="checkoutPhone" class="form-control"
                        placeholder="10-digit mobile number"
-                       pattern="[6-9][0-9]{9}" maxlength="10" required/>
+                       value="{{ initial_phone }}"
+                       maxlength="10" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="phoneError">Phone number must contain numbers only (10 digits starting with 6-9).</div>
+                <div class="form-text small">10-digit Indian mobile number (starts with 6-9)</div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-semibold">Email *</label>
-                <input type="email" name="email" class="form-control"
-                       value="{{ initial_email }}" required/>
+                <label class="form-label fw-semibold" for="checkoutEmail">Email <span class="text-danger">*</span></label>
+                <input type="email" name="email" id="checkoutEmail" class="form-control"
+                       value="{{ initial_email }}" placeholder="name@example.com" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="emailError">Please enter a valid email format (e.g. name@example.com).</div>
               </div>
               <div class="col-12">
-                <label class="form-label fw-semibold">Delivery Address *</label>
-                <textarea name="delivery_address" class="form-control"
-                          rows="3" placeholder="House/Flat no., Street, Locality" required></textarea>
+                <label class="form-label fw-semibold" for="checkoutAddress">Delivery Address <span class="text-danger">*</span></label>
+                <textarea name="delivery_address" id="checkoutAddress" class="form-control"
+                          rows="3" placeholder="House/Flat no., Farm/Street name, Landmark, Locality" minlength="5" required>{{ initial_address }}</textarea>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-semibold">City *</label>
-                <input type="text" name="city" class="form-control" placeholder="City" required/>
+                <label class="form-label fw-semibold" for="checkoutCity">City / Town <span class="text-danger">*</span></label>
+                <input type="text" name="city" id="checkoutCity" class="form-control" placeholder="City (letters only)" value="{{ initial_city }}" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="cityError">City name should only contain letters.</div>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-semibold">District *</label>
-                <input type="text" name="district" class="form-control" placeholder="District" required/>
+                <label class="form-label fw-semibold" for="checkoutDistrict">District / State <span class="text-danger">*</span></label>
+                <input type="text" name="district" id="checkoutDistrict" class="form-control" placeholder="District / State (letters only)" value="{{ initial_district }}" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="districtError">District/State name should only contain letters.</div>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-semibold">PIN Code *</label>
-                <input type="text" name="pin_code" class="form-control"
-                       placeholder="6-digit PIN" pattern="[0-9]{6}" maxlength="6" required/>
+                <label class="form-label fw-semibold" for="checkoutPincode">PIN Code <span class="text-danger">*</span></label>
+                <input type="text" name="pin_code" id="checkoutPincode" class="form-control"
+                       placeholder="6-digit PIN" value="{{ initial_pincode }}" maxlength="6" required/>
+                <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="pincodeError">PIN code must contain numbers only (6 digits).</div>
               </div>
             </div>
-            <button type="submit" class="btn btn-success btn-lg w-100 mt-4">
-              Continue to Payment →
-            </button>
+
+            <div class="d-flex justify-content-between align-items-center gap-3 mt-4 pt-3 border-top flex-wrap">
+              <a href="{% url 'marketplace:cart' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Cart
+              </a>
+              <button type="submit" class="btn btn-success btn-lg px-4 shadow-sm">
+                Continue to Payment <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -62,30 +90,109 @@
 
     <!-- Order Summary -->
     <div class="col-lg-5">
-      <div class="card shadow-sm summary-card">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0">Order Summary</h5>
+      <div class="card shadow-sm summary-card border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white py-3">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-1"></i> Order Summary</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           {% for item in items %}
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <div>
-                <strong>{{ item.product.name }}</strong>
-                <small class="text-muted d-block">× {{ item.quantity }}{% if item.product.provider %} ({{ item.product.provider.farm_name }}){% endif %}</small>
+                <strong class="text-dark">{{ item.product.name }}</strong>
+                <small class="text-muted d-block">Qty: {{ item.quantity }}{% if item.product.provider %} &bull; {{ item.product.provider.farm_name }}{% endif %}</small>
               </div>
               <span class="text-success fw-bold">₹{{ item.get_subtotal }}</span>
             </div>
           {% empty %}
-            <div class="text-muted">No items.</div>
+            <div class="text-muted">No items in cart.</div>
           {% endfor %}
-          <hr/>
-          <div class="d-flex justify-content-between fw-bold fs-5">
-            <span>Total</span>
+          <div class="d-flex justify-content-between fw-bold fs-5 mt-3">
+            <span>Total Amount</span>
             <span class="text-success">₹{{ total }}</span>
+          </div>
+          <div class="alert alert-info py-2 px-3 small rounded-3 mt-3 mb-0">
+            <i class="bi bi-shield-check text-success me-1"></i> Free doorstep nursery packaging included.
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('checkoutFullName');
+    const nameError = document.getElementById('fullNameError');
+    if (nameInput) {
+      nameInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.'-]+$/.test(this.value)) {
+          nameError.classList.remove('d-none');
+        } else {
+          nameError.classList.add('d-none');
+        }
+      });
+    }
+
+    const emailInput = document.getElementById('checkoutEmail');
+    const emailError = document.getElementById('emailError');
+    if (emailInput) {
+      emailInput.addEventListener('input', function() {
+        if (this.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value)) {
+          emailError.classList.remove('d-none');
+        } else {
+          emailError.classList.add('d-none');
+        }
+      });
+    }
+
+    const phoneInput = document.getElementById('checkoutPhone');
+    const phoneError = document.getElementById('phoneError');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', function() {
+        const hasNonDigits = /\D/.test(this.value);
+        if (hasNonDigits || (this.value.length > 0 && !/^[6-9]\d{0,9}$/.test(this.value))) {
+          phoneError.classList.remove('d-none');
+        } else {
+          phoneError.classList.add('d-none');
+        }
+      });
+    }
+
+    const cityInput = document.getElementById('checkoutCity');
+    const cityError = document.getElementById('cityError');
+    if (cityInput) {
+      cityInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+          cityError.classList.remove('d-none');
+        } else {
+          cityError.classList.add('d-none');
+        }
+      });
+    }
+
+    const districtInput = document.getElementById('checkoutDistrict');
+    const districtError = document.getElementById('districtError');
+    if (districtInput) {
+      districtInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+          districtError.classList.remove('d-none');
+        } else {
+          districtError.classList.add('d-none');
+        }
+      });
+    }
+
+    const pinInput = document.getElementById('checkoutPincode');
+    const pinError = document.getElementById('pincodeError');
+    if (pinInput) {
+      pinInput.addEventListener('input', function() {
+        if (this.value && !/^\d{0,6}$/.test(this.value)) {
+          pinError.classList.remove('d-none');
+        } else {
+          pinError.classList.add('d-none');
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}

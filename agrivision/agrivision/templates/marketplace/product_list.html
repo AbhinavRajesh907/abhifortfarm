@@ -2,96 +2,180 @@
 {% load static %}
 
 {% block title %}Products — AgriSmart Marketplace{% endblock %}
-{% block nav_products %}active{% endblock %}
+{% block nav_products %}{% if not category_filter %}active{% endif %}{% endblock %}
+{% block nav_seeds %}{% if category_filter == 'Seeds' %}active{% endif %}{% endblock %}
+{% block nav_plants %}{% if category_filter == 'Plants' %}active{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="section-title">Browse Products</h1>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h1 class="section-title mb-1">
+        {% if category_filter == 'Seeds' %}
+          <span class="text-warning">🌱</span> Seeds Catalog
+        {% elif category_filter == 'Plants' %}
+          <span class="text-success">🌿</span> Live Plants &amp; Saplings
+        {% else %}
+          <i class="bi bi-grid me-2 text-success"></i>Browse All Products
+        {% endif %}
+      </h1>
+      <p class="text-muted small mb-0">
+        {% if category_filter == 'Seeds' %}
+          Certified high-yield vegetable, fruit, flower, and herb seeds for high germination rates.
+        {% elif category_filter == 'Plants' %}
+          Healthy potted plants, nursery saplings, and fruit tree grafts directly from local growers.
+        {% else %}
+          Explore verified seeds, healthy plants, and essential farming supplies.
+        {% endif %}
+      </p>
+    </div>
+  </div>
 
-  <!-- Search & Filter bar -->
-  <div class="card filter-card mb-4">
-    <div class="card-body">
+  <!-- Search & Classification Filter Bar -->
+  <div class="card filter-card mb-4 border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
       <form method="get" action="" class="row g-3 align-items-end" id="filterForm">
-        <div class="col-md-5">
-          <label class="form-label fw-semibold" for="searchInput">Search</label>
+        <div class="col-lg-5">
+          <label class="form-label fw-semibold" for="searchInput">
+            <i class="bi bi-search text-success me-1"></i> Search Products
+          </label>
           <input type="text" name="q" id="searchInput" class="form-control"
-                 placeholder="Search products…" value="{{ query }}"/>
+                 placeholder="Search by variety name, crop, plant type…" value="{{ query }}"/>
         </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Category</label>
+
+        <div class="col-lg-5">
+          <label class="form-label fw-semibold">
+            <i class="bi bi-funnel text-success me-1"></i> Classify By Category
+          </label>
           <div class="d-flex gap-2 flex-wrap">
+            <a href="?{% if query %}q={{ query }}&{% endif %}"
+               class="btn btn-sm {% if not category_filter %}btn-success{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
+              All Products
+            </a>
             <a href="?{% if query %}q={{ query }}&{% endif %}category=Seeds"
-               class="btn btn-sm {% if category_filter == 'Seeds' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+               class="btn btn-sm {% if category_filter == 'Seeds' %}btn-warning text-dark fw-bold shadow-sm{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-3">
               🌱 Seeds
             </a>
             <a href="?{% if query %}q={{ query }}&{% endif %}category=Plants"
-               class="btn btn-sm {% if category_filter == 'Plants' %}btn-success{% else %}btn-outline-success{% endif %}">
+               class="btn btn-sm {% if category_filter == 'Plants' %}btn-success fw-bold shadow-sm{% else %}btn-outline-success{% endif %} rounded-pill px-3">
               🌿 Plants
             </a>
-            {% if category_filter %}
-              <a href="?{% if query %}q={{ query }}{% endif %}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-x-circle"></i> Clear
-              </a>
+            {% if category_filter and category_filter != 'Seeds' and category_filter != 'Plants' %}
+              <span class="badge bg-primary fs-6 rounded-pill d-flex align-items-center px-3">
+                {{ category_filter }}
+                <a href="?{% if query %}q={{ query }}{% endif %}" class="text-white ms-2 text-decoration-none">&times;</a>
+              </span>
             {% endif %}
           </div>
         </div>
-        <div class="col-md-3">
-          <button type="submit" class="btn btn-success w-100">
-            <i class="bi bi-search"></i> Search
+
+        <div class="col-lg-2">
+          <button type="submit" class="btn btn-success w-100 rounded-pill py-2">
+            <i class="bi bi-search me-1"></i> Filter
           </button>
         </div>
       </form>
+
+      <!-- Subcategory Quick Pills -->
+      {% if all_subcategories %}
+        <div class="border-top mt-3 pt-3">
+          <div class="d-flex align-items-center gap-2 flex-wrap small">
+            <span class="text-muted fw-semibold me-1"><i class="bi bi-tags me-1"></i>Sub-types:</span>
+            {% for sub in all_subcategories %}
+              {% if not category_filter or sub.category_type == category_filter or sub.parent.name == category_filter %}
+                <a href="?{% if query %}q={{ query }}&{% endif %}category={{ sub.name }}"
+                   class="btn btn-sm py-0 px-2 rounded-pill {% if category_filter == sub.name %}btn-dark{% elif sub.category_type == 'Seeds' %}btn-outline-warning text-dark border{% else %}btn-outline-success border{% endif %}">
+                  {% if sub.category_type == 'Seeds' %}🌱{% else %}🌿{% endif %} {{ sub.name }}
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 
   <!-- Results meta -->
-  <p class="text-muted mb-3">
-    Showing <strong>{{ products|length }}</strong> product{{ products|length|pluralize }}
-    {% if category_filter %}in <strong>{{ category_filter }}</strong>{% endif %}
-    {% if query %}for "<strong>{{ query }}</strong>"{% endif %}
-  </p>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <p class="text-muted mb-0">
+      Showing <strong class="text-dark">{{ products|length }}</strong> product{{ products|length|pluralize }}
+      {% if category_filter %}in <strong class="text-success">{{ category_filter }}</strong>{% endif %}
+      {% if query %}matching "<strong>{{ query }}</strong>"{% endif %}
+    </p>
+    {% if category_filter or query %}
+      <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
+      </a>
+    {% endif %}
+  </div>
 
   {% if products %}
     <div class="row g-4">
       {% for product in products %}
         <div class="col-6 col-md-4 col-lg-3">
-          <div class="product-card h-100">
-            <div class="product-img-wrap">
+          <div class="product-card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="product-img-wrap position-relative">
               {% if product.image %}
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img"/>
               {% else %}
                 <div class="product-img-placeholder">
-                  {% if product.category.name == "Seeds" %}🌱{% else %}🌿{% endif %}
+                  {% if product.category.category_type == "Seeds" or product.category.name == "Seeds" %}🌱{% else %}🌿{% endif %}
                 </div>
               {% endif %}
-              <span class="product-category-badge badge
-                {% if product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %}">
-                {{ product.category.name }}
+
+              <!-- Category Badge -->
+              <span class="product-category-badge badge rounded-pill position-absolute top-0 start-0 m-2 px-2 py-1
+                {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}
+                  bg-warning text-dark border border-warning
+                {% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}
+                  bg-success text-white border border-success
+                {% else %}
+                  bg-secondary text-white
+                {% endif %}">
+                {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}
+                  🌱 {{ product.category.name }}
+                {% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}
+                  🌿 {{ product.category.name }}
+                {% else %}
+                  📦 {{ product.category.name }}
+                {% endif %}
               </span>
             </div>
-            <div class="product-card-body">
-              <h5 class="product-name">{{ product.name }}</h5>
-              <p class="product-desc text-muted small">{{ product.description|truncatechars:60 }}</p>
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="product-price">₹{{ product.price }}</span>
-                {% if product.in_stock %}
-                  <span class="badge bg-success-subtle text-success">Stock: {{ product.stock }}</span>
-                {% else %}
-                  <span class="badge bg-danger-subtle text-danger">Out of Stock</span>
+
+            <div class="product-card-body p-3 d-flex flex-column justify-content-between">
+              <div>
+                <h5 class="product-name fw-bold mb-1 text-dark fs-6">{{ product.name }}</h5>
+                <p class="product-desc text-muted small mb-2">{{ product.description|truncatechars:60 }}</p>
+                {% if product.provider %}
+                  <div class="text-muted small mb-2 d-flex align-items-center gap-1">
+                    <i class="bi bi-shop text-success"></i>
+                    <span class="text-truncate">{{ product.provider.farm_name }}</span>
+                  </div>
                 {% endif %}
               </div>
-              <div class="d-flex gap-2">
-                <a href="{% url 'marketplace:product_detail' product.pk %}"
-                   class="btn btn-outline-success btn-sm flex-fill">Details</a>
-                {% if product.in_stock %}
-                  <form method="post" action="{% url 'marketplace:add_to_cart' product.pk %}" class="flex-fill">
-                    {% csrf_token %}
-                    <input type="hidden" name="quantity" value="1"/>
-                    <button type="submit" class="btn btn-success btn-sm w-100">
-                      <i class="bi bi-cart-plus"></i>
-                    </button>
-                  </form>
-                {% endif %}
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="product-price fw-bold text-success fs-5">₹{{ product.price }}</span>
+                  {% if product.in_stock %}
+                    <span class="badge bg-success-subtle text-success small">Stock: {{ product.stock }}</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger small">Out of Stock</span>
+                  {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                  <a href="{% url 'marketplace:product_detail' product.pk %}"
+                     class="btn btn-outline-success btn-sm flex-fill rounded-pill">Details</a>
+                  {% if product.in_stock %}
+                    <form method="post" action="{% url 'marketplace:add_to_cart' product.pk %}" class="flex-fill">
+                      {% csrf_token %}
+                      <input type="hidden" name="quantity" value="1"/>
+                      <button type="submit" class="btn btn-success btn-sm w-100 rounded-pill" title="Add to Cart">
+                        <i class="bi bi-cart-plus"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
@@ -99,11 +183,17 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty-state text-center py-5">
-      <div class="empty-icon">🔍</div>
-      <h4>No products found.</h4>
-      <p class="text-muted">Try a different search term or clear the filter.</p>
-      <a href="{% url 'marketplace:product_list' %}" class="btn btn-success">View All Products</a>
+    <div class="empty-state text-center py-5 bg-light rounded-4 my-4 p-5">
+      <div class="empty-icon fs-1 mb-2">🔍</div>
+      <h4 class="fw-bold">No products found.</h4>
+      <p class="text-muted">
+        {% if category_filter %}
+          There are currently no products under the <strong>{{ category_filter }}</strong> classification.
+        {% else %}
+          Try a different search term or clear the filter.
+        {% endif %}
+      </p>
+      <a href="{% url 'marketplace:product_list' %}" class="btn btn-success rounded-pill px-4">View All Products</a>
     </div>
   {% endif %}
 </div>

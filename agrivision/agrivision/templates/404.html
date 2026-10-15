@@ -1,13 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}Page not found{% endblock title %}
+{% block title %}Page Not Found (404) — AgriFarm{% endblock title %}
+
 {% block content %}
-  <h1>Page not found</h1>
-  <p>
-    {% if exception %}
-      {{ exception }}
-    {% else %}
-      This is not the page you were looking for.
-    {% endif %}
-  </p>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6 text-center">
+      <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+        <div class="mb-3">
+          <span style="font-size: 4rem;">🌱</span>
+        </div>
+        <h1 class="display-5 fw-bold text-success mb-2">404</h1>
+        <h3 class="fw-bold text-dark mb-3">Page Not Found</h3>
+        <p class="text-muted mb-4">
+          {% if exception %}
+            {{ exception }}
+          {% else %}
+            The page or product listing you were looking for doesn't exist, may have been moved, or is temporarily unavailable.
+          {% endif %}
+        </p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-house-door me-1"></i> Return Home
+          </a>
+          <a href="{% url 'marketplace:dashboard' %}" class="btn btn-success rounded-pill px-4">
+            <i class="bi bi-shop me-1"></i> Back to Marketplace
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock content %}

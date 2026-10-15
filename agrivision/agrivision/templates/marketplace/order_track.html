@@ -1,0 +1,428 @@
+{% extends "marketplace/base_marketplace.html" %}
+{% load static %}
+
+{% block title %}Live Tracking: Order #{{ order.order_number }} — AgriVision{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .track-stepper {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin: 2rem 0;
+  }
+  .track-stepper::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 40px;
+    right: 40px;
+    height: 6px;
+    background: #e2e8f0;
+    z-index: 1;
+    border-radius: 4px;
+  }
+  .track-progress-bar {
+    position: absolute;
+    top: 24px;
+    left: 40px;
+    height: 6px;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+    z-index: 2;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+  .track-step {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    width: 120px;
+  }
+  .track-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #64748b;
+    margin: 0 auto 0.5rem;
+    transition: all 0.3s ease;
+  }
+  .track-step.completed .track-icon {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.2);
+  }
+  .track-step.active .track-icon {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
+    animation: pulse 2s infinite;
+  }
+  .track-step-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 2px;
+  }
+  .track-step-time {
+    font-size: 0.72rem;
+    color: #64748b;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #16a34a;
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+  }
+  /* Transit Visualizer */
+  .transit-card {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+    color: #ffffff;
+    border-radius: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .transit-road {
+    position: relative;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    margin: 2.5rem 1rem 1.5rem;
+  }
+  .transit-road-fill {
+    height: 100%;
+    background: #34d399;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  .transit-truck {
+    position: absolute;
+    top: -24px;
+    transform: translateX(-50%);
+    background: #ffffff;
+    color: #065f46;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: left 1s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb & Back Actions -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:my_orders' %}" class="text-success text-decoration-none">My Orders</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:order_detail' order.order_number %}" class="text-success text-decoration-none">Order #{{ order.order_number }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Live Tracker</li>
+      </ol>
+    </nav>
+    <div class="d-flex gap-2">
+      <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-house-door me-1"></i> Dashboard
+      </a>
+      <a href="{% url 'marketplace:my_orders' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Orders
+      </a>
+    </div>
+  </div>
+
+  <!-- Title & Actions -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+    <div>
+      <h1 class="h3 fw-bold mb-1 text-dark">
+        <i class="bi bi-geo-alt-fill text-success"></i> Live Product &amp; Shipment Tracking
+      </h1>
+      <p class="text-muted mb-0">Tracking package delivery for <strong class="text-dark">{{ order.full_name }}</strong> &bull; Order #{{ order.order_number }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'marketplace:order_detail' order.order_number %}" class="btn btn-outline-success">
+        <i class="bi bi-receipt me-1"></i> Order Details
+      </a>
+      <a href="{% url 'marketplace:track_order' order.order_number %}" class="btn btn-success" title="Refresh Live Status">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Live Tracker
+      </a>
+    </div>
+  </div>
+
+  {% if order.order_status == 'cancelled' %}
+    <div class="alert alert-danger shadow-sm rounded-4 p-4 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="fs-1 text-danger"><i class="bi bi-x-circle-fill"></i></div>
+        <div>
+          <h4 class="fw-bold mb-1 text-danger">This Order Was Cancelled</h4>
+          <p class="mb-1 text-dark">Reason: <strong>{{ order.cancellation_reason|default:"Cancelled by customer before dispatch." }}</strong></p>
+          <small class="text-muted">Cancelled on {{ order.cancelled_at|date:"M d, Y h:i A"|default:order.updated_at|date:"M d, Y h:i A" }}</small>
+        </div>
+      </div>
+    </div>
+  {% else %}
+
+    <!-- Pending Provider Review Notice -->
+    {% if order.order_status == 'pending' %}
+      <div class="alert alert-warning shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center gap-3 border-warning">
+        <div class="fs-2 text-warning"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <h6 class="fw-bold mb-1 text-dark">Awaiting Farm Provider Review &amp; Confirmation</h6>
+          <p class="mb-0 text-muted small">Your order has been submitted. The farm/nursery provider is currently reviewing stock. Once accepted by the provider, payment is activated and fulfillment tracking will begin.</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Live Transit Route Visualizer Card -->
+    <div class="transit-card p-4 shadow-lg mb-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <div>
+          <span class="badge bg-white text-dark fw-bold px-3 py-1 mb-1">
+            <i class="bi bi-broadcast text-danger me-1"></i> LIVE TRANSIT ROUTE
+          </span>
+          <h4 class="fw-bold mb-0 text-white">Tracking Towards Your Doorstep</h4>
+        </div>
+        <div class="text-md-end">
+          <span class="badge bg-success bg-opacity-75 text-white fs-6 px-3 py-1">
+            Status: {{ current_stage.label }}
+          </span>
+          <div class="small text-white-50 mt-1">Est. Arrival: 2 - 4 Business Days</div>
+        </div>
+      </div>
+
+      <!-- Animated Road Visualizer -->
+      <div class="transit-road">
+        <div class="transit-road-fill" style="width: {{ current_stage.percent }}%;"></div>
+        <div class="transit-truck" style="left: {{ current_stage.percent }}%;">
+          {% if order.order_status == 'delivered' %}
+            <i class="bi bi-house-heart text-success"></i>
+          {% else %}
+            <i class="bi bi-truck text-success"></i>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Origin & Destination Endpoints -->
+      <div class="d-flex justify-content-between align-items-start mt-4 pt-2">
+        <div>
+          <div class="small text-white-50"><i class="bi bi-shop me-1"></i> DISPATCH ORIGIN</div>
+          <strong class="text-white fs-6">
+            {% if order_items.0.product and order_items.0.product.provider %}
+              {{ order_items.0.product.provider.farm_name }} ({{ order_items.0.product.provider.city }})
+            {% elif order_items.0.product and order_items.0.product.provider_name %}
+              {{ order_items.0.product.provider_name }}
+            {% else %}
+              AgriVision Organic Nursery Hub
+            {% endif %}
+          </strong>
+        </div>
+        <div class="text-end">
+          <div class="small text-white-50"><i class="bi bi-geo-alt-fill text-warning me-1"></i> DELIVERY DESTINATION</div>
+          <strong class="text-white fs-6">{{ order.full_name }}</strong>
+          <div class="small text-white-50">{{ order.city }}, {{ order.district }} — {{ order.pin_code }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stepper Progress Bar -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history text-success me-2"></i> Shipment Milestones</h5>
+      </div>
+      <div class="card-body p-4 overflow-x-auto">
+        <div class="track-stepper" style="min-width: 600px;">
+          <div class="track-progress-bar" style="width: {{ current_stage.percent }}%;"></div>
+
+          <!-- Step 1: Placed -->
+          <div class="track-step {% if current_stage.step >= 1 %}completed{% endif %} {% if current_stage.step == 1 %}active{% endif %}">
+            <div class="track-icon"><i class="bi bi-bag-check"></i></div>
+            <div class="track-step-title">Order Placed</div>
+            <div class="track-step-time">{{ order.created_at|date:"M d, h:i A" }}</div>
+          </div>
+
+          <!-- Step 2: Confirmed -->
+          <div class="track-step {% if current_stage.step > 2 %}completed{% elif current_stage.step == 2 %}active{% endif %}">
+            <div class="track-icon"><i class="bi bi-check2-circle"></i></div>
+            <div class="track-step-title">Confirmed</div>
+            <div class="track-step-time">{% if current_stage.step >= 2 %}Verified{% else %}Pending{% endif %}</div>
+          </div>
+
+          <!-- Step 3: Packing -->
+          <div class="track-step {% if current_stage.step > 3 %}completed{% elif current_stage.step == 3 %}active{% endif %}">
+            <div class="track-icon"><i class="bi bi-box-seam"></i></div>
+            <div class="track-step-title">Nursery Packing</div>
+            <div class="track-step-time">{% if current_stage.step >= 3 %}Ready in Crates{% else %}Queued{% endif %}</div>
+          </div>
+
+          <!-- Step 4: Shipped -->
+          <div class="track-step {% if current_stage.step > 4 %}completed{% elif current_stage.step == 4 %}active{% endif %}">
+            <div class="track-icon"><i class="bi bi-truck"></i></div>
+            <div class="track-step-title">In Transit</div>
+            <div class="track-step-time">{% if current_stage.step >= 4 %}Courier En Route{% else %}Awaiting{% endif %}</div>
+          </div>
+
+          <!-- Step 5: Delivered -->
+          <div class="track-step {% if current_stage.step >= 5 %}completed{% endif %}">
+            <div class="track-icon"><i class="bi bi-house-check"></i></div>
+            <div class="track-step-title">Delivered</div>
+            <div class="track-step-time">{% if current_stage.step >= 5 %}Completed{% else %}Destination{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Two Column Information Grid -->
+  <div class="row g-4">
+    <!-- Payment & 50% Balance Breakdown Card -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-cash-stack text-success me-2"></i> Payment &amp; Doorstep Balance Settlement
+          </h5>
+          <span class="badge {% if order.payment_status == 'paid' %}bg-success{% elif order.payment_status == 'partially_paid' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+            {{ order.get_payment_status_display }}
+          </span>
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-3">
+            <div class="small text-muted">Selected Payment Mode:</div>
+            <div class="fw-bold fs-6 text-dark">{{ order.get_payment_method_display }}</div>
+          </div>
+
+          <div class="p-3 bg-light rounded-3 border mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted">Total Order Amount:</span>
+              <span class="fw-bold fs-5 text-dark">₹{{ order.total_amount }}</span>
+            </div>
+
+            {% if order.payment_method == 'half_cod' %}
+              <hr class="my-2"/>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <span class="fw-semibold text-primary"><i class="bi bi-credit-card me-1"></i> 50% Advance Online:</span>
+                  <div class="small text-muted">Paid at checkout</div>
+                </div>
+                <span class="fw-bold text-primary fs-6">₹{{ order.online_paid_amount }} (Paid)</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-semibold text-warning-emphasis"><i class="bi bi-cash me-1"></i> 50% Cash on Delivery Balance:</span>
+                  <div class="small text-muted">Payable to courier after delivery</div>
+                </div>
+                <span class="fw-bold text-warning-emphasis fs-6">₹{{ order.cod_amount_due }}</span>
+              </div>
+            {% elif order.payment_method == 'online' %}
+              <hr class="my-2"/>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-success"><i class="bi bi-check-circle me-1"></i> 100% Paid Online:</span>
+                <span class="fw-bold text-success fs-6">₹{{ order.online_paid_amount }}</span>
+              </div>
+            {% else %}
+              <hr class="my-2"/>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="fw-semibold text-dark"><i class="bi bi-cash me-1"></i> 100% Cash on Delivery:</span>
+                  <div class="small text-muted">Payable at doorstep</div>
+                </div>
+                <span class="fw-bold text-dark fs-6">₹{{ order.cod_amount_due }}</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Doorstep COD Balance Status Note -->
+          <div class="p-3 rounded-3 {% if order.order_status == 'delivered' %}bg-success-subtle border border-success{% else %}bg-warning-subtle border border-warning{% endif %}">
+            <div class="d-flex align-items-start gap-2">
+              <div class="fs-5 {% if order.order_status == 'delivered' %}text-success{% else %}text-warning{% endif %}">
+                <i class="bi {% if order.order_status == 'delivered' %}bi-check-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+              </div>
+              <div class="small text-dark">
+                {% if order.order_status == 'delivered' %}
+                  <strong>Doorstep Settlement Completed:</strong> The remaining Cash on Delivery balance (₹{{ order.cod_amount_due }}) was collected by the courier upon delivery completion. Your invoice is fully settled.
+                {% else %}
+                  <strong>Doorstep COD Collection Policy:</strong>
+                  {% if order.payment_method == 'half_cod' %}
+                    You have paid 50% (₹{{ order.online_paid_amount }}) advance online. The remaining 50% balance (<strong>₹{{ order.cod_amount_due }}</strong>) must be paid in cash directly to the delivery person once the package arrives at your doorstep.
+                  {% elif order.payment_method == 'cod' %}
+                    The full order amount (<strong>₹{{ order.cod_amount_due }}</strong>) will be collected in cash upon package delivery.
+                  {% else %}
+                    This order was paid 100% online. No cash payment is required upon delivery.
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Destination & Products Summary -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white py-3">
+          <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-pin-map text-success me-2"></i> Shipping Destination &amp; Items
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <!-- Delivery Address -->
+          <div class="mb-4">
+            <h6 class="fw-bold small text-muted text-uppercase mb-2">Delivery Address</h6>
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="fw-bold text-dark fs-6">{{ order.full_name }}</div>
+              <div class="text-dark small">{{ order.delivery_address }}</div>
+              <div class="text-muted small">{{ order.city }}, {{ order.district }} — {{ order.pin_code }}</div>
+              <div class="text-muted small mt-1"><i class="bi bi-telephone"></i> {{ order.phone }} &bull; <i class="bi bi-envelope"></i> {{ order.email }}</div>
+            </div>
+          </div>
+
+          <!-- Items Ordered -->
+          <div>
+            <h6 class="fw-bold small text-muted text-uppercase mb-2">Items in this Shipment ({{ order_items.count }})</h6>
+            <div class="list-group list-group-flush rounded-3 border">
+              {% for item in order_items %}
+                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                  <div>
+                    <div class="fw-bold text-dark">{{ item.product_name }}</div>
+                    <small class="text-muted">
+                      Qty: <strong>{{ item.quantity }}</strong> &bull; Unit: ₹{{ item.price }}
+                      {% if item.product and item.product.provider %}
+                        &bull; Farm: {{ item.product.provider.farm_name }}
+                      {% endif %}
+                    </small>
+                  </div>
+                  <div class="fw-bold text-success fs-6">₹{{ item.subtotal }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

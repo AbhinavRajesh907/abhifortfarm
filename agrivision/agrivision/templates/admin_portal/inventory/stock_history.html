@@ -1,0 +1,136 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Stock Audit History | AgriVision Admin{% endblock title %}
+{% block page_title %}Platform Inventory Stock Audit Trail{% endblock page_title %}
+{% block page_subtitle %}Comprehensive, immutable audit logs for all stock modifications across all providers, purchases, cancellations, and restocks{% endblock page_subtitle %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search product name, reason, or order #..." />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="product" class="form-select" onchange="this.form.submit()">
+        <option value="">All Products</option>
+        {% for p in products %}
+          <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:"s" %}selected{% endif %}>
+            {{ p.name }} (Stock: {{ p.stock }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="change_type" class="form-select" onchange="this.form.submit()">
+        <option value="">All Movement Types</option>
+        {% for val, label in change_types %}
+          <option value="{{ val }}" {% if selected_change_type == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-admin-primary flex-grow-1">Filter</button>
+      {% if selected_product or selected_change_type or search %}
+        <a href="{% url 'admin_portal:stock_history' %}" class="btn btn-outline-secondary" title="Clear Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Stock History Table -->
+<div class="admin-card">
+  <div class="admin-card-header d-flex justify-content-between align-items-center">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Inventory Movement Audit Records
+    </h5>
+    <div class="d-flex gap-2">
+      <a href="{% url 'admin_portal:inventory_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-warehouse me-1"></i> Inventory Control
+      </a>
+    </div>
+  </div>
+  <div class="admin-table-container">
+    {% if history_records %}
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Date &amp; Time</th>
+          <th>Product / SKU</th>
+          <th>Provider</th>
+          <th>Movement Type</th>
+          <th class="text-center">Previous</th>
+          <th class="text-center">Adjustment</th>
+          <th class="text-center">New Stock</th>
+          <th>Reason / Order Reference</th>
+          <th>Recorded By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history_records %}
+        <tr>
+          <td class="small text-muted text-nowrap">
+            {{ h.created_at|date:"M d, Y" }}<br>
+            <span class="text-secondary small">{{ h.created_at|date:"h:i A" }}</span>
+          </td>
+          <td>
+            <div class="fw-bold text-dark">{{ h.product.name }}</div>
+            <small class="text-muted">ID: #{{ h.product.id }} | Category: {{ h.product.category.name|default:"General" }}</small>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">
+              {{ h.provider.farm_name|default:h.product.provider_name|default:"AgriVision Direct" }}
+            </span>
+          </td>
+          <td>
+            {% if h.change_type == 'INITIAL' %}
+              <span class="badge bg-secondary">Initial Listing</span>
+            {% elif h.change_type == 'ADDED' %}
+              <span class="badge bg-success">Restock / Add</span>
+            {% elif h.change_type == 'REMOVED' %}
+              <span class="badge bg-warning text-dark">Stock Reduced</span>
+            {% elif h.change_type == 'ORDER' %}
+              <span class="badge bg-primary">Customer Order</span>
+            {% elif h.change_type == 'CANCELLATION' %}
+              <span class="badge bg-info text-dark">Order Cancelled</span>
+            {% elif h.change_type == 'REFUND_RESTOCK' %}
+              <span class="badge bg-success-subtle text-success border border-success">Refund Restock</span>
+            {% else %}
+              <span class="badge bg-dark">Manual Adjustment</span>
+            {% endif %}
+          </td>
+          <td class="text-center text-muted fw-semibold">{{ h.previous_stock }}</td>
+          <td class="text-center fw-bold {% if h.quantity_changed > 0 %}text-success{% elif h.quantity_changed < 0 %}text-danger{% else %}text-muted{% endif %}">
+            {% if h.quantity_changed > 0 %}+{{ h.quantity_changed }}{% else %}{{ h.quantity_changed }}{% endif %}
+          </td>
+          <td class="text-center fw-bold fs-6 text-dark">{{ h.new_stock }}</td>
+          <td>
+            <div class="small text-dark">{{ h.reason }}</div>
+            {% if h.related_order %}
+              <a href="{% url 'admin_portal:order_detail' h.related_order.pk %}" class="badge bg-light text-primary border text-decoration-none">
+                Order #{{ h.related_order.order_number }}
+              </a>
+            {% endif %}
+          </td>
+          <td class="small text-muted">
+            {{ h.created_by.name|default:h.created_by.email|default:"System" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="text-center py-5">
+        <div style="font-size: 3rem; color: #a1a1aa;"><i class="fa-solid fa-clipboard-list"></i></div>
+        <h5 class="fw-bold mt-2">No stock history entries found</h5>
+        <p class="text-muted small mb-0">Stock modifications from orders, cancellations, restocks, or adjustments will be logged automatically.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}

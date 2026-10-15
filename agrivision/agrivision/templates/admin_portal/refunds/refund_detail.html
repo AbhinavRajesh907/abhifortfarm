@@ -1,0 +1,251 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Review Refund #{{ refund.id }} | AgriVision Admin{% endblock title %}
+{% block page_title %}Refund Claim Review #{{ refund.id }}{% endblock page_title %}
+{% block page_subtitle %}Order #{{ refund.order.order_number }} &bull; Customer: {{ refund.user.name|default:refund.user.email }}{% endblock page_subtitle %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <a href="{% url 'admin_portal:refund_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="fa-solid fa-arrow-left me-1"></i> Back to Refund Requests
+  </a>
+  <div>
+    {% if refund.status == 'PENDING' %}
+      <span class="status-pill status-pending fs-6 px-3 py-1"><i class="fa-solid fa-clock me-1"></i> Status: Pending Admin Decision</span>
+    {% elif refund.status == 'APPROVED' %}
+      <span class="status-pill status-delivered fs-6 px-3 py-1"><i class="fa-solid fa-circle-check me-1"></i> Status: Approved</span>
+    {% elif refund.status == 'REJECTED' %}
+      <span class="status-pill status-failed fs-6 px-3 py-1"><i class="fa-solid fa-circle-xmark me-1"></i> Status: Rejected</span>
+    {% else %}
+      <span class="status-pill status-paid fs-6 px-3 py-1">{{ refund.get_status_display }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Claim Details & Items -->
+  <div class="col-lg-8">
+    <!-- Reason Card -->
+    <div class="admin-card mb-4">
+      <div class="admin-card-header bg-light">
+        <h5 class="admin-card-title text-dark">
+          <i class="fa-solid fa-file-circle-question text-warning me-2"></i> Return Claim Reason &amp; Description
+        </h5>
+      </div>
+      <div class="p-4">
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted fw-semibold">Standardized Reason:</div>
+          <div class="col-sm-8">
+            <span class="badge bg-warning-subtle text-dark border border-warning fs-6 px-3 py-1">
+              {{ refund.get_reason_display }}
+            </span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted fw-semibold">Customer Explanation:</div>
+          <div class="col-sm-8">
+            <div class="p-3 bg-light rounded-3 border text-dark">
+              {{ refund.custom_reason|default:"No additional notes provided by customer." }}
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted fw-semibold">Requested Refund Amount:</div>
+          <div class="col-sm-8">
+            <span class="fs-5 fw-bold text-success">₹{{ refund.requested_amount|default:refund.order.total_amount }}</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-4 text-muted fw-semibold">Claim Date &amp; Time:</div>
+          <div class="col-sm-8 text-dark">
+            {{ refund.created_at|date:"F d, Y — h:i A" }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items Table -->
+    <div class="admin-card mb-4">
+      <div class="admin-card-header">
+        <h5 class="admin-card-title">
+          <i class="fa-solid fa-boxes-packing text-primary me-2"></i> Order Items in this Purchase
+        </h5>
+        <span class="badge bg-light text-dark border">{{ refund.order.items.count }} items</span>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Item / Product</th>
+              <th>Category</th>
+              <th>Provider</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th class="text-end">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in refund.order.items.all %}
+            <tr>
+              <td>
+                <div class="fw-bold text-dark">{{ item.product_name }}</div>
+                {% if item.product %}
+                  <small class="text-muted">Live Stock: {{ item.product.stock }} units</small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">{{ item.category_name|default:"General" }}</span>
+              </td>
+              <td>
+                <span class="small text-muted">{{ item.provider_name|default:"AgriVision Direct" }}</span>
+              </td>
+              <td class="fw-bold">{{ item.quantity }}</td>
+              <td>₹{{ item.price }}</td>
+              <td class="text-end fw-bold text-success">₹{{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="table-light">
+              <td colspan="5" class="text-end fw-bold">Order Total:</td>
+              <td class="text-end fw-bold fs-6 text-success">₹{{ refund.order.total_amount }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Order Info & Admin Decision Form -->
+  <div class="col-lg-4">
+    <!-- Order Summary Card -->
+    <div class="admin-card mb-4">
+      <div class="admin-card-header bg-light">
+        <h5 class="admin-card-title text-dark">
+          <i class="fa-solid fa-receipt text-success me-2"></i> Order Details
+        </h5>
+      </div>
+      <div class="p-3">
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Order Number:</span>
+          <span class="fw-bold text-dark">#{{ refund.order.order_number }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Order Date:</span>
+          <span class="small text-dark">{{ refund.order.created_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Customer Name:</span>
+          <span class="fw-semibold text-dark">{{ refund.order.full_name }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Customer Phone:</span>
+          <span class="small text-dark">{{ refund.order.phone }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Payment Method:</span>
+          <span class="badge bg-light text-dark border">{{ refund.order.get_payment_method_display }}</span>
+        </div>
+        {% if refund.order.payment_method == 'half_cod' %}
+        <div class="d-flex justify-content-between py-1 border-bottom bg-light px-2 rounded">
+          <span class="text-muted small">Online Paid (50%):</span>
+          <span class="fw-bold text-success small">₹{{ refund.order.online_paid_amount }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom bg-light px-2 rounded">
+          <span class="text-muted small">COD Balance (50%):</span>
+          <span class="fw-bold text-warning small">₹{{ refund.order.cod_amount_due }}</span>
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span class="text-muted small">Payment Status:</span>
+          <span class="badge {% if refund.order.payment_status == 'paid' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+            {{ refund.order.get_payment_status_display }}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted small">Fulfillment Status:</span>
+          <span class="badge bg-info text-dark">{{ refund.order.get_order_status_display }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Decision Box -->
+    <div class="admin-card">
+      <div class="admin-card-header bg-dark text-white">
+        <h5 class="admin-card-title text-white mb-0">
+          <i class="fa-solid fa-gavel me-2"></i> Administrative Decision
+        </h5>
+      </div>
+      <div class="p-3">
+        {% if refund.status == 'PENDING' %}
+          <form method="POST" action="{% url 'admin_portal:refund_process' refund.pk %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Decision</label>
+              {{ process_form.decision }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Approved Refund Amount (₹)</label>
+              {{ process_form.refund_amount }}
+              <div class="form-text small">Full or partial settlement amount to issue.</div>
+            </div>
+
+            <div class="mb-3 p-3 bg-light rounded-3 border">
+              <div class="form-check form-switch">
+                {{ process_form.is_restocked }}
+                <label class="form-check-label fw-bold small text-dark ms-2" for="{{ process_form.is_restocked.id_for_label }}">
+                  Restock Resellable Inventory
+                </label>
+              </div>
+              <div class="small text-muted mt-1">
+                If checked, ordered product quantities will automatically be added back to provider stock and logged in the Stock History audit trail.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Audit Notes / Customer Feedback</label>
+              {{ process_form.admin_notes }}
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow-sm">
+              <i class="fa-solid fa-paper-plane me-1"></i> Submit Decision
+            </button>
+          </form>
+        {% else %}
+          <div class="alert {% if refund.status == 'APPROVED' %}alert-success{% else %}alert-danger{% endif %} mb-3">
+            <div class="fw-bold mb-1">
+              {% if refund.status == 'APPROVED' %}
+                <i class="fa-solid fa-circle-check text-success me-1"></i> Approved for ₹{{ refund.refund_amount }}
+              {% else %}
+                <i class="fa-solid fa-circle-xmark text-danger me-1"></i> Claim Rejected
+              {% endif %}
+            </div>
+            <div class="small text-muted">
+              Processed on {{ refund.processed_at|date:"M d, Y h:i A" }} by {{ refund.processed_by.name|default:refund.processed_by.email }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold">Inventory Restocked:</label>
+            <div>
+              {% if refund.is_restocked %}
+                <span class="badge bg-success"><i class="fa-solid fa-check"></i> Yes — Items Restocked</span>
+              {% else %}
+                <span class="badge bg-secondary">No — Items Damaged / Not Restocked</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold">Admin Notes:</label>
+            <div class="p-2 bg-light rounded border small text-dark">
+              {{ refund.admin_notes|default:"No notes recorded." }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

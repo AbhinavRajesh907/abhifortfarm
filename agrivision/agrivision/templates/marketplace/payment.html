@@ -4,7 +4,22 @@
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="section-title"><i class="bi bi-credit-card me-2"></i>Payment</h1>
+  <!-- Breadcrumb & Back navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:cart' %}" class="text-success text-decoration-none">Cart</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:checkout' %}" class="text-success text-decoration-none">Checkout</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Payment</li>
+      </ol>
+    </nav>
+    <a href="{% url 'marketplace:checkout' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Delivery Details
+    </a>
+  </div>
+
+  <h1 class="section-title"><i class="bi bi-credit-card me-2"></i>Select Payment Method</h1>
 
   <div class="row g-4">
     <!-- Payment method selection -->
@@ -12,45 +27,50 @@
       <form method="post" action="{% url 'marketplace:place_order' %}" id="paymentForm">
         {% csrf_token %}
 
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0">Select Payment Method</h5>
+        <div class="card shadow-sm mb-4 border-0 rounded-4 overflow-hidden">
+          <div class="card-header bg-success text-white py-3">
+            <h5 class="mb-0 fw-bold">Choose How You'd Like to Pay</h5>
           </div>
-          <div class="card-body">
-            <!-- COD -->
-            <div class="payment-option" id="codOption">
-              <label class="d-flex align-items-center gap-3 cursor-pointer">
+          <div class="card-body p-4">
+            
+            <!-- Option 1: 50% Online + 50% COD (Split Payment) -->
+            <div class="payment-option p-3 rounded-3 border mb-3 cursor-pointer" id="halfCodOptionWrap">
+              <label class="d-flex align-items-center gap-3 cursor-pointer w-100 mb-0">
+                <input type="radio" name="payment_method" value="half_cod" class="form-check-input payment-radio"
+                       id="radioHalfCod" checked/>
+                <div class="payment-icon text-warning fs-2">
+                  <i class="bi bi-pie-chart-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="d-block text-dark">1. 50% Advance Online + 50% Cash on Delivery</strong>
+                    <span class="badge bg-warning text-dark fs-6">Pay ₹{{ half_online }} Now</span>
+                  </div>
+                  <small class="text-muted">Pay 50% (₹{{ half_online }}) now online &bull; Remaining 50% balance (₹{{ half_cod }}) payable after delivery is complete.</small>
+                </div>
+              </label>
+            </div>
+
+            <!-- Option 2: Full Cash on Delivery (COD) -->
+            <div class="payment-option p-3 rounded-3 border mb-3 cursor-pointer" id="codOptionWrap">
+              <label class="d-flex align-items-center gap-3 cursor-pointer w-100 mb-0">
                 <input type="radio" name="payment_method" value="cod" class="form-check-input payment-radio"
-                       checked id="radioCod"/>
-                <div class="payment-icon cod-icon">
-                  <i class="bi bi-cash-coin fs-2"></i>
+                       id="radioCod"/>
+                <div class="payment-icon text-success fs-2">
+                  <i class="bi bi-cash-coin"></i>
                 </div>
-                <div>
-                  <strong class="d-block">Cash on Delivery</strong>
-                  <small class="text-muted">Pay with cash when your order arrives.</small>
-                </div>
-              </label>
-            </div>
-
-            <hr/>
-
-            <!-- Online Payment (Card) -->
-            <div class="payment-option" id="onlineOption">
-              <label class="d-flex align-items-center gap-3 cursor-pointer">
-                <input type="radio" name="payment_method" value="online" class="form-check-input payment-radio"
-                       id="radioOnline"/>
-                <div class="payment-icon online-icon text-primary">
-                  <i class="bi bi-credit-card-2-front fs-2"></i>
-                </div>
-                <div>
-                  <strong class="d-block">Credit / Debit Card</strong>
-                  <small class="text-muted">Pay securely using Visa, MasterCard, or RuPay card.</small>
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="d-block text-dark">2. Full Cash on Delivery (COD)</strong>
+                    <span class="badge bg-success fs-6">Pay ₹{{ total }} on Delivery</span>
+                  </div>
+                  <small class="text-muted">Pay the entire amount in cash when your order arrives at your doorstep.</small>
                 </div>
               </label>
             </div>
 
-            <!-- Card Details Section (Expands when Online Payment selected) -->
-            <div id="cardDetailsSection" class="mt-3 p-3 bg-light border rounded-3 d-none">
+            <!-- Card Details Section (Expands for Full Online or 50% Split) -->
+            <div id="cardDetailsSection" class="mt-3 p-3 bg-light border rounded-3">
               <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                 <h6 class="fw-bold mb-0 text-dark">
                   <i class="bi bi-shield-lock-fill text-success me-1"></i> Card Payment Details
@@ -62,51 +82,65 @@
 
               <div class="row g-3">
                 <div class="col-12">
-                  <label class="form-label small fw-semibold text-dark">Cardholder Name</label>
+                  <label class="form-label small fw-semibold text-dark" for="cardName">Cardholder Name</label>
                   <input type="text" name="card_name" id="cardName" class="form-control form-control-sm"
-                         placeholder="e.g. Abinto Tennichan"/>
+                         placeholder="e.g. Farmer Abhinav (letters only)" required/>
+                  <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="cardNameError">Cardholder name should contain letters and spaces only.</div>
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label small fw-semibold text-dark">Card / Account Number</label>
+                  <label class="form-label small fw-semibold text-dark" for="cardNumber">Card / Account Number</label>
                   <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white"><i class="bi bi-credit-card"></i></span>
                     <input type="text" name="card_number" id="cardNumber" class="form-control form-control-sm"
-                           placeholder="XXXX XXXX XXXX XXXX" maxlength="19"/>
+                           placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required/>
                   </div>
                 </div>
 
                 <div class="col-6">
-                  <label class="form-label small fw-semibold text-dark">Expiry Date</label>
+                  <label class="form-label small fw-semibold text-dark" for="cardExpiry">Expiry Date</label>
                   <input type="text" name="card_expiry" id="cardExpiry" class="form-control form-control-sm"
-                         placeholder="MM/YY" maxlength="5"/>
+                         placeholder="MM/YY" maxlength="5" required/>
                 </div>
 
                 <div class="col-6">
-                  <label class="form-label small fw-semibold text-dark">CVC / CVV</label>
-                  <input type="password" name="card_cvc" id="cardCvc" class="form-control form-control-sm"
-                         placeholder="123" maxlength="4"/>
+                  <label class="form-label small fw-semibold text-dark" for="cardCvc">CVC / CVV</label>
+                  <div class="input-group input-group-sm">
+                    <input type="password" name="card_cvc" id="cardCvc" class="form-control form-control-sm"
+                           placeholder="123" maxlength="4" required/>
+                    <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="cardCvc" title="Show/Hide CVV">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+                  <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="cardCvcError">CVV must be 3 or 4 digits.</div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
         <!-- Delivery recap -->
-        <div class="card shadow-sm mb-4">
-          <div class="card-header">
-            <h6 class="mb-0">Delivering to</h6>
+        <div class="card shadow-sm mb-4 border-0 rounded-4 overflow-hidden">
+          <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-geo-alt me-1 text-success"></i> Delivering to</h6>
+            <a href="{% url 'marketplace:checkout' %}" class="btn btn-link btn-sm text-success text-decoration-none p-0">Change Address</a>
           </div>
-          <div class="card-body text-muted small">
-            <strong>{{ checkout_data.full_name }}</strong> · {{ checkout_data.phone }}<br/>
+          <div class="card-body text-muted small p-3">
+            <strong class="text-dark">{{ checkout_data.full_name }}</strong> &bull; {{ checkout_data.phone }} &bull; {{ checkout_data.email }}<br/>
             {{ checkout_data.delivery_address }},
-            {{ checkout_data.city }}, {{ checkout_data.district }} — {{ checkout_data.pin_code }}
+            {{ checkout_data.city }}, {{ checkout_data.district }} — <strong>{{ checkout_data.pin_code }}</strong>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-success btn-lg w-100" id="placeOrderBtn">
-          <i class="bi bi-bag-check me-1"></i> Place Order
-        </button>
+        <div class="d-flex justify-content-between align-items-center gap-3">
+          <a href="{% url 'marketplace:checkout' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Delivery
+          </a>
+          <button type="submit" class="btn btn-success btn-lg px-4 shadow-sm" id="placeOrderBtn">
+            <i class="bi bi-bag-check me-1"></i> Confirm &amp; Place Order
+          </button>
+        </div>
       </form>
     </div>
 
@@ -127,9 +161,22 @@
             </div>
           {% endfor %}
           <hr/>
-          <div class="d-flex justify-content-between fw-bold fs-5">
-            <span>Total</span>
+          <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+            <span>Total Order Amount</span>
             <span class="text-success">₹{{ total }}</span>
+          </div>
+
+          <!-- Dynamic Payment Split Card -->
+          <div class="p-3 bg-light rounded-3 border" id="paymentBreakdownBox">
+            <h6 class="fw-semibold text-dark mb-2"><i class="bi bi-receipt me-1"></i> Payment Breakdown:</h6>
+            <div class="d-flex justify-content-between small mb-1">
+              <span>Online Payment (Now):</span>
+              <strong class="text-primary" id="breakdownOnline">₹{{ total }}</strong>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span>Cash on Delivery (Later):</span>
+              <strong class="text-success" id="breakdownCod">₹0.00</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -140,19 +187,34 @@
 
 {% block extra_js %}
 <script>
-  document.querySelectorAll('.payment-radio').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const cardDetailsSection = document.getElementById('cardDetailsSection');
-      const cardInputs = cardDetailsSection.querySelectorAll('input');
+  const totalAmount = parseFloat('{{ total|default:0 }}');
+  const halfOnlineAmount = parseFloat('{{ half_online|default:0 }}');
+  const halfCodAmount = parseFloat('{{ half_cod|default:0 }}');
 
-      if (document.getElementById('radioOnline').checked) {
-        cardDetailsSection.classList.remove('d-none');
-        cardInputs.forEach(input => input.setAttribute('required', 'required'));
-      } else {
-        cardDetailsSection.classList.add('d-none');
-        cardInputs.forEach(input => input.removeAttribute('required'));
-      }
-    });
+  const cardDetailsSection = document.getElementById('cardDetailsSection');
+  const cardInputs = cardDetailsSection.querySelectorAll('input');
+  const breakdownOnline = document.getElementById('breakdownOnline');
+  const breakdownCod = document.getElementById('breakdownCod');
+
+  function updatePaymentUI() {
+    const isHalfCod = document.getElementById('radioHalfCod') && document.getElementById('radioHalfCod').checked;
+    const isCod = document.getElementById('radioCod') && document.getElementById('radioCod').checked;
+
+    if (isHalfCod) {
+      cardDetailsSection.classList.remove('d-none');
+      cardInputs.forEach(i => i.setAttribute('required', 'required'));
+      breakdownOnline.textContent = '₹' + halfOnlineAmount.toFixed(2);
+      breakdownCod.textContent = '₹' + halfCodAmount.toFixed(2);
+    } else if (isCod) {
+      cardDetailsSection.classList.add('d-none');
+      cardInputs.forEach(i => i.removeAttribute('required'));
+      breakdownOnline.textContent = '₹0.00';
+      breakdownCod.textContent = '₹' + totalAmount.toFixed(2);
+    }
+  }
+
+  document.querySelectorAll('.payment-radio').forEach(radio => {
+    radio.addEventListener('change', updatePaymentUI);
   });
 
   // Card number formatting (XXXX XXXX XXXX XXXX)
@@ -176,5 +238,53 @@
       e.target.value = val.substring(0, 5);
     });
   }
+
+  // Password / CVV toggle
+  document.querySelectorAll('.toggle-password-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const targetId = this.getAttribute('data-target');
+      const input = document.getElementById(targetId) || this.previousElementSibling;
+      const icon = this.querySelector('i');
+      if (input) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.remove('bi-eye');
+          icon.classList.add('bi-eye-slash');
+        } else {
+          input.type = 'password';
+          icon.classList.remove('bi-eye-slash');
+          icon.classList.add('bi-eye');
+        }
+      }
+    });
+  });
+
+  // Cardholder name letters-only validation
+  const cardNameInput = document.getElementById('cardName');
+  const cardNameError = document.getElementById('cardNameError');
+  if (cardNameInput) {
+    cardNameInput.addEventListener('input', function() {
+      if (this.value && !/^[a-zA-Z\s.'-]+$/.test(this.value)) {
+        cardNameError.classList.remove('d-none');
+      } else {
+        cardNameError.classList.add('d-none');
+      }
+    });
+  }
+
+  // Card CVC numbers-only validation
+  const cardCvcInput = document.getElementById('cardCvc');
+  const cardCvcError = document.getElementById('cardCvcError');
+  if (cardCvcInput) {
+    cardCvcInput.addEventListener('input', function() {
+      if (this.value && !/^\d{0,4}$/.test(this.value)) {
+        cardCvcError.classList.remove('d-none');
+      } else {
+        cardCvcError.classList.add('d-none');
+      }
+    });
+  }
+
+  updatePaymentUI();
 </script>
 {% endblock %}

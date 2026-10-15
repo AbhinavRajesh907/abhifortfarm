@@ -68,7 +68,7 @@ class ProviderWorkflowTests(TestCase):
             "farm_name": "Green Acres Organic Farm",
             "provider_type": "Seed Producer",
             "description": "Growing heirloom tomato and pepper seeds.",
-            "phone_number": "+91 9876543210",
+            "phone_number": "9876543210",
             "address": "123 Farm Road",
             "city": "Kochi",
             "district": "Ernakulam",
@@ -207,7 +207,37 @@ class ProviderWorkflowTests(TestCase):
         self.assertEqual(req.provider, profile)
         self.assertEqual(req.quantity, 50)
         self.assertEqual(req.expected_price, Decimal("120.00"))
-        self.assertEqual(req.status, ProviderRequest.Status.PENDING)
+        self.assertTrue(Product.objects.filter(name="Tomato Seeds (Hybrid 50g)").exists())
+
+    def test_provider_product_add_with_new_category_and_description(self):
+        """Test adding a plant with an on-the-fly created category and detailed care description."""
+        profile = ProviderProfile.objects.create(
+            user=self.user_a,
+            farm_name="Bonsai Heritage Nursery",
+            phone_number="9876543210",
+            verification_status=ProviderProfile.VerificationStatus.APPROVED,
+        )
+        self.client.login(email="provider_a@example.com", password="testpassword123")
+
+        # Submit plant without category input and with detailed care guide
+        plant_data = {
+            "item_name": "Ficus Retusa 5-Year Bonsai Plant",
+            "description": "Premium 5-year-old Ficus Retusa bonsai plant in ceramic glazed pot. Requires bright indirect light, moderate watering twice a week, and well-draining bonsai soil mix.",
+            "quantity": 15,
+            "expected_price": "850.00",
+        }
+        res = self.client.post(reverse("providers:product_add"), data=plant_data)
+        self.assertEqual(res.status_code, 302)
+
+        # Verify category was auto-assigned with category_type='Plants'
+        product = Product.objects.get(name="Ficus Retusa 5-Year Bonsai Plant")
+        self.assertEqual(product.category.category_type, Category.PLANTS)
+        self.assertTrue(product.category.is_plant_category)
+        self.assertEqual(product.price, Decimal("850.00"))
+        self.assertEqual(product.stock, 15)
+        self.assertIn("Ficus Retusa", product.description)
+        self.assertIn("ceramic glazed pot", product.description)
+
 
     def test_product_ownership_isolation(self):
         """Provider A cannot edit or delete Provider B's products."""

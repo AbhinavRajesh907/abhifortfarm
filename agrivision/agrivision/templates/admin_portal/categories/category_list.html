@@ -1,26 +1,25 @@
 {% extends "admin_portal/base_admin.html" %}
 
-{% block title %}Categories Management | AgriVision Admin{% endblock title %}
-{% block page_title %}Product Categories{% endblock page_title %}
-{% block page_subtitle %}Organize seeds, plants, fertilizers, pesticides, and farming tools into structured catalogs{% endblock page_subtitle %}
+{% block title %}Categories &amp; Hierarchy Management | AgriVision Admin{% endblock title %}
+{% block page_title %}Product Categories &amp; Hierarchy{% endblock page_title %}
+{% block page_subtitle %}Manage parent categories and subcategories for Seeds, Nursery Plants, Fertilizers, and Agri-equipment{% endblock page_subtitle %}
 
 {% block content %}
 <div class="row g-4">
   <!-- Left: Category List -->
   <div class="col-lg-7">
     <div class="admin-card">
-      <div class="admin-card-header">
+      <div class="admin-card-header d-flex justify-content-between align-items-center">
         <h5 class="admin-card-title">
-          <i class="fa-solid fa-layer-group text-success"></i> Existing Categories
+          <i class="fa-solid fa-layer-group text-success me-2"></i> Category Catalog ({{ categories|length }})
         </h5>
-        <span class="badge bg-light text-dark border">{{ categories|length }} Categories</span>
       </div>
       <div class="admin-table-container">
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Category Name</th>
-              <th>Description</th>
+              <th>Category &amp; Type</th>
+              <th>Hierarchy</th>
               <th>Products Linked</th>
               <th class="text-end">Actions</th>
             </tr>
@@ -33,15 +32,34 @@
                     <div class="p-2 rounded bg-light border text-success">
                       <i class="fa-solid {{ cat.icon|default:'fa-seedling' }}"></i>
                     </div>
-                    <div class="fw-bold text-dark">{{ cat.name }}</div>
+                    <div>
+                      <div class="fw-bold text-dark">
+                        {{ cat.name }}
+                        {% if not cat.is_active %}
+                          <span class="badge bg-secondary-subtle text-muted ms-1">Inactive</span>
+                        {% endif %}
+                      </div>
+                      <small class="text-muted">{{ cat.get_category_type_display|default:cat.category_type }}</small>
+                    </div>
                   </div>
                 </td>
                 <td>
-                  <small class="text-muted text-truncate d-inline-block" style="max-width: 220px;">{{ cat.description|default:"No description provided" }}</small>
+                  {% if cat.parent %}
+                    <span class="badge bg-light text-dark border">
+                      <i class="fa-solid fa-arrow-turn-down me-1 text-muted"></i> Sub of {{ cat.parent.name }}
+                    </span>
+                  {% else %}
+                    <span class="badge bg-success-subtle text-success border border-success">
+                      <i class="fa-solid fa-sitemap me-1"></i> Top-Level Parent
+                    </span>
+                    {% if cat.subcategories.count > 0 %}
+                      <div class="small text-muted mt-1">{{ cat.subcategories.count }} subcategories</div>
+                    {% endif %}
+                  {% endif %}
                 </td>
                 <td>
-                  <a href="{% url 'admin_portal:product_list' %}?category={{ cat.pk }}" class="badge bg-success-subtle text-success text-decoration-none">
-                    {{ cat.product_count }} products
+                  <a href="{% url 'admin_portal:product_list' %}?category={{ cat.pk }}" class="badge bg-primary-subtle text-primary text-decoration-none">
+                    {{ cat.products.count }} products
                   </a>
                 </td>
                 <td class="text-end">
@@ -66,16 +84,45 @@
                           {% csrf_token %}
                           <div class="modal-body">
                             <div class="mb-3">
-                              <label class="form-label fw-bold">Category Name *</label>
+                              <label class="form-label fw-bold small">Category Name *</label>
                               <input type="text" name="name" value="{{ cat.name }}" class="form-control" required />
                             </div>
                             <div class="mb-3">
-                              <label class="form-label fw-bold">Icon Class (FontAwesome)</label>
-                              <input type="text" name="icon" value="{{ cat.icon }}" class="form-control" />
+                              <label class="form-label fw-bold small">Category Type</label>
+                              <select name="category_type" class="form-select">
+                                <option value="SEEDS" {% if cat.category_type == 'SEEDS' %}selected{% endif %}>Seeds</option>
+                                <option value="PLANTS" {% if cat.category_type == 'PLANTS' %}selected{% endif %}>Plants &amp; Saplings</option>
+                                <option value="FERTILIZERS" {% if cat.category_type == 'FERTILIZERS' %}selected{% endif %}>Fertilizers &amp; Soil</option>
+                                <option value="PESTICIDES" {% if cat.category_type == 'PESTICIDES' %}selected{% endif %}>Pesticides &amp; Bio-Care</option>
+                                <option value="TOOLS" {% if cat.category_type == 'TOOLS' %}selected{% endif %}>Tools &amp; Equipment</option>
+                                <option value="IRRIGATION" {% if cat.category_type == 'IRRIGATION' %}selected{% endif %}>Irrigation Systems</option>
+                                <option value="OTHER" {% if cat.category_type == 'OTHER' %}selected{% endif %}>Other</option>
+                              </select>
                             </div>
                             <div class="mb-3">
-                              <label class="form-label fw-bold">Description</label>
-                              <textarea name="description" class="form-control" rows="3">{{ cat.description }}</textarea>
+                              <label class="form-label fw-bold small">Parent Category (Optional)</label>
+                              <select name="parent" class="form-select">
+                                <option value="">-- None (Top-Level Parent) --</option>
+                                {% for p_cat in parent_categories %}
+                                  {% if p_cat.pk != cat.pk %}
+                                    <option value="{{ p_cat.pk }}" {% if cat.parent_id == p_cat.pk %}selected{% endif %}>
+                                      {{ p_cat.name }}
+                                    </option>
+                                  {% endif %}
+                                {% endfor %}
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold small">FontAwesome Icon</label>
+                              <input type="text" name="icon" value="{{ cat.icon|default:'' }}" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label fw-bold small">Description</label>
+                              <textarea name="description" class="form-control" rows="3">{{ cat.description|default:'' }}</textarea>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                              <input type="checkbox" name="is_active" class="form-check-input" id="isActiveCat{{ cat.pk }}" {% if cat.is_active %}checked{% endif %}>
+                              <label class="form-check-label fw-bold small" for="isActiveCat{{ cat.pk }}">Active in Marketplace</label>
                             </div>
                           </div>
                           <div class="modal-footer">
@@ -126,26 +173,38 @@
     <div class="admin-card">
       <div class="admin-card-header">
         <h5 class="admin-card-title">
-          <i class="fa-solid fa-plus-circle text-primary"></i> Add New Category
+          <i class="fa-solid fa-plus-circle text-primary me-2"></i> Add New Category / Subcategory
         </h5>
       </div>
-      <div class="admin-card-body">
+      <div class="p-4">
         <form method="post" action="{% url 'admin_portal:category_create' %}">
           {% csrf_token %}
           <div class="mb-3">
-            <label class="form-label fw-bold">Category Name *</label>
+            <label class="form-label fw-bold small">Category Name *</label>
             {{ form.name }}
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold">FontAwesome Icon</label>
-            {{ form.icon }}
-            <div class="form-text">e.g. fa-seedling, fa-leaf, fa-flask, fa-shield-halved, fa-wrench</div>
+            <label class="form-label fw-bold small">Category Type</label>
+            {{ form.category_type }}
           </div>
           <div class="mb-3">
-            <label class="form-label fw-bold">Description</label>
+            <label class="form-label fw-bold small">Parent Category (Leave blank for top-level)</label>
+            {{ form.parent }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">FontAwesome Icon</label>
+            {{ form.icon }}
+            <div class="form-text small">e.g. fa-seedling, fa-leaf, fa-apple-whole, fa-tree</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Description</label>
             {{ form.description }}
           </div>
-          <button type="submit" class="btn btn-admin-primary w-100 py-2 fw-bold">
+          <div class="form-check form-switch mb-3">
+            {{ form.is_active }}
+            <label class="form-check-label fw-bold small ms-2" for="{{ form.is_active.id_for_label }}">Active in Marketplace</label>
+          </div>
+          <button type="submit" class="btn btn-admin-primary w-100 py-2 fw-bold shadow-sm">
             <i class="fa-solid fa-plus me-1"></i> Create Category
           </button>
         </form>

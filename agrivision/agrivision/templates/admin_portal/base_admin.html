@@ -65,11 +65,15 @@
         </a>
         <a href="{% url 'admin_portal:category_list' %}" class="admin-nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-layer-group"></i>
-          <span>Categories</span>
+          <span>Categories & Hierarchy</span>
         </a>
-        <a href="{% url 'admin_portal:inventory_list' %}" class="admin-nav-link {% if 'inventory' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'admin_portal:inventory_list' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'inventory_list' or request.resolver_match.url_name == 'inventory_adjust' %}active{% endif %}">
           <i class="fa-solid fa-warehouse"></i>
           <span>Inventory Control</span>
+        </a>
+        <a href="{% url 'admin_portal:stock_history' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'stock_history' %}active{% endif %}">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Stock Audit Log</span>
         </a>
 
         <div class="admin-nav-section">Sales & Operations</div>
@@ -80,6 +84,10 @@
         <a href="{% url 'admin_portal:order_view' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'order_view' or 'payment' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-file-invoice"></i>
           <span>Order View</span>
+        </a>
+        <a href="{% url 'admin_portal:refund_list' %}" class="admin-nav-link {% if 'refund' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-hand-holding-dollar"></i>
+          <span>Refund Requests</span>
         </a>
 
         <div class="admin-nav-section">User Management</div>
@@ -98,7 +106,7 @@
           <div class="fw-bold text-white text-truncate">{{ request.user.name|default:request.user.email }}</div>
           <div class="text-emerald-400" style="color: #34d399; font-size: 0.72rem;">Administrator</div>
         </div>
-        <a href="{% url 'account_logout' %}" class="text-white-50 hover-text-white" title="Sign Out">
+        <a href="{% url 'users:logout' %}" class="text-white-50 hover-text-white" title="Sign Out">
           <i class="fa-solid fa-right-from-bracket"></i>
         </a>
       </div>

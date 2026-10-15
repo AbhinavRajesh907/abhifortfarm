@@ -5,14 +5,112 @@
 
 {% block content %}
 <div class="container py-4">
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'marketplace:my_orders' %}">My Orders</a></li>
-      <li class="breadcrumb-item active">Order #{{ order.order_number }}</li>
-    </ol>
-  </nav>
+  <!-- Breadcrumb & Back buttons -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:my_orders' %}" class="text-success text-decoration-none">My Orders</a></li>
+        <li class="breadcrumb-item active">Order #{{ order.order_number }}</li>
+      </ol>
+    </nav>
+    <div class="d-flex gap-2">
+      <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-house-door me-1"></i> Dashboard
+      </a>
+      <a href="{% url 'marketplace:my_orders' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Orders
+      </a>
+    </div>
+  </div>
 
-  <h1 class="section-title">Order #{{ order.order_number }}</h1>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="section-title mb-0">Order #{{ order.order_number }}</h1>
+    <div class="d-flex gap-2 flex-wrap">
+      {% if order.order_status != 'cancelled' %}
+        <a href="{% url 'marketplace:track_order' order.order_number %}" class="btn btn-success">
+          <i class="bi bi-geo-alt-fill me-1"></i> Live Tracking &amp; Balance
+        </a>
+      {% endif %}
+      {% if order.can_cancel %}
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+          <i class="bi bi-x-circle me-1"></i> Cancel Order
+        </button>
+      {% endif %}
+      {% if order.can_request_refund %}
+        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#refundModal">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Request Refund
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Live Progress Tracker Banner -->
+  {% if order.order_status != 'cancelled' %}
+    <div class="card shadow-sm mb-4 border-0 bg-light rounded-4">
+      <div class="card-body p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {{ current_stage.badge_class }} fs-6 px-3 py-1"><i class="bi {{ current_stage.icon }} me-1"></i> {{ current_stage.label }}</span>
+            <small class="text-muted">{{ current_stage.desc }}</small>
+          </div>
+          <a href="{% url 'marketplace:track_order' order.order_number %}" class="btn btn-sm btn-outline-success">
+            Full Tracker View &rarr;
+          </a>
+        </div>
+        <div class="progress" style="height: 10px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{ current_stage.percent }}%;" aria-valuenow="{{ current_stage.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Cancellation Alert if Cancelled -->
+  {% if order.order_status == 'cancelled' %}
+    <div class="alert alert-danger mb-4 rounded-4 shadow-sm">
+      <h6 class="alert-heading fw-bold"><i class="bi bi-x-circle-fill me-1"></i> Order Cancelled</h6>
+      <p class="mb-0 small">Reason: {{ order.cancellation_reason|default:"Cancelled by user" }} · Cancelled on {{ order.cancelled_at|date:"d M Y, H:i"|default:order.updated_at|date:"d M Y, H:i" }}</p>
+    </div>
+  {% endif %}
+
+  <!-- Refund Requests Section -->
+  {% if refund_requests %}
+    <div class="card shadow-sm mb-4 border-warning">
+      <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-arrow-counterclockwise me-1"></i> Refund Information</h6>
+        <span class="badge bg-dark">Total Requests: {{ refund_requests.count }}</span>
+      </div>
+      <div class="card-body">
+        {% for ref in refund_requests %}
+          <div class="p-3 bg-light rounded-3 border mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>Refund Request #{{ ref.refund_number }}</strong>
+              <span class="badge 
+                {% if ref.status == 'APPROVED' or ref.status == 'REFUNDED' %}bg-success
+                {% elif ref.status == 'REJECTED' or ref.status == 'CANCELLED' %}bg-danger
+                {% elif ref.status == 'PROCESSING' %}bg-primary
+                {% else %}bg-warning text-dark{% endif %}">
+                {{ ref.get_status_display }}
+              </span>
+            </div>
+            <div class="small text-muted mb-1">
+              <strong>Reason:</strong> {{ ref.get_reason_display }}
+              {% if ref.custom_reason %}<span class="text-dark"> — {{ ref.custom_reason }}</span>{% endif %}
+            </div>
+            {% if ref.additional_description %}
+              <div class="small text-muted mb-1"><strong>Details:</strong> {{ ref.additional_description }}</div>
+            {% endif %}
+            {% if ref.admin_notes %}
+              <div class="small bg-white p-2 rounded border mt-2">
+                <strong class="text-primary"><i class="bi bi-chat-left-dots"></i> Admin Response:</strong> {{ ref.admin_notes }}
+              </div>
+            {% endif %}
+            <div class="small text-muted mt-1">Requested on {{ ref.created_at|date:"d M Y, H:i" }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
 
   <div class="row g-4">
     <!-- Left column: items + delivery -->
@@ -36,11 +134,11 @@
               {% for item in order_items %}
                 <tr>
                   <td>
-                    <strong>{{ item.product.name|default:"(Product deleted)" }}</strong>
+                    <strong>{{ item.product_name|default:item.product.name }}</strong>
                     {% if item.product %}
                       <br/>
                       <span class="badge
-                        {% if item.product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %} small">
+                        {% if item.product.category.category_type == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %} small">
                         {{ item.product.category.name }}
                       </span>
                       {% if item.product.provider %}
@@ -62,7 +160,7 @@
             </tbody>
             <tfoot class="table-light">
               <tr>
-                <td colspan="3" class="text-end fw-bold">Total</td>
+                <td colspan="3" class="text-end fw-bold">Total Order Amount</td>
                 <td class="text-center fw-bold fs-5 text-success">₹{{ order.total_amount }}</td>
               </tr>
             </tfoot>
@@ -72,7 +170,7 @@
 
       <!-- Delivery Information -->
       <div class="card shadow-sm mb-4">
-        <div class="card-header">
+        <div class="card-header bg-light">
           <h6 class="mb-0"><i class="bi bi-geo-alt me-1"></i>Delivery Information</h6>
         </div>
         <div class="card-body">
@@ -103,35 +201,24 @@
       </div>
     </div>
 
-    <!-- Right column: order info -->
+    <!-- Right column: order info & payment split -->
     <div class="col-lg-4">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm mb-4">
         <div class="card-header bg-success text-white">
-          <h5 class="mb-0">Order Info</h5>
+          <h5 class="mb-0">Order Summary</h5>
         </div>
         <div class="card-body">
           <dl class="row small mb-0">
-            <dt class="col-sm-5 text-muted">Date</dt>
-            <dd class="col-sm-7">{{ order.created_at|date:"d M Y" }}</dd>
-
-            <dt class="col-sm-5 text-muted">Payment</dt>
-            <dd class="col-sm-7">{{ order.get_payment_method_display }}</dd>
-
-            <dt class="col-sm-5 text-muted">Payment Status</dt>
-            <dd class="col-sm-7">
-              <span class="badge
-                {% if order.payment_status == 'paid' %}bg-success
-                {% elif order.payment_status == 'failed' %}bg-danger
-                {% else %}bg-warning text-dark{% endif %}">
-                {{ order.get_payment_status_display }}
-              </span>
-            </dd>
+            <dt class="col-sm-5 text-muted">Order Date</dt>
+            <dd class="col-sm-7">{{ order.created_at|date:"d M Y, H:i" }}</dd>
 
             <dt class="col-sm-5 text-muted">Order Status</dt>
             <dd class="col-sm-7">
               <span class="badge
                 {% if order.order_status == 'delivered' %}bg-success
                 {% elif order.order_status == 'cancelled' %}bg-danger
+                {% elif order.order_status == 'refund_requested' %}bg-warning text-dark
+                {% elif order.order_status == 'refunded' %}bg-secondary
                 {% elif order.order_status == 'shipped' %}bg-info text-dark
                 {% elif order.order_status == 'processing' %}bg-primary
                 {% elif order.order_status == 'confirmed' %}bg-secondary
@@ -140,16 +227,143 @@
               </span>
             </dd>
 
-            <dt class="col-sm-5 text-muted">Total</dt>
-            <dd class="col-sm-7 fw-bold text-success fs-5">₹{{ order.total_amount }}</dd>
+            <dt class="col-sm-5 text-muted">Payment Type</dt>
+            <dd class="col-sm-7 fw-semibold">{{ order.get_payment_method_display }}</dd>
+
+            <dt class="col-sm-5 text-muted">Payment Status</dt>
+            <dd class="col-sm-7">
+              <span class="badge
+                {% if order.payment_status == 'paid' %}bg-success
+                {% elif order.payment_status == 'partially_paid' %}bg-info text-dark
+                {% elif order.payment_status == 'refunded' %}bg-secondary
+                {% elif order.payment_status == 'failed' %}bg-danger
+                {% else %}bg-warning text-dark{% endif %}">
+                {{ order.get_payment_status_display }}
+              </span>
+            </dd>
           </dl>
+
+          <hr/>
+
+          <!-- Payment Breakdown -->
+          <h6 class="fw-bold small text-dark mb-2"><i class="bi bi-cash-stack me-1"></i> Payment Breakdown</h6>
+          <div class="p-3 bg-light rounded-3 border small mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Online Paid:</span>
+              <strong class="text-primary">₹{{ order.online_paid_amount }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span>COD Due on Delivery:</span>
+              <strong class="text-success">₹{{ order.cod_amount_due }}</strong>
+            </div>
+            <div class="d-flex justify-content-between border-top pt-1 mt-1 fw-bold">
+              <span>Total:</span>
+              <span class="text-dark">₹{{ order.total_amount }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <a href="{% url 'marketplace:my_orders' %}" class="btn btn-outline-success w-100 mt-3">
+      <a href="{% url 'marketplace:my_orders' %}" class="btn btn-outline-success w-100">
         ← Back to My Orders
       </a>
     </div>
   </div>
 </div>
+
+<!-- ====== Cancel Order Modal ====== -->
+{% if order.can_cancel %}
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'marketplace:cancel_order' order.order_number %}">
+        {% csrf_token %}
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="cancelOrderModalLabel"><i class="bi bi-x-circle me-1"></i> Cancel Order #{{ order.order_number }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Are you sure you want to cancel this order? Stock will automatically be restored to the provider.</p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Reason for Cancellation</label>
+            <select name="cancellation_reason" class="form-select" required>
+              <option value="Ordered by mistake">Ordered by mistake</option>
+              <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+              <option value="Delivery time is too long">Delivery time is too long</option>
+              <option value="Need to change shipping address">Need to change shipping address</option>
+              <option value="Other">Other reason</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Order</button>
+          <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ====== Request Refund Modal ====== -->
+{% if order.can_request_refund %}
+<div class="modal fade" id="refundModal" tabindex="-1" aria-labelledby="refundModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'marketplace:request_refund' order.order_number %}">
+        {% csrf_token %}
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="refundModalLabel"><i class="bi bi-arrow-counterclockwise me-1"></i> Request Refund for Order #{{ order.order_number }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Refund Reason *</label>
+            <select name="reason" id="refundReasonSelect" class="form-select" required>
+              {% for val, label in refund_reasons %}
+                <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3 d-none" id="customReasonWrap">
+            <label class="form-label fw-semibold small">Please specify your reason *</label>
+            <input type="text" name="custom_reason" id="customReasonInput" class="form-control" placeholder="Enter reason here..."/>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Additional Details / Description</label>
+            <textarea name="additional_description" class="form-control" rows="3" placeholder="Explain the issue with the product..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning">Submit Refund Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  const refundReasonSelect = document.getElementById('refundReasonSelect');
+  const customReasonWrap = document.getElementById('customReasonWrap');
+  const customReasonInput = document.getElementById('customReasonInput');
+
+  if (refundReasonSelect) {
+    refundReasonSelect.addEventListener('change', () => {
+      if (refundReasonSelect.value === 'OTHER') {
+        customReasonWrap.classList.remove('d-none');
+        customReasonInput.setAttribute('required', 'required');
+      } else {
+        customReasonWrap.classList.add('d-none');
+        customReasonInput.removeAttribute('required');
+      }
+    });
+  }
+</script>
+{% endblock %}
+{% endif %}
+
 {% endblock %}

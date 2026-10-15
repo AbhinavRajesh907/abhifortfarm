@@ -2,157 +2,189 @@
 {% load static %}
 
 {% block title %}
-  {% if is_edit %}Edit Product — {{ product.name }}{% else %}Add Seed/Plant Product{% endif %} — AgriVision
+  {% if is_edit %}Edit Product — {{ product.name }}{% else %}Add Seed or Plant Product{% endif %} — AgriSmart
 {% endblock %}
 {% block nav_add_product %}{% if not is_edit %}active{% endif %}{% endblock %}
 {% block nav_products %}{% if is_edit %}active{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
   <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-lg-9">
 
-      <!-- Breadcrumb -->
-      <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{% url 'providers:dashboard' %}" class="text-success text-decoration-none">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{% url 'providers:product_list' %}" class="text-success text-decoration-none">My Products</a></li>
-          <li class="breadcrumb-item active" aria-current="page">
-            {% if is_edit %}Edit {{ product.name }}{% else %}Add New Product{% endif %}
-          </li>
-        </ol>
-      </nav>
+      <!-- Breadcrumb & Back navigation -->
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'providers:dashboard' %}" class="text-success text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'providers:product_list' %}" class="text-success text-decoration-none">My Products</a></li>
+            <li class="breadcrumb-item active" aria-current="page">
+              {% if is_edit %}Edit {{ product.name }}{% else %}Add New Plant / Seed{% endif %}
+            </li>
+          </ol>
+        </nav>
+        <a href="{% url 'providers:product_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="bi bi-arrow-left me-1"></i> Back to Product List
+        </a>
+      </div>
 
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white border-bottom p-4">
-          <h4 class="fw-bold mb-1 text-dark">
-            {% if is_edit %}
-              <i class="bi bi-pencil-square text-primary"></i> Edit Product Listing
-            {% else %}
-              <i class="bi bi-plus-circle text-success"></i> Add Seed or Plant Product
-            {% endif %}
-          </h4>
-          <p class="text-muted small mb-0">
-            {% if is_edit %}
-              Update inventory pricing, available units, and description for this product.
-            {% else %}
-              Submit seed varieties or nursery plants for listing in the AgriVision Marketplace.
-            {% endif %}
-          </p>
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white p-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; font-size: 1.6rem;">
+              {% if is_edit %}
+                <i class="bi bi-pencil-square"></i>
+              {% else %}
+                <i class="bi bi-flower1"></i>
+              {% endif %}
+            </div>
+            <div>
+              <h4 class="fw-bold mb-1">
+                {% if is_edit %}
+                  Edit Plant / Product Listing
+                {% else %}
+                  Add Seed or Plant to Marketplace
+                {% endif %}
+              </h4>
+              <p class="mb-0 opacity-90 small">
+                {% if is_edit %}
+                  Update product details, pricing, care description, and inventory stock.
+                {% else %}
+                  Register healthy nursery plants, saplings, or certified seed packets for growers to buy.
+                {% endif %}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="card-body p-4 p-md-5">
-          <form method="post" enctype="multipart/form-data" novalidate>
+          <form method="post" enctype="multipart/form-data" novalidate id="plantProductForm">
             {% csrf_token %}
 
-            <div class="row g-3">
-              {% if is_edit %}
-                <!-- Edit existing product fields -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger mb-4 py-2">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <!-- SECTION 1: Product Information -->
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold">
+              <i class="bi bi-tag-fill fs-5"></i> 1. Plant / Product Information
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="{% if is_edit %}{{ form.name.id_for_label }}{% else %}{{ form.item_name.id_for_label }}{% endif %}">
+                  Product / Plant Variety Name <span class="text-danger">*</span>
+                </label>
+                {% if is_edit %}
                   {{ form.name }}
-                  {% if form.name.errors %}
-                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
-                  {% endif %}
-                </div>
+                  {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+                {% else %}
+                  {{ form.item_name }}
+                  {% if form.item_name.errors %}<div class="text-danger small mt-1">{{ form.item_name.errors.0 }}</div>{% endif %}
+                {% endif %}
+                <div class="form-text small">e.g. Grafted Alphonso Mango Plantlet, Hybrid Tomato F1 Seeds, Sansevieria Snake Plant</div>
+              </div>
+            </div>
 
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
-                  {{ form.category }}
-                </div>
+            <!-- SECTION 2: Pricing, Stock & Product Image -->
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold mt-4">
+              <i class="bi bi-currency-rupee fs-5"></i> 2. Pricing, Inventory Stock &amp; Photo
+            </div>
 
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Unit Price (₹) <span class="text-danger">*</span></label>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Unit Price (₹) <span class="text-danger">*</span>
+                </label>
+                {% if is_edit %}
                   {{ form.price }}
-                  {% if form.price.errors %}
-                    <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
-                  {% endif %}
-                </div>
+                  {% if form.price.errors %}<div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>{% endif %}
+                {% else %}
+                  {{ form.expected_price }}
+                  {% if form.expected_price.errors %}<div class="text-danger small mt-1">{{ form.expected_price.errors.0 }}</div>{% endif %}
+                {% endif %}
+              </div>
 
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Available Stock Quantity <span class="text-danger">*</span></label>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Available Quantity / Stock (Units) <span class="text-danger">*</span>
+                </label>
+                {% if is_edit %}
                   {{ form.stock }}
-                  {% if form.stock.errors %}
-                    <div class="text-danger small mt-1">{{ form.stock.errors.0 }}</div>
-                  {% endif %}
-                </div>
+                  {% if form.stock.errors %}<div class="text-danger small mt-1">{{ form.stock.errors.0 }}</div>{% endif %}
+                {% else %}
+                  {{ form.quantity }}
+                  {% if form.quantity.errors %}<div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>{% endif %}
+                {% endif %}
+              </div>
 
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Upload Plant / Seed Image</label>
+                {{ form.image }}
+                {% if form.image.errors %}<div class="text-danger small mt-1">{{ form.image.errors.0 }}</div>{% endif %}
+                <div class="form-text small">Clear photo of the plant, seedling, pot, or seed packet.</div>
+              </div>
+
+              {% if not is_edit %}
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Or Image URL (Optional)</label>
+                  {{ form.image_url }}
+                  {% if form.image_url.errors %}<div class="text-danger small mt-1">{{ form.image_url.errors.0 }}</div>{% endif %}
+                </div>
+              {% else %}
                 <div class="col-md-6 d-flex align-items-center pt-4">
                   <div class="form-check form-switch fs-5">
                     {{ form.is_active }}
                     <label class="form-check-label fs-6 fw-semibold ms-2" for="{{ form.is_active.id_for_label }}">Active in Marketplace</label>
                   </div>
                 </div>
-
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Description &amp; Growing Notes</label>
-                  {{ form.description }}
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Update Product Image</label>
-                  {{ form.image }}
-                </div>
-
-              {% else %}
-                <!-- Add new product submission fields -->
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Product Category <span class="text-danger">*</span></label>
-                  {{ form.category }}
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Product / Variety Name <span class="text-danger">*</span></label>
-                  {{ form.item_name }}
-                  {% if form.item_name.errors %}
-                    <div class="text-danger small mt-1">{{ form.item_name.errors.0 }}</div>
-                  {% endif %}
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Description &amp; Specifications</label>
-                  {{ form.description }}
-                  <div class="form-text">Specify variety traits, seed germination rate, pot size for plants, recommended soil, etc.</div>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Quantity Available (Units/Packets) <span class="text-danger">*</span></label>
-                  {{ form.quantity }}
-                  {% if form.quantity.errors %}
-                    <div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>
-                  {% endif %}
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Expected Unit Price (₹) <span class="text-danger">*</span></label>
-                  {{ form.expected_price }}
-                  {% if form.expected_price.errors %}
-                    <div class="text-danger small mt-1">{{ form.expected_price.errors.0 }}</div>
-                  {% endif %}
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Upload Product Image</label>
-                  {{ form.image }}
-                  <div class="form-text">Upload a clear photo of the seed packet or plant sapling.</div>
-                </div>
-
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Or Image URL (Optional)</label>
-                  {{ form.image_url }}
-                </div>
               {% endif %}
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
-              <a href="{% url 'providers:product_list' %}" class="btn btn-outline-secondary px-4">
-                <i class="bi bi-arrow-left"></i> Cancel
+            <!-- SECTION 3: Detailed Description & Care Guidelines -->
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold mt-4">
+              <i class="bi bi-card-text fs-5"></i> 3. Plant Description &amp; Growing Care Guidelines
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label fw-semibold mb-0" for="{{ form.description.id_for_label }}">
+                    Description, Variety Traits &amp; Care Instructions <span class="text-danger">*</span>
+                  </label>
+                  <!-- Care Template Quick Fill Buttons -->
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary btn-sm template-btn" data-type="plant">
+                      🌱 Plant Template
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm template-btn" data-type="seed">
+                      🌾 Seed Template
+                    </button>
+                  </div>
+                </div>
+
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text small">
+                  Include key information: <strong>Sunlight needs</strong> (Full sun/Partial shade), <strong>Watering schedule</strong>, <strong>Soil type</strong>, <strong>Pot size / Sapling height</strong>, <strong>Expected flowering/fruiting time</strong>, or <strong>Germination rate</strong>.
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button & Cancel -->
+            <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top flex-wrap gap-2">
+              <a href="{% url 'providers:product_list' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i> Cancel
               </a>
-              <button type="submit" class="btn btn-success px-5 shadow-sm">
+              <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm">
                 {% if is_edit %}
-                  <i class="bi bi-check2"></i> Update Product
+                  <i class="bi bi-check2-circle me-1"></i> Save Product Changes
                 {% else %}
-                  <i class="bi bi-plus-lg"></i> Add Product to Marketplace
+                  <i class="bi bi-plus-circle me-1"></i> Add Plant to Marketplace
                 {% endif %}
               </button>
             </div>
@@ -164,4 +196,34 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Quick Template Fillers for Plant / Seed Description
+    const descArea = document.getElementById('id_description');
+    document.querySelectorAll('.template-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const type = this.getAttribute('data-type');
+        if (!descArea) return;
+        if (type === 'plant') {
+          descArea.value = 
+`• Plant Type: Healthy potted sapling / Grafted plantlet
+• Height & Pot Size: 1.5 - 2 ft tall in standard nursery pot
+• Sunlight: Requires 4-6 hours of morning sunlight / bright indirect light
+• Watering: Water when top 1 inch of soil is dry (2-3 times a week)
+• Soil Requirement: Well-draining potting mix with organic compost
+• Growth & Care: Suitable for home gardens, terrace farming, or indoor pots. Resilient and low-maintenance.`;
+        } else if (type === 'seed') {
+          descArea.value = 
+`• Variety: High-yield F1 hybrid certified seed packet
+• Germination Rate: > 85% germination within 6-10 days
+• Sowing Season: All seasons / Kharif & Rabi suitable
+• Sowing Depth: 0.5 cm deep in fertile, moist nursery bed or seed tray
+• Days to Harvest: 60 - 75 days after transplantation
+• Features: Disease-resistant variety producing uniform, flavorful harvest.`;
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}

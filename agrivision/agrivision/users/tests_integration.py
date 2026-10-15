@@ -321,3 +321,86 @@ class AgriFarmFullIntegrationTests(TestCase):
         dash_res = self.client.get(reverse("marketplace:dashboard"))
         self.assertEqual(dash_res.status_code, 302)
         self.assertIn("login", dash_res.url)
+
+    def test_10_field_validations_character_phone_email_pincode(self):
+        """Test 10: Character-only, numeric phone/pincode, and valid email format enforcement."""
+        # 1. Invalid Name (contains numbers/symbols)
+        res_invalid_name = self.client.post(reverse("users:register_user"), data={
+            "username": "user_invalid_1",
+            "name": "Rajesh123",
+            "email": "valid@email.com",
+            "phone": "9847123456",
+            "address": "Sample address",
+            "city": "Thrissur",
+            "state": "Kerala",
+            "pincode": "680001",
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        })
+        self.assertEqual(res_invalid_name.status_code, 200)
+        self.assertContains(res_invalid_name, "Name should only contain alphabetic characters")
+
+        # 2. Invalid Phone (non-digits or not starting with 6-9)
+        res_invalid_phone = self.client.post(reverse("users:register_user"), data={
+            "username": "user_invalid_2",
+            "name": "Rajesh Kumar",
+            "email": "valid@email.com",
+            "phone": "1234567890",
+            "address": "Sample address",
+            "city": "Thrissur",
+            "state": "Kerala",
+            "pincode": "680001",
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        })
+        self.assertEqual(res_invalid_phone.status_code, 200)
+        self.assertContains(res_invalid_phone, "Phone number must contain numbers only")
+
+        # 3. Invalid Pincode (not 6 digits)
+        res_invalid_pin = self.client.post(reverse("users:register_user"), data={
+            "username": "user_invalid_3",
+            "name": "Rajesh Kumar",
+            "email": "valid@email.com",
+            "phone": "9847123456",
+            "address": "Sample address",
+            "city": "Thrissur",
+            "state": "Kerala",
+            "pincode": "68001",  # 5 digits
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        })
+        self.assertEqual(res_invalid_pin.status_code, 200)
+        self.assertContains(res_invalid_pin, "Pincode must contain numbers only")
+
+        # 4. Invalid City (contains digits)
+        res_invalid_city = self.client.post(reverse("users:register_user"), data={
+            "username": "user_invalid_4",
+            "name": "Rajesh Kumar",
+            "email": "valid@email.com",
+            "phone": "9847123456",
+            "address": "Sample address",
+            "city": "Thrissur42",
+            "state": "Kerala",
+            "pincode": "680001",
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        })
+        self.assertEqual(res_invalid_city.status_code, 200)
+        self.assertContains(res_invalid_city, "City name should only contain alphabetic characters")
+
+        # 5. Invalid Email
+        res_invalid_email = self.client.post(reverse("users:register_user"), data={
+            "username": "user_invalid_5",
+            "name": "Rajesh Kumar",
+            "email": "not-an-email",
+            "phone": "9847123456",
+            "address": "Sample address",
+            "city": "Thrissur",
+            "state": "Kerala",
+            "pincode": "680001",
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        })
+        self.assertEqual(res_invalid_email.status_code, 200)
+        self.assertContains(res_invalid_email, "Enter a valid email address")
+

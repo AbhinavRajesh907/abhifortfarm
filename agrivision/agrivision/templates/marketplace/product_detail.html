@@ -4,14 +4,19 @@
 
 {% block content %}
 <div class="container py-4">
-  <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}">Home</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'marketplace:product_list' %}">Products</a></li>
-      <li class="breadcrumb-item active">{{ product.name }}</li>
-    </ol>
-  </nav>
+  <!-- Breadcrumb & Back button -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:product_list' %}" class="text-success text-decoration-none">Products</a></li>
+        <li class="breadcrumb-item active">{{ product.name }}</li>
+      </ol>
+    </nav>
+    <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Products
+    </a>
+  </div>
 
   <div class="row g-4">
     <!-- Image -->
@@ -21,7 +26,7 @@
           <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded-3"/>
         {% else %}
           <div class="product-detail-placeholder">
-            {% if product.category.name == "Seeds" %}🌱{% else %}🌿{% endif %}
+            {% if product.category.category_type == "Seeds" or product.category.name == "Seeds" or "Seed" in product.category.name %}🌱{% else %}🌿{% endif %}
           </div>
         {% endif %}
       </div>
@@ -29,8 +34,14 @@
 
     <!-- Details -->
     <div class="col-md-7">
-      <span class="badge {% if product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %} mb-2">
-        {{ product.category.name }}
+      <span class="badge {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}bg-warning text-dark border border-warning{% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}bg-success text-white border border-success{% else %}bg-secondary text-white{% endif %} mb-2 px-3 py-2 rounded-pill">
+        {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}
+          🌱 {{ product.category.name }}
+        {% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}
+          🌿 {{ product.category.name }}
+        {% else %}
+          📦 {{ product.category.name }}
+        {% endif %}
       </span>
       <h1 class="product-detail-title">{{ product.name }}</h1>
       <p class="product-detail-desc text-muted">{{ product.description }}</p>
@@ -41,33 +52,65 @@
         <strong>Available Stock:</strong>
         {% if product.in_stock %}
           <span class="text-success fw-bold">{{ product.stock }} units</span>
+          {% if cart_item_qty > 0 %}
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2">
+              <i class="bi bi-cart-check"></i> {{ cart_item_qty }} already in your cart
+            </span>
+          {% endif %}
         {% else %}
           <span class="text-danger fw-bold">Out of Stock</span>
         {% endif %}
       </p>
 
       {% if product.in_stock %}
-        <form method="post" action="{% url 'marketplace:add_to_cart' product.pk %}" class="add-to-cart-form">
-          {% csrf_token %}
-          <div class="mb-3 d-flex align-items-center gap-3">
-            <label class="fw-semibold">Quantity:</label>
-            <div class="qty-control d-flex align-items-center gap-2">
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="qtyDecBtn">−</button>
-              <input type="number" name="quantity" id="qtyInput" value="1"
-                     min="1" max="{{ product.stock }}"
-                     class="form-control text-center qty-input"/>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="qtyIncBtn">+</button>
+        {% if remaining_stock > 0 %}
+          <form method="post" action="{% url 'marketplace:add_to_cart' product.pk %}" class="add-to-cart-form" id="addToCartForm">
+            {% csrf_token %}
+            <div class="mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <label class="fw-semibold" for="qtyInput">Quantity:</label>
+                <div class="qty-control d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="qtyDecBtn" aria-label="Decrease quantity">−</button>
+                  <input type="number" name="quantity" id="qtyInput" value="1"
+                         min="1" max="{{ remaining_stock }}" step="1"
+                         class="form-control text-center qty-input" style="max-width: 100px;"/>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="qtyIncBtn" aria-label="Increase quantity">+</button>
+                </div>
+                <span class="text-muted small">
+                  {% if cart_item_qty > 0 %}
+                    (Can add up to <strong class="text-success">{{ remaining_stock }}</strong> more)
+                  {% else %}
+                    (Available: <strong class="text-success">{{ product.stock }}</strong>)
+                  {% endif %}
+                </span>
+              </div>
+              <!-- Dynamic validation feedback message -->
+              <div id="stockErrorMsg" class="text-danger small mt-2 fw-semibold d-none" role="alert"></div>
             </div>
-          </div>
-          <div class="d-flex gap-3 flex-wrap">
-            <button type="submit" class="btn btn-success btn-lg px-5">
-              <i class="bi bi-cart-plus me-1"></i> Add to Cart
-            </button>
-            <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success btn-lg">
-              ← Continue Shopping
+
+            <div class="d-flex gap-3 flex-wrap">
+              <button type="submit" class="btn btn-success btn-lg px-5" id="addToCartBtn">
+                <i class="bi bi-cart-plus me-1"></i> Add to Cart
+              </button>
+              <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success btn-lg">
+                ← Continue Shopping
+              </a>
+            </div>
+          </form>
+        {% else %}
+          <div class="alert alert-info d-flex align-items-center justify-content-between p-3 rounded-3 mb-3">
+            <div>
+              <i class="bi bi-cart-check-fill text-success fs-5 me-2"></i>
+              You have already added all <strong>{{ product.stock }}</strong> available units to your cart.
+            </div>
+            <a href="{% url 'marketplace:cart' %}" class="btn btn-sm btn-success text-nowrap ms-3">
+              View Cart →
             </a>
           </div>
-        </form>
+          <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success btn-lg">
+            ← Continue Shopping
+          </a>
+        {% endif %}
       {% else %}
         <div class="alert alert-warning">This product is currently out of stock.</div>
         <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-success">← Back to Products</a>
@@ -93,14 +136,119 @@
 {% block extra_js %}
 <script>
   const qtyInput = document.getElementById('qtyInput');
-  const maxStock = parseInt('{{ product.stock }}');
-  document.getElementById('qtyDecBtn').addEventListener('click', () => {
-    const v = parseInt(qtyInput.value);
-    if (v > 1) qtyInput.value = v - 1;
-  });
-  document.getElementById('qtyIncBtn').addEventListener('click', () => {
-    const v = parseInt(qtyInput.value);
-    if (v < maxStock) qtyInput.value = v + 1;
-  });
+  const qtyDecBtn = document.getElementById('qtyDecBtn');
+  const qtyIncBtn = document.getElementById('qtyIncBtn');
+  const stockErrorMsg = document.getElementById('stockErrorMsg');
+  const addToCartBtn = document.getElementById('addToCartBtn');
+  const addToCartForm = document.getElementById('addToCartForm');
+  const maxStock = parseInt('{{ remaining_stock|default:product.stock|default:0 }}', 10);
+  const totalStock = parseInt('{{ product.stock|default:0 }}', 10);
+  const inCartQty = parseInt('{{ cart_item_qty|default:0 }}', 10);
+
+  function validateQuantity() {
+    if (!qtyInput) return true;
+    const rawVal = qtyInput.value.trim();
+    const val = Number(rawVal);
+
+    // 1. Check if empty
+    if (rawVal === '') {
+      showError('Please enter a quantity.');
+      return false;
+    }
+
+    // 2. Check if whole positive integer
+    if (!Number.isInteger(val) || val <= 0) {
+      showError('Please enter a positive whole number (1 or more).');
+      return false;
+    }
+
+    // 3. Check if greater than available stock to add
+    if (val > maxStock) {
+      if (inCartQty > 0) {
+        showError(`Only ${totalStock} units are available (${inCartQty} already in your cart). Please enter a quantity between 1 and ${maxStock}.`);
+      } else {
+        if (totalStock === 1) {
+          showError('Only 1 unit is available. Please enter 1.');
+        } else {
+          showError(`Only ${totalStock} units are available. Please enter a quantity between 1 and ${totalStock}.`);
+        }
+      }
+      return false;
+    }
+
+    // 4. Valid!
+    clearError();
+    return true;
+  }
+
+  function showError(msg) {
+    if (stockErrorMsg) {
+      stockErrorMsg.textContent = msg;
+      stockErrorMsg.classList.remove('d-none');
+    }
+    if (qtyInput) {
+      qtyInput.classList.add('is-invalid');
+    }
+    if (addToCartBtn) {
+      addToCartBtn.disabled = true;
+    }
+  }
+
+  function clearError() {
+    if (stockErrorMsg) {
+      stockErrorMsg.textContent = '';
+      stockErrorMsg.classList.add('d-none');
+    }
+    if (qtyInput) {
+      qtyInput.classList.remove('is-invalid');
+    }
+    if (addToCartBtn) {
+      addToCartBtn.disabled = false;
+    }
+  }
+
+  if (qtyInput) {
+    // Prevent typing invalid characters: 'e', 'E', '+', '-', '.', ','
+    qtyInput.addEventListener('keydown', (e) => {
+      if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+
+    qtyInput.addEventListener('input', validateQuantity);
+    qtyInput.addEventListener('change', validateQuantity);
+  }
+
+  if (qtyDecBtn) {
+    qtyDecBtn.addEventListener('click', () => {
+      let v = parseInt(qtyInput.value, 10) || 1;
+      if (v > 1) {
+        qtyInput.value = v - 1;
+      } else {
+        qtyInput.value = 1;
+      }
+      validateQuantity();
+    });
+  }
+
+  if (qtyIncBtn) {
+    qtyIncBtn.addEventListener('click', () => {
+      let v = parseInt(qtyInput.value, 10) || 0;
+      if (v < maxStock) {
+        qtyInput.value = v + 1;
+      } else {
+        qtyInput.value = maxStock;
+      }
+      validateQuantity();
+    });
+  }
+
+  if (addToCartForm) {
+    addToCartForm.addEventListener('submit', (e) => {
+      if (!validateQuantity()) {
+        e.preventDefault();
+      }
+    });
+  }
 </script>
 {% endblock %}

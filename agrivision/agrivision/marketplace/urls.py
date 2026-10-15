@@ -27,4 +27,7 @@ urlpatterns = [
     path("order-success/<str:order_number>/", views.order_success, name="order_success"),
     path("orders/", views.my_orders, name="my_orders"),
     path("orders/<str:order_number>/", views.order_detail, name="order_detail"),
+    path("orders/<str:order_number>/track/", views.track_order, name="track_order"),
+    path("orders/<str:order_number>/cancel/", views.cancel_order, name="cancel_order"),
+    path("orders/<str:order_number>/refund/", views.request_refund, name="request_refund"),
 ]

@@ -4,6 +4,20 @@
 
 {% block content %}
 <div class="container py-4">
+  <!-- Breadcrumb & Back navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:product_list' %}" class="text-success text-decoration-none">Products</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+      </ol>
+    </nav>
+    <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Marketplace
+    </a>
+  </div>
+
   <h1 class="section-title"><i class="bi bi-cart3 me-2"></i>Shopping Cart</h1>
 
   {% if items %}
@@ -24,7 +38,7 @@
               </thead>
               <tbody>
                 {% for item in items %}
-                  <tr>
+                  <tr {% if item.quantity > item.product.stock or item.product.stock == 0 %}class="table-danger"{% endif %}>
                     <!-- Image + name -->
                     <td width="60">
                       <div class="cart-item-img">
@@ -41,6 +55,18 @@
                       <span class="badge {% if item.product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %} small">
                         {{ item.product.category.name }}
                       </span>
+                      <span class="badge bg-light text-dark border small ms-1">
+                        Stock: {{ item.product.stock }}
+                      </span>
+                      {% if item.quantity > item.product.stock %}
+                        <div class="text-danger small fw-semibold mt-1">
+                          <i class="bi bi-exclamation-triangle-fill"></i> Only {{ item.product.stock }} units available. Please reduce quantity.
+                        </div>
+                      {% elif item.product.stock == 0 %}
+                        <div class="text-danger small fw-semibold mt-1">
+                          <i class="bi bi-exclamation-octagon-fill"></i> Out of Stock. Please remove to proceed.
+                        </div>
+                      {% endif %}
                       {% if item.product.provider %}
                       <div class="text-muted small mt-1">
                         <i class="bi bi-shop"></i> {{ item.product.provider.farm_name }}
@@ -61,12 +87,12 @@
                           <button type="submit" class="btn btn-outline-secondary btn-xs"
                                   {% if item.quantity <= 1 %}title="Remove item"{% endif %}>−</button>
                         </form>
-                        <span class="qty-badge">{{ item.quantity }}</span>
+                        <span class="qty-badge {% if item.quantity > item.product.stock %}bg-danger text-white border-danger{% endif %}">{{ item.quantity }}</span>
                         <form method="post" action="{% url 'marketplace:update_cart' item.pk %}">
                           {% csrf_token %}
                           <input type="hidden" name="quantity" value="{{ item.quantity|add:'1' }}"/>
                           <button type="submit" class="btn btn-outline-secondary btn-xs"
-                                  {% if item.quantity >= item.product.stock %}disabled{% endif %}>+</button>
+                                  {% if item.quantity >= item.product.stock %}disabled title="Maximum available stock reached"{% endif %}>+</button>
                         </form>
                       </div>
                     </td>

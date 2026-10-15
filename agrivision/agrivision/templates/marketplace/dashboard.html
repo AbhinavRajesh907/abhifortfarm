@@ -73,12 +73,24 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img"/>
               {% else %}
                 <div class="product-img-placeholder">
-                  {% if product.category.name == "Seeds" %}🌱{% else %}🌿{% endif %}
+                  {% if product.category.category_type == "Seeds" or product.category.name == "Seeds" or "Seed" in product.category.name %}🌱{% else %}🌿{% endif %}
                 </div>
               {% endif %}
               <span class="product-category-badge badge
-                {% if product.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %}">
-                {{ product.category.name }}
+                {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}
+                  bg-warning text-dark
+                {% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}
+                  bg-success
+                {% else %}
+                  bg-secondary
+                {% endif %}">
+                {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'Seed' in product.category.name %}
+                  🌱 {{ product.category.name }}
+                {% elif product.category.category_type == 'Plants' or product.category.name == 'Plants' or 'Plant' in product.category.name %}
+                  🌿 {{ product.category.name }}
+                {% else %}
+                  📦 {{ product.category.name }}
+                {% endif %}
               </span>
             </div>
             <!-- Info -->

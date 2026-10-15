@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -132,6 +133,43 @@ class ProviderProfileForm(forms.ModelForm):
             ),
         }
 
+    def clean_full_name(self):
+        full_name = self.cleaned_data.get("full_name", "").strip()
+        if full_name:
+            if not re.match(r"^[a-zA-Z\s.'-]+$", full_name):
+                raise ValidationError(_("Full name should only contain alphabetic characters and spaces."))
+            if len(full_name) < 2:
+                raise ValidationError(_("Full name must be at least 2 characters long."))
+        return full_name
+
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get("phone_number", "").strip()
+        if phone:
+            if not re.match(r"^[6-9]\d{9}$", phone):
+                raise ValidationError(_("Phone number must contain numbers only (10 digits starting with 6-9)."))
+        return phone
+
+    def clean_city(self):
+        city = self.cleaned_data.get("city", "").strip()
+        if city:
+            if not re.match(r"^[a-zA-Z\s.-]+$", city):
+                raise ValidationError(_("City name should only contain alphabetic characters."))
+        return city
+
+    def clean_state(self):
+        state = self.cleaned_data.get("state", "").strip()
+        if state:
+            if not re.match(r"^[a-zA-Z\s.-]+$", state):
+                raise ValidationError(_("State name should only contain alphabetic characters."))
+        return state
+
+    def clean_pincode(self):
+        pincode = self.cleaned_data.get("pincode", "").strip()
+        if pincode:
+            if not re.match(r"^\d{6}$", pincode):
+                raise ValidationError(_("Pincode must contain numbers only (6 digits)."))
+        return pincode
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.user_id:
@@ -160,7 +198,7 @@ class ProviderApplyForm(ProviderProfileForm):
 
 
 class ProviderRequestForm(forms.ModelForm):
-    """Form for an approved Provider to submit a new seed/plant product for admin review."""
+    """Form for an approved Provider to submit a new plant/seed product."""
 
     class Meta:
         model = ProviderRequest
@@ -174,15 +212,15 @@ class ProviderRequestForm(forms.ModelForm):
             "image_url",
         ]
         widgets = {
-            "category": forms.Select(attrs={"class": "form-select"}),
+            "category": forms.HiddenInput(),
             "item_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g. Tomato Seeds (Hybrid)"}
+                attrs={"class": "form-control form-control-lg", "placeholder": "e.g. Grafted Alphonso Mango Plantlet, Sansevieria Snake Plant..."}
             ),
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control",
-                    "rows": 3,
-                    "placeholder": "Variety details, growing tips, packaging info…",
+                    "rows": 5,
+                    "placeholder": "Enter detailed plant description, variety specifications, sunlight & watering guidelines, pot size / sapling height, soil requirements...",
                 }
             ),
             "quantity": forms.NumberInput(
@@ -200,10 +238,14 @@ class ProviderRequestForm(forms.ModelForm):
             "image_url": forms.URLInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "https://… (optional, if no upload)",
+                    "placeholder": "https://… (optional, if no image file)",
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].required = False
 
     def clean_quantity(self):
         qty = self.cleaned_data.get("quantity")
@@ -216,3 +258,31 @@ class ProviderRequestForm(forms.ModelForm):
         if price is not None and price <= 0:
             raise ValidationError(_("Price must be greater than zero."))
         return price
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from agrivision.marketplace.models import Category
+        category = cleaned_data.get("category")
+        item_name = cleaned_data.get("item_name", "").strip()
+
+        if not category:
+            # Auto-assign category: Seeds if 'seed' in name, otherwise Plants
+            if "seed" in item_name.lower():
+                category, _ = Category.objects.get_or_create(
+                    name="Seeds",
+                    defaults={"category_type": Category.SEEDS, "description": "Agricultural and garden seeds"}
+                )
+            else:
+                category, _ = Category.objects.get_or_create(
+                    name="Plants",
+                    defaults={"category_type": Category.PLANTS, "description": "Live plants and nursery saplings"}
+                )
+            cleaned_data["category"] = category
+
+        description = cleaned_data.get("description", "").strip()
+        if not description:
+            self.add_error("description", _("Please provide a description and care details for this plant or seed product."))
+
+        return cleaned_data
+
+

@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.contrib.auth import forms as admin_forms
 from django.forms import EmailField
@@ -101,6 +102,43 @@ class BaseRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['name', 'username', 'email', 'phone', 'address', 'city', 'state', 'pincode']
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name', '').strip()
+        if name:
+            if not re.match(r"^[a-zA-Z\s.'-]+$", name):
+                raise forms.ValidationError(_("Name should only contain alphabetic characters and spaces."))
+            if len(name) < 2:
+                raise forms.ValidationError(_("Name must be at least 2 characters long."))
+        return name
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone:
+            if not re.match(r"^[6-9]\d{9}$", phone):
+                raise forms.ValidationError(_("Phone number must contain numbers only (10 digits starting with 6-9)."))
+        return phone
+
+    def clean_city(self):
+        city = self.cleaned_data.get('city', '').strip()
+        if city:
+            if not re.match(r"^[a-zA-Z\s.-]+$", city):
+                raise forms.ValidationError(_("City name should only contain alphabetic characters."))
+        return city
+
+    def clean_state(self):
+        state = self.cleaned_data.get('state', '').strip()
+        if state:
+            if not re.match(r"^[a-zA-Z\s.-]+$", state):
+                raise forms.ValidationError(_("State name should only contain alphabetic characters."))
+        return state
+
+    def clean_pincode(self):
+        pincode = self.cleaned_data.get('pincode', '').strip()
+        if pincode:
+            if not re.match(r"^\d{6}$", pincode):
+                raise forms.ValidationError(_("Pincode must contain numbers only (6 digits)."))
+        return pincode
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
@@ -243,3 +281,47 @@ class UserEditProfileForm(admin_forms.UserChangeForm):
             "state": _("State"),
             "pincode": _("Pincode"),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name', '').strip()
+        if name:
+            if not re.match(r"^[a-zA-Z\s.'-]+$", name):
+                raise forms.ValidationError(_("Name should only contain alphabetic characters and spaces."))
+            if len(name) < 2:
+                raise forms.ValidationError(_("Name must be at least 2 characters long."))
+        return name
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone:
+            if not re.match(r"^[6-9]\d{9}$", phone):
+                raise forms.ValidationError(_("Phone number must contain numbers only (10 digits starting with 6-9)."))
+        return phone
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number', '').strip()
+        if phone_number:
+            if not re.match(r"^[6-9]\d{9}$", phone_number):
+                raise forms.ValidationError(_("Phone number must contain numbers only (10 digits starting with 6-9)."))
+        return phone_number
+
+    def clean_city(self):
+        city = self.cleaned_data.get('city', '').strip()
+        if city:
+            if not re.match(r"^[a-zA-Z\s.-]+$", city):
+                raise forms.ValidationError(_("City name should only contain alphabetic characters."))
+        return city
+
+    def clean_state(self):
+        state = self.cleaned_data.get('state', '').strip()
+        if state:
+            if not re.match(r"^[a-zA-Z\s.-]+$", state):
+                raise forms.ValidationError(_("State name should only contain alphabetic characters."))
+        return state
+
+    def clean_pincode(self):
+        pincode = self.cleaned_data.get('pincode', '').strip()
+        if pincode:
+            if not re.match(r"^\d{6}$", pincode):
+                raise forms.ValidationError(_("Pincode must contain numbers only (6 digits)."))
+        return pincode

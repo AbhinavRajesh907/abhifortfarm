@@ -1,0 +1,188 @@
+{% extends "admin_portal/base_admin.html" %}
+
+{% block title %}Refund Management | AgriVision Admin{% endblock title %}
+{% block page_title %}Refund &amp; Return Requests{% endblock page_title %}
+{% block page_subtitle %}Review customer return claims, evaluate standardized reason categories, approve refunds, and manage inventory restocking.{% endblock page_subtitle %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label">Total Claims</div>
+          <div class="stat-value text-dark">{{ total_refunds_count }}</div>
+        </div>
+        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-value text-warning">{{ pending_refunds_count }}</div>
+        </div>
+        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label">Approved &amp; Settled</div>
+          <div class="stat-value text-success">{{ approved_refunds_count }}</div>
+        </div>
+        <div class="stat-icon bg-success bg-opacity-10 text-success">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="stat-label">Rejected</div>
+          <div class="stat-value text-danger">{{ rejected_refunds_count }}</div>
+        </div>
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="admin-filter-bar">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+        <input type="text" name="q" value="{{ search }}" class="form-control border-start-0" placeholder="Search Order #, customer name, email..." />
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Refund Statuses</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="reason" class="form-select" onchange="this.form.submit()">
+        <option value="">All Standardized Reasons</option>
+        {% for val, label in reason_choices %}
+          <option value="{{ val }}" {% if selected_reason == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-admin-primary flex-grow-1">Filter</button>
+      {% if selected_status or selected_reason or search %}
+        <a href="{% url 'admin_portal:refund_list' %}" class="btn btn-outline-secondary" title="Clear Filters">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Refunds Table -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <h5 class="admin-card-title">
+      <i class="fa-solid fa-hand-holding-dollar text-primary"></i> Refund Claims
+    </h5>
+    <span class="badge bg-light text-dark border">{{ refunds.count }} Claims Displayed</span>
+  </div>
+  <div class="admin-table-container">
+    {% if refunds %}
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Standard Reason</th>
+          <th>Claim Amount</th>
+          <th>Restocked?</th>
+          <th>Status</th>
+          <th>Date Submitted</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in refunds %}
+        <tr>
+          <td>
+            <a href="{% url 'admin_portal:refund_detail' r.pk %}" class="fw-bold text-dark text-decoration-none">
+              #{{ r.order.order_number }}
+            </a>
+            <div class="small text-muted">{{ r.order.items.count }} items in order</div>
+          </td>
+          <td>
+            <div class="fw-semibold">{{ r.user.name|default:r.user.email }}</div>
+            <small class="text-muted">{{ r.user.email }}</small>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border fw-medium">{{ r.get_reason_display }}</span>
+            {% if r.custom_reason %}
+              <div class="small text-muted text-truncate" style="max-width: 200px;">"{{ r.custom_reason }}"</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="fw-bold text-success">₹{{ r.requested_amount|default:r.order.total_amount }}</span>
+            {% if r.refund_amount and r.status == 'APPROVED' %}
+              <div class="small text-muted">Approved: ₹{{ r.refund_amount }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.is_restocked %}
+              <span class="badge bg-success-subtle text-success border border-success"><i class="fa-solid fa-check"></i> Restocked</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-muted">No</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.status == 'PENDING' %}
+              <span class="status-pill status-pending"><i class="fa-solid fa-clock"></i> Pending Review</span>
+            {% elif r.status == 'APPROVED' %}
+              <span class="status-pill status-delivered"><i class="fa-solid fa-check-circle"></i> Approved</span>
+            {% elif r.status == 'REJECTED' %}
+              <span class="status-pill status-failed"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+            {% else %}
+              <span class="status-pill status-paid">{{ r.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="small text-muted text-nowrap">
+            {{ r.created_at|date:"M d, Y" }}<br>
+            <span class="text-secondary small">{{ r.created_at|date:"h:i A" }}</span>
+          </td>
+          <td class="text-end">
+            <a href="{% url 'admin_portal:refund_detail' r.pk %}" class="btn btn-sm btn-admin-primary">
+              <i class="fa-solid fa-eye"></i> Review
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="text-center py-5">
+        <div style="font-size: 3rem; color: #a1a1aa;"><i class="fa-solid fa-inbox"></i></div>
+        <h5 class="fw-bold mt-2">No refund requests found</h5>
+        <p class="text-muted small mb-0">Customer refund and return submissions will appear here for review and decision.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}

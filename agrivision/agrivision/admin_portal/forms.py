@@ -1,12 +1,33 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from agrivision.marketplace.models import Product, Category, Order, Payment
+from agrivision.marketplace.models import Product, Category, Order, Payment, RefundRequest
 from agrivision.providers.models import Provider, ProviderRequest
 
 User = get_user_model()
 
 
 class ProductForm(forms.ModelForm):
+    new_category_name = forms.CharField(
+        label="Or Create New Category",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "e.g. Bonsai Plants, Fruit Tree Saplings..."}
+        ),
+        help_text="Leave blank to use selected category, or type to create a new category.",
+    )
+    new_category_type = forms.ChoiceField(
+        label="New Category Classification",
+        choices=[
+            ("Plants", "🌿 Plant / Sapling"),
+            ("Seeds", "🌱 Seed Variety"),
+            ("Other", "📦 Farming Supply"),
+        ],
+        initial="Plants",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -27,7 +48,7 @@ class ProductForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Hybrid Tomato F1 Seeds"}),
             "category": forms.Select(attrs={"class": "form-select"}),
             "provider_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. GreenRoots Nursery"}),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Enter detailed product specifications, seed germination rates, or planting guide..."}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Enter detailed plant description, variety traits, sunlight, watering, soil, and care instructions..."}),
             "price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "placeholder": "0.00"}),
             "cost_price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "placeholder": "0.00"}),
             "stock": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
@@ -38,16 +59,84 @@ class ProductForm(forms.ModelForm):
             "is_featured": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("category_type", "name")
+        self.fields["category"].required = False
+        self.fields["category"].empty_label = "-- Select an Existing Category --"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        new_cat_name = cleaned_data.get("new_category_name", "").strip()
+        new_cat_type = cleaned_data.get("new_category_type") or Category.PLANTS
+
+        if new_cat_name:
+            parent_cat = Category.objects.filter(name=new_cat_type, parent__isnull=True).first()
+            category, _ = Category.objects.get_or_create(
+                name=new_cat_name,
+                defaults={
+                    "category_type": new_cat_type,
+                    "parent": parent_cat,
+                    "description": f"{new_cat_name} ({new_cat_type})",
+                },
+            )
+            cleaned_data["category"] = category
+        elif not category:
+            self.add_error("category", "Please select a category or enter a new category name.")
+
+        description = cleaned_data.get("description", "").strip()
+        if not description:
+            self.add_error("description", "Please provide a detailed description and care guide.")
+
+        return cleaned_data
+
 
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["name", "description", "icon"]
+        fields = ["name", "category_type", "parent", "description", "icon", "is_active"]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Fertilizers"}),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Vegetable Seeds"}),
+            "category_type": forms.Select(attrs={"class": "form-select"}),
+            "parent": forms.Select(attrs={"class": "form-select"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Category description..."}),
             "icon": forms.TextInput(attrs={"class": "form-control", "placeholder": "fa-seedling, fa-leaf, fa-flask, fa-tools"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["parent"].queryset = Category.objects.filter(parent__isnull=True).exclude(pk=self.instance.pk if self.instance.pk else None)
+        self.fields["parent"].required = False
+        self.fields["parent"].empty_label = "-- None (Top-level Parent Category) --"
+
+
+class RefundProcessForm(forms.Form):
+    STATUS_CHOICES = [
+        (RefundRequest.RefundStatus.APPROVED, "Approve Refund"),
+        (RefundRequest.RefundStatus.REJECTED, "Reject Refund"),
+    ]
+    decision = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+    refund_amount = forms.DecimalField(
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "placeholder": "Approved refund amount in INR"})
+    )
+    is_restocked = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        help_text="Check if goods were returned in undamaged / resellable condition to add back to provider stock."
+    )
+    admin_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Internal audit note or explanation to customer..."})
+    )
 
 
 class ProviderRequestApproveForm(forms.Form):

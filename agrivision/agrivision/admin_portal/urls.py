@@ -40,6 +40,7 @@ urlpatterns = [
     # Inventory Management
     path("inventory/", views.InventoryListView.as_view(), name="inventory_list"),
     path("inventory/<int:pk>/adjust/", views.InventoryQuickAdjustView.as_view(), name="inventory_adjust"),
+    path("inventory/history/", views.AdminStockHistoryView.as_view(), name="stock_history"),
     
     # Order & Payment Management
     path("orders/", views.OrderListView.as_view(), name="order_list"),
@@ -48,6 +49,11 @@ urlpatterns = [
     path("orders/<int:pk>/update-status/", views.OrderStatusUpdateView.as_view(), name="order_status_update"),
     path("payments/", views.PaymentListView.as_view(), name="payment_list"),
     path("payments/<int:pk>/mark-paid/", views.PaymentMarkPaidView.as_view(), name="payment_mark_paid"),
+
+    # Refund Management
+    path("refunds/", views.AdminRefundListView.as_view(), name="refund_list"),
+    path("refunds/<int:pk>/", views.AdminRefundDetailView.as_view(), name="refund_detail"),
+    path("refunds/<int:pk>/process/", views.AdminRefundProcessView.as_view(), name="refund_process"),
     
     # Business Reports & Data Exports
     path("reports/", views.AdminReportsView.as_view(), name="reports"),

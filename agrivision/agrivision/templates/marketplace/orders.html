@@ -5,7 +5,20 @@
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="section-title"><i class="bi bi-receipt me-2"></i>My Orders</h1>
+  <!-- Breadcrumb & Back navigation -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'marketplace:dashboard' %}" class="text-success text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">My Orders</li>
+      </ol>
+    </nav>
+    <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-house-door me-1"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <h1 class="section-title"><i class="bi bi-receipt me-2"></i>My Orders &amp; Purchase History</h1>
 
   {% if orders %}
     <div class="table-responsive">
@@ -14,10 +27,11 @@
           <tr>
             <th>Order #</th>
             <th>Date</th>
-            <th>Total</th>
-            <th>Payment</th>
-            <th>Status</th>
-            <th></th>
+            <th>Total Amount</th>
+            <th>Payment Split</th>
+            <th>Payment Status</th>
+            <th>Order Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -27,8 +41,21 @@
               <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
               <td><strong>₹{{ order.total_amount }}</strong></td>
               <td>
+                <small class="d-block text-muted">{{ order.get_payment_method_display }}</small>
+                {% if order.payment_method == 'half_cod' %}
+                  <span class="badge bg-primary-subtle text-primary">Paid: ₹{{ order.online_paid_amount }}</span>
+                  <span class="badge bg-warning-subtle text-dark">COD: ₹{{ order.cod_amount_due }}</span>
+                {% elif order.payment_method == 'online' %}
+                  <span class="badge bg-success-subtle text-success">Online: ₹{{ order.online_paid_amount }}</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-dark">COD Due: ₹{{ order.cod_amount_due }}</span>
+                {% endif %}
+              </td>
+              <td>
                 <span class="badge
                   {% if order.payment_status == 'paid' %}bg-success
+                  {% elif order.payment_status == 'partially_paid' %}bg-info text-dark
+                  {% elif order.payment_status == 'refunded' %}bg-secondary
                   {% elif order.payment_status == 'failed' %}bg-danger
                   {% else %}bg-warning text-dark{% endif %}">
                   {{ order.get_payment_status_display }}
@@ -38,6 +65,8 @@
                 <span class="badge
                   {% if order.order_status == 'delivered' %}bg-success
                   {% elif order.order_status == 'cancelled' %}bg-danger
+                  {% elif order.order_status == 'refund_requested' %}bg-warning text-dark
+                  {% elif order.order_status == 'refunded' %}bg-secondary
                   {% elif order.order_status == 'shipped' %}bg-info text-dark
                   {% elif order.order_status == 'processing' %}bg-primary
                   {% elif order.order_status == 'confirmed' %}bg-secondary
@@ -45,10 +74,14 @@
                   {{ order.get_order_status_display }}
                 </span>
               </td>
-              <td>
+              <td class="text-nowrap">
+                <a href="{% url 'marketplace:track_order' order.order_number %}"
+                   class="btn btn-success btn-sm me-1">
+                  <i class="bi bi-geo-alt-fill me-1"></i> Track
+                </a>
                 <a href="{% url 'marketplace:order_detail' order.order_number %}"
-                   class="btn btn-outline-success btn-sm">
-                  View →
+                   class="btn btn-outline-secondary btn-sm">
+                  Details &rarr;
                 </a>
               </td>
             </tr>

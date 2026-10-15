@@ -7,6 +7,14 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'users:register' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="bi bi-arrow-left me-1"></i> Back to Account Selection
+        </a>
+        <a href="{% url 'home' %}" class="text-muted text-decoration-none small">
+          <i class="bi bi-house-door me-1"></i> Home
+        </a>
+      </div>
       <div class="auth-card">
         <!-- Header -->
         <div class="text-center mb-4">
@@ -35,6 +43,7 @@
             <div class="col-md-6">
               <label class="form-label" for="id_name">Full Name <span class="text-danger">*</span></label>
               {{ form.name }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="nameLiveError">Name should only contain letters and spaces (no numbers or symbols).</div>
               {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
             </div>
 
@@ -47,24 +56,36 @@
             <div class="col-md-6">
               <label class="form-label" for="id_email">Email Address <span class="text-danger">*</span></label>
               {{ form.email }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="emailLiveError">Please enter a valid email format (e.g. name@example.com).</div>
               {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
               <label class="form-label" for="id_phone">Phone Number <span class="text-danger">*</span></label>
               {{ form.phone }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="phoneLiveError">Phone number must contain numbers only (10 digits starting with 6-9).</div>
               {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
               <label class="form-label" for="id_password">Password <span class="text-danger">*</span></label>
-              {{ form.password }}
+              <div class="input-group">
+                {{ form.password }}
+                <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="id_password" title="Show/Hide password" style="border-color: #ced4da; z-index: 10;">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
               {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
               <label class="form-label" for="id_confirm_password">Confirm Password <span class="text-danger">*</span></label>
-              {{ form.confirm_password }}
+              <div class="input-group">
+                {{ form.confirm_password }}
+                <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="id_confirm_password" title="Show/Hide password" style="border-color: #ced4da; z-index: 10;">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
               {% if form.confirm_password.errors %}<div class="text-danger small mt-1">{{ form.confirm_password.errors }}</div>{% endif %}
             </div>
           </div>
@@ -83,18 +104,21 @@
             <div class="col-md-4">
               <label class="form-label" for="id_city">City <span class="text-danger">*</span></label>
               {{ form.city }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="cityLiveError">City name should only contain letters.</div>
               {% if form.city.errors %}<div class="text-danger small mt-1">{{ form.city.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-4">
               <label class="form-label" for="id_state">State <span class="text-danger">*</span></label>
               {{ form.state }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="stateLiveError">State name should only contain letters.</div>
               {% if form.state.errors %}<div class="text-danger small mt-1">{{ form.state.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-4">
               <label class="form-label" for="id_pincode">Pincode <span class="text-danger">*</span></label>
               {{ form.pincode }}
+              <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="pincodeLiveError">Pincode must contain numbers only (6 digits).</div>
               {% if form.pincode.errors %}<div class="text-danger small mt-1">{{ form.pincode.errors }}</div>{% endif %}
             </div>
           </div>
@@ -118,4 +142,102 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Password visibility toggles
+    document.querySelectorAll('.toggle-password-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const input = document.getElementById(targetId) || this.previousElementSibling;
+        const icon = this.querySelector('i');
+        if (input) {
+          if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+          } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+          }
+        }
+      });
+    });
+
+    // Real-time character/number validations
+    const nameInput = document.getElementById('id_name');
+    const nameError = document.getElementById('nameLiveError');
+    if (nameInput) {
+      nameInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.'-]+$/.test(this.value)) {
+          nameError.classList.remove('d-none');
+        } else {
+          nameError.classList.add('d-none');
+        }
+      });
+    }
+
+    const emailInput = document.getElementById('id_email');
+    const emailError = document.getElementById('emailLiveError');
+    if (emailInput) {
+      emailInput.addEventListener('input', function() {
+        if (this.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value)) {
+          emailError.classList.remove('d-none');
+        } else {
+          emailError.classList.add('d-none');
+        }
+      });
+    }
+
+    const phoneInput = document.getElementById('id_phone');
+    const phoneError = document.getElementById('phoneLiveError');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', function() {
+        const hasNonDigits = /\D/.test(this.value);
+        if (hasNonDigits || (this.value.length > 0 && !/^[6-9]\d{0,9}$/.test(this.value))) {
+          phoneError.classList.remove('d-none');
+        } else {
+          phoneError.classList.add('d-none');
+        }
+      });
+    }
+
+    const cityInput = document.getElementById('id_city');
+    const cityError = document.getElementById('cityLiveError');
+    if (cityInput) {
+      cityInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+          cityError.classList.remove('d-none');
+        } else {
+          cityError.classList.add('d-none');
+        }
+      });
+    }
+
+    const stateInput = document.getElementById('id_state');
+    const stateError = document.getElementById('stateLiveError');
+    if (stateInput) {
+      stateInput.addEventListener('input', function() {
+        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+          stateError.classList.remove('d-none');
+        } else {
+          stateError.classList.add('d-none');
+        }
+      });
+    }
+
+    const pinInput = document.getElementById('id_pincode');
+    const pinError = document.getElementById('pincodeLiveError');
+    if (pinInput) {
+      pinInput.addEventListener('input', function() {
+        if (this.value && !/^\d{0,6}$/.test(this.value)) {
+          pinError.classList.remove('d-none');
+        } else {
+          pinError.classList.add('d-none');
+        }
+      });
+    }
+  });
+</script>
 {% endblock content %}

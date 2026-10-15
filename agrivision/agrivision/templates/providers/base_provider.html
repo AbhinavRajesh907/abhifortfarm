@@ -124,18 +124,23 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% block nav_stock %}{% endblock %}" href="{% url 'providers:stock_management' %}">
+              <i class="bi bi-boxes"></i> Stock
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% block nav_stock_history %}{% endblock %}" href="{% url 'providers:stock_history' %}">
+              <i class="bi bi-clock-history"></i> Stock History
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% block nav_add_product %}{% endblock %}" href="{% url 'providers:product_add' %}">
               <i class="bi bi-plus-circle"></i> + Add Product
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% block nav_orders_view %}{% endblock %}" href="{% url 'providers:orders_view' %}">
-              <i class="bi bi-eye"></i> Order View
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link {% block nav_orders %}{% endblock %}" href="{% url 'providers:orders' %}">
-              <i class="bi bi-sliders"></i> Order Management
+              <i class="bi bi-receipt-cutoff"></i> Order Management
             </a>
           </li>
           <li class="nav-item">
@@ -153,11 +158,6 @@
       </ul>
 
       <ul class="navbar-nav ms-auto align-items-center gap-2">
-        <li class="nav-item">
-          <a class="btn btn-sm btn-outline-success rounded-pill px-3" href="{% url 'marketplace:dashboard' %}">
-            <i class="bi bi-shop"></i> View Marketplace
-          </a>
-        </li>
         {% if request.user.is_authenticated %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle user-avatar" href="#" role="button"
@@ -165,23 +165,29 @@
             <i class="bi bi-person-circle fs-5"></i>
             {{ request.user.name|default:request.user.email }}
           </a>
-          <ul class="dropdown-menu dropdown-menu-end">
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li>
+              <a class="dropdown-item text-success fw-semibold" href="{% url 'marketplace:dashboard' %}">
+                <i class="bi bi-shop me-2"></i> View Marketplace
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"/></li>
             <li>
               <a class="dropdown-item" href="{% url 'users:detail' request.user.pk %}">
-                <i class="bi bi-person"></i> My Account
+                <i class="bi bi-person me-2"></i> My Account
               </a>
             </li>
             {% if is_approved_provider %}
             <li>
               <a class="dropdown-item" href="{% url 'providers:profile_edit' %}">
-                <i class="bi bi-building"></i> Edit Farm Details
+                <i class="bi bi-building me-2"></i> Edit Farm Details
               </a>
             </li>
             {% endif %}
             <li><hr class="dropdown-divider"/></li>
             <li>
-              <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
-                <i class="bi bi-box-arrow-right"></i> Logout
+              <a class="dropdown-item text-danger" href="{% url 'users:logout' %}">
+                <i class="bi bi-box-arrow-right me-2"></i> Logout
               </a>
             </li>
           </ul>

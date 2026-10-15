@@ -28,9 +28,10 @@ from agrivision.admin_portal.forms import (
     ProviderRequestApproveForm,
     ProviderRequestRejectForm,
     QuickStockAdjustmentForm,
+    RefundProcessForm,
     UserEditForm,
 )
-from agrivision.marketplace.models import Category, Order, OrderItem, Payment, Product
+from agrivision.marketplace.models import Category, Order, OrderItem, Payment, Product, RefundRequest, StockHistory
 from agrivision.providers.models import Provider, ProviderProduct, ProviderRequest
 
 User = get_user_model()
@@ -58,6 +59,8 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
 
         # Alert Counters
         pending_requests_count = ProviderRequest.objects.filter(status=ProviderRequest.PENDING).count()
+        pending_refunds_count = RefundRequest.objects.filter(status=RefundRequest.RefundStatus.PENDING).count()
+        total_refunds_count = RefundRequest.objects.count()
         low_stock_count = Product.objects.filter(stock__gt=0, stock__lte=10).count()
         out_of_stock_count = Product.objects.filter(stock=0).count()
         pending_orders_count = Order.objects.filter(order_status=Order.ORDER_PENDING).count()
@@ -116,6 +119,8 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
             "total_sales": total_sales,
             "avg_order_value": avg_order_value,
             "pending_requests_count": pending_requests_count,
+            "pending_refunds_count": pending_refunds_count,
+            "total_refunds_count": total_refunds_count,
             "low_stock_count": low_stock_count,
             "out_of_stock_count": out_of_stock_count,
             "pending_orders_count": pending_orders_count,
@@ -527,9 +532,13 @@ class CategoryListView(AdminRequiredMixin, ListView):
     template_name = "admin_portal/categories/category_list.html"
     context_object_name = "categories"
 
+    def get_queryset(self):
+        return Category.objects.select_related("parent").prefetch_related("subcategories", "products").order_by("parent_id", "name")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = CategoryForm()
+        context["parent_categories"] = Category.objects.filter(parent__isnull=True).prefetch_related("subcategories", "products")
         return context
 
 
@@ -605,28 +614,52 @@ class InventoryListView(AdminRequiredMixin, ListView):
 
 class InventoryQuickAdjustView(AdminRequiredMixin, View):
     """
-    Adjusts stock count on a product quickly (+X, -X, =X).
+    Adjusts stock count on a product quickly (+X, -X, =X) and writes StockHistory.
     """
     def post(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
         adj_type = request.POST.get("adjustment_type")
+        note = request.POST.get("note", "Admin manual stock adjustment").strip()
         try:
             qty = int(request.POST.get("quantity", 0))
-        except ValueError:
-            qty = 0
+            if qty < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid quantity entered.")
+            return redirect(request.META.get("HTTP_REFERER", "admin_portal:inventory_list"))
 
         old_stock = product.stock
         if adj_type == "add":
-            product.stock += qty
+            new_stock = old_stock + qty
+            change_type = StockHistory.ChangeType.ADDED
         elif adj_type == "subtract":
-            product.stock = max(0, product.stock - qty)
-        elif adj_type == "set":
-            product.stock = max(0, qty)
+            new_stock = max(0, old_stock - qty)
+            change_type = StockHistory.ChangeType.REMOVED
+        else:  # set
+            new_stock = qty
+            change_type = StockHistory.ChangeType.MANUAL
 
-        product.save()
+        diff = new_stock - old_stock
+
+        from django.db import transaction
+        with transaction.atomic():
+            product.stock = new_stock
+            product.save(update_fields=["stock"])
+
+            StockHistory.objects.create(
+                product=product,
+                provider=product.provider,
+                previous_stock=old_stock,
+                quantity_changed=diff,
+                new_stock=new_stock,
+                change_type=change_type,
+                reason=note or f"Admin adjustment ({adj_type})",
+                created_by=request.user,
+            )
+
         messages.success(
             request,
-            f"Stock for '{product.name}' adjusted from {old_stock} to {product.stock} units."
+            f"Stock for '{product.name}' adjusted from {old_stock} to {product.stock} units ({'+' if diff > 0 else ''}{diff})."
         )
         return redirect(request.META.get("HTTP_REFERER", "admin_portal:inventory_list"))
 
@@ -695,6 +728,13 @@ class OrderStatusUpdateView(AdminRequiredMixin, View):
 
         if new_order_status in dict(Order.ORDER_STATUS_CHOICES):
             order.order_status = new_order_status
+            # If delivered, auto-settle the remaining Cash on Delivery balance
+            if new_order_status == Order.DELIVERED and order.payment_status in [Order.PARTIALLY_PAID, Order.PENDING, Order.COD_PENDING]:
+                order.payment_status = Order.PAID
+                if getattr(order, "payment_record", None):
+                    order.payment_record.status = Order.PAID
+                    order.payment_record.save()
+
         if new_payment_status in dict(Order.PAYMENT_STATUS_CHOICES):
             order.payment_status = new_payment_status
             if getattr(order, "payment_record", None):
@@ -904,3 +944,160 @@ class ExportProductsReportCSVView(AdminRequiredMixin, View):
                 status,
             ])
         return response
+
+
+# -----------------------------------------------------------------------------
+# 9. REFUND MANAGEMENT & STOCK AUDIT LOGS
+# -----------------------------------------------------------------------------
+class AdminRefundListView(AdminRequiredMixin, ListView):
+    model = RefundRequest
+    template_name = "admin_portal/refunds/refund_list.html"
+    context_object_name = "refunds"
+    paginate_by = 15
+
+    def get_queryset(self):
+        qs = RefundRequest.objects.select_related("order", "user", "processed_by").order_by("-created_at")
+        status = self.request.GET.get("status")
+        reason = self.request.GET.get("reason")
+        search = self.request.GET.get("q")
+
+        if status:
+            qs = qs.filter(status=status)
+        if reason:
+            qs = qs.filter(reason=reason)
+        if search:
+            qs = qs.filter(
+                Q(order__order_number__icontains=search)
+                | Q(user__name__icontains=search)
+                | Q(user__email__icontains=search)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_refunds = RefundRequest.objects.all()
+        context["total_refunds_count"] = all_refunds.count()
+        context["pending_refunds_count"] = all_refunds.filter(status=RefundRequest.RefundStatus.PENDING).count()
+        context["approved_refunds_count"] = all_refunds.filter(status=RefundRequest.RefundStatus.APPROVED).count()
+        context["rejected_refunds_count"] = all_refunds.filter(status=RefundRequest.RefundStatus.REJECTED).count()
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["selected_reason"] = self.request.GET.get("reason", "")
+        context["search"] = self.request.GET.get("q", "")
+        context["reason_choices"] = RefundRequest.RefundReason.choices
+        context["status_choices"] = RefundRequest.RefundStatus.choices
+        return context
+
+
+class AdminRefundDetailView(AdminRequiredMixin, DetailView):
+    model = RefundRequest
+    template_name = "admin_portal/refunds/refund_detail.html"
+    context_object_name = "refund"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["process_form"] = RefundProcessForm(initial={
+            "refund_amount": self.object.requested_amount or self.object.order.total_amount,
+            "decision": RefundRequest.RefundStatus.APPROVED,
+        })
+        return context
+
+
+class AdminRefundProcessView(AdminRequiredMixin, View):
+    def post(self, request, pk):
+        refund = get_object_or_404(RefundRequest, pk=pk)
+        if refund.status != RefundRequest.RefundStatus.PENDING:
+            messages.warning(request, f"This refund request has already been processed ({refund.get_status_display()}).")
+            return redirect("admin_portal:refund_detail", pk=pk)
+
+        form = RefundProcessForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Please fill in the refund form correctly.")
+            return redirect("admin_portal:refund_detail", pk=pk)
+
+        decision = form.cleaned_data["decision"]
+        admin_notes = form.cleaned_data.get("admin_notes", "")
+        is_restocked = form.cleaned_data.get("is_restocked", False)
+        refund_amount = form.cleaned_data.get("refund_amount") or refund.requested_amount or refund.order.total_amount
+
+        from django.db import transaction
+        with transaction.atomic():
+            refund.status = decision
+            refund.admin_notes = admin_notes
+            refund.processed_by = request.user
+            refund.processed_at = timezone.now()
+            refund.is_restocked = is_restocked
+
+            if decision == RefundRequest.RefundStatus.APPROVED:
+                refund.refund_amount = refund_amount
+                order = refund.order
+                order.refund_status = Order.REFUND_APPROVED
+                order.save(update_fields=["refund_status"])
+
+                # If resellable goods restocked, restore inventory and log StockHistory
+                if is_restocked:
+                    for item in order.items.select_related("product"):
+                        if item.product:
+                            prod = Product.objects.select_for_update().get(id=item.product.id)
+                            prev_stock = prod.stock
+                            prod.stock += item.quantity
+                            prod.save(update_fields=["stock"])
+
+                            StockHistory.objects.create(
+                                product=prod,
+                                provider=prod.provider,
+                                previous_stock=prev_stock,
+                                quantity_changed=item.quantity,
+                                new_stock=prod.stock,
+                                change_type=StockHistory.ChangeType.REFUND_RESTOCK,
+                                reason=f"Restocked after refund approval for Order #{order.order_number}",
+                                related_order=order,
+                                created_by=request.user,
+                            )
+                messages.success(
+                    request,
+                    f"✅ Refund Request for Order #{order.order_number} APPROVED for ₹{refund_amount}." +
+                    (" Stock was automatically restocked into inventory." if is_restocked else "")
+                )
+            else:
+                order = refund.order
+                order.refund_status = Order.REFUND_REJECTED
+                order.save(update_fields=["refund_status"])
+                messages.warning(request, f"Refund Request for Order #{order.order_number} was REJECTED.")
+
+            refund.save()
+
+        return redirect("admin_portal:refund_detail", pk=pk)
+
+
+class AdminStockHistoryView(AdminRequiredMixin, ListView):
+    model = StockHistory
+    template_name = "admin_portal/inventory/stock_history.html"
+    context_object_name = "history_records"
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = StockHistory.objects.select_related("product", "provider", "related_order", "created_by").order_by("-created_at")
+        product_id = self.request.GET.get("product")
+        change_type = self.request.GET.get("change_type")
+        search = self.request.GET.get("q")
+
+        if product_id:
+            qs = qs.filter(product_id=product_id)
+        if change_type:
+            qs = qs.filter(change_type=change_type)
+        if search:
+            qs = qs.filter(
+                Q(product__name__icontains=search)
+                | Q(reason__icontains=search)
+                | Q(related_order__order_number__icontains=search)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["products"] = Product.objects.all().order_by("name")
+        context["change_types"] = StockHistory.ChangeType.choices
+        context["selected_product"] = self.request.GET.get("product", "")
+        context["selected_change_type"] = self.request.GET.get("change_type", "")
+        context["search"] = self.request.GET.get("q", "")
+        return context

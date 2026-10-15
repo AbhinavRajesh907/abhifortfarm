@@ -7,6 +7,34 @@
 {% block content %}
 <div class="row justify-content-center my-4">
     <div class="col-md-9 col-lg-8">
+        <!-- Back Navigation & Quick Actions -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-success text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">User Profile</li>
+                </ol>
+            </nav>
+            <div class="d-flex gap-2">
+                {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+                    <a href="{% url 'admin_portal:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Admin Dashboard
+                    </a>
+                {% elif request.user.role == 'PROVIDER' %}
+                    <a href="{% url 'providers:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Provider Dashboard
+                    </a>
+                {% else %}
+                    <a href="{% url 'marketplace:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Marketplace
+                    </a>
+                    <a href="{% url 'marketplace:my_orders' %}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                        <i class="bi bi-receipt me-1"></i> My Orders
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="card shadow-sm border-0 border-top border-success border-4 rounded-3">
             <div class="card-body p-4 p-md-5">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,27 +52,30 @@
                 </div>
                 
                 {% if object == request.user %}
-                <form class="form-horizontal" method="post" action="{% url 'users:update' %}">
+                <form class="form-horizontal" method="post" action="{% url 'users:update' %}" novalidate>
                     {% csrf_token %}
                     
                     <h5 class="mb-3 fw-bold" style="color: #2c3e50;">Personal Information</h5>
                     
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Full Name *</label>
-                            <input type="text" name="name" class="form-control" placeholder="Full Name" value="{{ object.name|default:'' }}" required>
+                            <label class="form-label fw-semibold" for="profileName">Full Name *</label>
+                            <input type="text" name="name" id="profileName" class="form-control" placeholder="Full Name" value="{{ object.name|default:'' }}" required>
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profileNameError">Full name should only contain letters and spaces (no numbers or symbols).</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Username *</label>
-                            <input type="text" name="username" class="form-control" placeholder="Choose Username" value="{{ object.username|default:'' }}">
+                            <label class="form-label fw-semibold" for="profileUsername">Username *</label>
+                            <input type="text" name="username" id="profileUsername" class="form-control" placeholder="Choose Username" value="{{ object.username|default:'' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Email Address *</label>
-                            <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ object.email|default:'' }}" required>
+                            <label class="form-label fw-semibold" for="profileEmail">Email Address *</label>
+                            <input type="email" name="email" id="profileEmail" class="form-control" placeholder="Email Address" value="{{ object.email|default:'' }}" required>
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profileEmailError">Please enter a valid email format (e.g. name@example.com).</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Phone Number *</label>
-                            <input type="text" name="phone_number" class="form-control" placeholder="Phone Number" value="{{ object.phone_number|default:'' }}">
+                            <label class="form-label fw-semibold" for="profilePhone">Phone Number *</label>
+                            <input type="text" name="phone_number" id="profilePhone" class="form-control" placeholder="Phone Number" value="{{ object.phone_number|default:'' }}">
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profilePhoneError">Phone number must contain numbers only (10 digits starting with 6-9).</div>
                         </div>
                     </div>
 
@@ -54,20 +85,23 @@
                     
                     <div class="row g-3 mb-4">
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Street Address *</label>
-                            <input type="text" name="street_address" class="form-control" placeholder="Street Address / Location" value="{{ object.street_address|default:'' }}">
+                            <label class="form-label fw-semibold" for="profileAddress">Street Address *</label>
+                            <input type="text" name="street_address" id="profileAddress" class="form-control" placeholder="Street Address / Location" value="{{ object.street_address|default:'' }}">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">City *</label>
-                            <input type="text" name="city" class="form-control" placeholder="City" value="{{ object.city|default:'' }}">
+                            <label class="form-label fw-semibold" for="profileCity">City *</label>
+                            <input type="text" name="city" id="profileCity" class="form-control" placeholder="City" value="{{ object.city|default:'' }}">
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profileCityError">City name should only contain letters.</div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">State *</label>
-                            <input type="text" name="state" class="form-control" placeholder="State" value="{{ object.state|default:'' }}">
+                            <label class="form-label fw-semibold" for="profileState">State *</label>
+                            <input type="text" name="state" id="profileState" class="form-control" placeholder="State" value="{{ object.state|default:'' }}">
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profileStateError">State name should only contain letters.</div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Pincode *</label>
-                            <input type="text" name="pincode" class="form-control" placeholder="Pincode" value="{{ object.pincode|default:'' }}">
+                            <label class="form-label fw-semibold" for="profilePincode">Pincode *</label>
+                            <input type="text" name="pincode" id="profilePincode" class="form-control" placeholder="Pincode" value="{{ object.pincode|default:'' }}" maxlength="6">
+                            <div class="field-live-error text-danger small fw-semibold mt-1 d-none" id="profilePincodeError">Pincode must contain numbers only (6 digits).</div>
                         </div>
                     </div>
                     
@@ -77,6 +111,82 @@
                         </button>
                     </div>
                 </form>
+                <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const nameInput = document.getElementById('profileName');
+                    const nameError = document.getElementById('profileNameError');
+                    if (nameInput) {
+                      nameInput.addEventListener('input', function() {
+                        if (this.value && !/^[a-zA-Z\s.'-]+$/.test(this.value)) {
+                          nameError.classList.remove('d-none');
+                        } else {
+                          nameError.classList.add('d-none');
+                        }
+                      });
+                    }
+
+                    const emailInput = document.getElementById('profileEmail');
+                    const emailError = document.getElementById('profileEmailError');
+                    if (emailInput) {
+                      emailInput.addEventListener('input', function() {
+                        if (this.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value)) {
+                          emailError.classList.remove('d-none');
+                        } else {
+                          emailError.classList.add('d-none');
+                        }
+                      });
+                    }
+
+                    const phoneInput = document.getElementById('profilePhone');
+                    const phoneError = document.getElementById('profilePhoneError');
+                    if (phoneInput) {
+                      phoneInput.addEventListener('input', function() {
+                        const hasNonDigits = /\D/.test(this.value);
+                        if (hasNonDigits || (this.value.length > 0 && !/^[6-9]\d{0,9}$/.test(this.value))) {
+                          phoneError.classList.remove('d-none');
+                        } else {
+                          phoneError.classList.add('d-none');
+                        }
+                      });
+                    }
+
+                    const cityInput = document.getElementById('profileCity');
+                    const cityError = document.getElementById('profileCityError');
+                    if (cityInput) {
+                      cityInput.addEventListener('input', function() {
+                        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+                          cityError.classList.remove('d-none');
+                        } else {
+                          cityError.classList.add('d-none');
+                        }
+                      });
+                    }
+
+                    const stateInput = document.getElementById('profileState');
+                    const stateError = document.getElementById('profileStateError');
+                    if (stateInput) {
+                      stateInput.addEventListener('input', function() {
+                        if (this.value && !/^[a-zA-Z\s.-]+$/.test(this.value)) {
+                          stateError.classList.remove('d-none');
+                        } else {
+                          stateError.classList.add('d-none');
+                        }
+                      });
+                    }
+
+                    const pinInput = document.getElementById('profilePincode');
+                    const pinError = document.getElementById('profilePincodeError');
+                    if (pinInput) {
+                      pinInput.addEventListener('input', function() {
+                        if (this.value && !/^\d{0,6}$/.test(this.value)) {
+                          pinError.classList.remove('d-none');
+                        } else {
+                          pinError.classList.add('d-none');
+                        }
+                      });
+                    }
+                  });
+                </script>
                 {% else %}
                 <p><strong>Name:</strong> {{ object.name }}</p>
                 <p><strong>Email:</strong> {{ object.email }}</p>

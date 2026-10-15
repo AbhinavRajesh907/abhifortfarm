@@ -21,8 +21,13 @@ urlpatterns = [
     path("products/add/", views.provider_product_add, name="product_add"),
     path("products/<int:pk>/edit/", views.provider_product_edit, name="product_edit"),
     path("products/<int:pk>/delete/", views.provider_product_delete, name="product_delete"),
+    # Stock management
+    path("stock/", views.provider_stock_management, name="stock_management"),
+    path("stock/<int:pk>/adjust/", views.provider_stock_adjust, name="stock_adjust"),
+    path("stock/history/", views.provider_stock_history, name="stock_history"),
     # Orders related to provider's products
     path("orders/", views.provider_orders, name="orders"),
+    path("orders/<int:order_id>/", views.provider_order_detail, name="order_detail"),
     path("orders/view/", views.provider_orders_view, name="orders_view"),
     path("orders/<int:order_id>/status/", views.provider_order_status_update, name="order_status_update"),
 ]

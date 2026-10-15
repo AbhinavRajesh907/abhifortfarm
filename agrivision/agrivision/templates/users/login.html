@@ -7,6 +7,11 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-7 col-lg-5">
+      <div class="mb-3">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+          <i class="bi bi-arrow-left me-1"></i> Back to Home
+        </a>
+      </div>
       <div class="auth-card">
         <!-- Header -->
         <div class="text-center mb-4">
@@ -35,7 +40,12 @@
             <label class="form-label" for="id_password">
               <i class="bi bi-lock me-1 text-success"></i> Password
             </label>
-            {{ form.password }}
+            <div class="input-group">
+              {{ form.password }}
+              <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="id_password" title="Show/Hide password" style="border-color: #ced4da; z-index: 10;">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
             {% if form.password.errors %}
               <div class="text-danger small mt-1">{{ form.password.errors }}</div>
             {% endif %}
@@ -61,4 +71,27 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toggle-password-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const input = document.getElementById(targetId) || this.previousElementSibling;
+        const icon = this.querySelector('i');
+        if (input) {
+          if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+          } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+          }
+        }
+      });
+    });
+  });
+</script>
 {% endblock content %}

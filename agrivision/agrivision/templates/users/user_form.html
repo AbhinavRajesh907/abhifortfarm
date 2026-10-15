@@ -5,8 +5,22 @@
 {% block title %}Edit Profile - {{ user.name }}{% endblock title %}
 
 {% block content %}
-<div class="row justify-content-center my-5">
+<div class="row justify-content-center my-4">
     <div class="col-md-8 col-lg-6">
+        <!-- Back Navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-success text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'users:detail' request.user.pk %}" class="text-success text-decoration-none">Profile</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
+                </ol>
+            </nav>
+            <a href="{% url 'users:detail' request.user.pk %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to Profile
+            </a>
+        </div>
+
         <div class="card shadow-sm border-0 border-top border-success border-4 rounded-3">
             <div class="card-body p-4 p-md-5">
                 <h3 class="text-center mb-4" style="color: #198754; font-weight: 700;">Edit Profile</h3>
