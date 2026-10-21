@@ -285,8 +285,11 @@
         <div class="modal-body">
           <p class="text-muted">Are you sure you want to cancel this order? Stock will automatically be restored to the provider.</p>
           <div class="mb-3">
-            <label class="form-label fw-semibold small">Reason for Cancellation</label>
-            <select name="cancellation_reason" class="form-select" required>
+            <label class="form-label fw-semibold small" for="cancellationReasonSelect">
+              Reason for Cancellation <span class="text-danger">*</span>
+            </label>
+            <select name="cancellation_reason" id="cancellationReasonSelect" class="form-select" required>
+              <option value="" disabled selected>-- Select a Reason for Cancellation --</option>
               <option value="Ordered by mistake">Ordered by mistake</option>
               <option value="Found a better price elsewhere">Found a better price elsewhere</option>
               <option value="Delivery time is too long">Delivery time is too long</option>
@@ -294,15 +297,75 @@
               <option value="Other">Other reason</option>
             </select>
           </div>
+          <div class="mb-3" id="customReasonWrapper" style="display: none;">
+            <label class="form-label fw-semibold small" for="customCancellationReason">
+              Please specify reason details <span class="text-danger">*</span>
+            </label>
+            <textarea name="custom_cancellation_reason" id="customCancellationReason" class="form-control" rows="3" placeholder="Provide specific reason for cancellation..."></textarea>
+          </div>
+          <div id="cancelFormError" class="alert alert-danger py-2 small d-none"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Order</button>
-          <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+          <button type="submit" id="confirmCancelBtn" class="btn btn-danger">Confirm Cancellation</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const cancelSelect = document.getElementById('cancellationReasonSelect');
+    const customWrapper = document.getElementById('customReasonWrapper');
+    const customInput = document.getElementById('customCancellationReason');
+    const cancelForm = cancelSelect ? cancelSelect.closest('form') : null;
+    const errorDiv = document.getElementById('cancelFormError');
+
+    if (cancelSelect) {
+      cancelSelect.addEventListener('change', function() {
+        if (this.value === 'Other') {
+          if (customWrapper) customWrapper.style.display = 'block';
+          if (customInput) customInput.setAttribute('required', 'required');
+        } else {
+          if (customWrapper) customWrapper.style.display = 'none';
+          if (customInput) {
+            customInput.removeAttribute('required');
+            customInput.value = '';
+          }
+        }
+      });
+    }
+
+    if (cancelForm) {
+      cancelForm.addEventListener('submit', function(e) {
+        if (!cancelSelect.value || cancelSelect.value.trim() === '') {
+          e.preventDefault();
+          if (errorDiv) {
+            errorDiv.textContent = 'Please select a reason for cancellation.';
+            errorDiv.classList.remove('d-none');
+          }
+          return false;
+        }
+        if (cancelSelect.value === 'Other' && (!customInput.value || customInput.value.trim() === '')) {
+          e.preventDefault();
+          if (errorDiv) {
+            errorDiv.textContent = 'Please provide details for the cancellation reason.';
+            errorDiv.classList.remove('d-none');
+          }
+          return false;
+        }
+      });
+    }
+
+    if (window.location.hash === '#cancelOrderModal') {
+      const modalEl = document.getElementById('cancelOrderModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    }
+  });
+</script>
 {% endif %}
 
 <!-- ====== Request Refund Modal ====== -->

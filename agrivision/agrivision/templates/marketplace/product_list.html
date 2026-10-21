@@ -158,7 +158,13 @@
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="product-price fw-bold text-success fs-5">₹{{ product.price }}</span>
                   {% if product.in_stock %}
-                    <span class="badge bg-success-subtle text-success small">Stock: {{ product.stock }}</span>
+                    <span class="badge bg-success-subtle text-success small">
+                      {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}
+                        {{ product.stock }} packets
+                      {% else %}
+                        Stock: {{ product.stock }}
+                      {% endif %}
+                    </span>
                   {% else %}
                     <span class="badge bg-danger-subtle text-danger small">Out of Stock</span>
                   {% endif %}

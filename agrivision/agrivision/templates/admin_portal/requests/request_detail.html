@@ -220,8 +220,8 @@
           </div>
 
           {% if req.created_product %}
-            <a href="{% url 'admin_portal:product_update' req.created_product.pk %}" class="btn btn-outline-success w-100">
-              <i class="fa-solid fa-pen-to-square me-1"></i> Edit Published Product in Catalog
+            <a href="{% url 'admin_portal:product_list' %}?q={{ req.created_product.name|urlencode }}" class="btn btn-outline-success w-100">
+              <i class="fa-solid fa-eye me-1"></i> View Published Product in Catalog
             </a>
           {% endif %}
 

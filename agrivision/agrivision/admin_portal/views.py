@@ -495,15 +495,18 @@ class ProductCreateView(AdminRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ProductUpdateView(AdminRequiredMixin, UpdateView):
-    model = Product
-    form_class = ProductForm
-    template_name = "admin_portal/products/product_form.html"
-    success_url = reverse_lazy("admin_portal:product_list")
-
-    def form_valid(self, form):
-        messages.success(self.request, f"Product '{form.instance.name}' updated successfully!")
-        return super().form_valid(form)
+class ProductUpdateView(AdminRequiredMixin, View):
+    """
+    Administrators are not permitted to edit provider products.
+    Product editing is reserved for respective providers.
+    Direct access to this view is blocked and redirected to the product list.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        messages.error(
+            request,
+            "Product editing is restricted to the respective provider. Administrators cannot modify provider-owned products.",
+        )
+        return redirect("admin_portal:product_list")
 
 
 class ProductDeleteView(AdminRequiredMixin, DeleteView):

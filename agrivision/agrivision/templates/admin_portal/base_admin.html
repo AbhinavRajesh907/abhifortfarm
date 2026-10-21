@@ -167,6 +167,11 @@
     document.getElementById('sidebarToggleBtn')?.addEventListener('click', function() {
       document.getElementById('adminSidebar').classList.toggle('show');
     });
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+        window.location.reload();
+      }
+    });
   </script>
   
   {% block extra_js %}{% endblock extra_js %}

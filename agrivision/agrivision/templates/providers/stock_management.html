@@ -144,11 +144,17 @@
               <td class="fw-bold text-success">₹{{ prod.price }}</td>
               <td>
                 {% if prod.stock > 10 %}
-                  <span class="badge bg-success fs-6">{{ prod.stock }} units</span>
+                  <span class="badge bg-success fs-6">
+                    {{ prod.stock }} {% if prod.category.category_type == 'Seeds' or prod.category.name == 'Seeds' or 'seed' in prod.category.name.lower %}packets{% else %}units{% endif %}
+                  </span>
                 {% elif prod.stock > 0 %}
-                  <span class="badge bg-warning text-dark fs-6">{{ prod.stock }} units (Low)</span>
+                  <span class="badge bg-warning text-dark fs-6">
+                    {{ prod.stock }} {% if prod.category.category_type == 'Seeds' or prod.category.name == 'Seeds' or 'seed' in prod.category.name.lower %}packets (Low){% else %}units (Low){% endif %}
+                  </span>
                 {% else %}
-                  <span class="badge bg-danger fs-6">0 units (Out of Stock)</span>
+                  <span class="badge bg-danger fs-6">
+                    0 {% if prod.category.category_type == 'Seeds' or prod.category.name == 'Seeds' or 'seed' in prod.category.name.lower %}packets{% else %}units{% endif %} (Out of Stock)
+                  </span>
                 {% endif %}
               </td>
               <td>

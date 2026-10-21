@@ -2,6 +2,7 @@ import re
 from django import forms
 from django.contrib.auth import forms as admin_forms
 from django.forms import EmailField
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from agrivision.users.models import User
@@ -237,6 +238,28 @@ class ProviderRegistrationForm(BaseRegistrationForm):
         required=True,
         widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.jpg,.jpeg,.png,.pdf'})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today_str = timezone.now().date().isoformat()
+        if "issue_date" in self.fields:
+            self.fields["issue_date"].widget.attrs["max"] = today_str
+
+    def clean_issue_date(self):
+        issue_date = self.cleaned_data.get("issue_date")
+        if issue_date and issue_date > timezone.now().date():
+            raise forms.ValidationError(
+                _("License issue date cannot be in the future. Please select today's date or an earlier date.")
+            )
+        return issue_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        issue_date = cleaned_data.get("issue_date")
+        expiry_date = cleaned_data.get("expiry_date")
+        if issue_date and expiry_date and expiry_date <= issue_date:
+            self.add_error("expiry_date", _("License expiry date must be after the issue date."))
+        return cleaned_data
 
     def clean_license_document(self):
         file = self.cleaned_data.get('license_document')

@@ -112,9 +112,6 @@
             </td>
             <td class="text-end">
               <div class="btn-group btn-group-sm">
-                <a href="{% url 'admin_portal:product_update' prod.pk %}" class="btn btn-light border" title="Edit Product">
-                  <i class="fa-solid fa-pen-to-square text-primary"></i>
-                </a>
                 <a href="{% url 'admin_portal:inventory_list' %}?q={{ prod.name }}" class="btn btn-light border" title="Adjust Stock">
                   <i class="fa-solid fa-boxes-stacked text-success"></i>
                 </a>

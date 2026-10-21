@@ -1,6 +1,7 @@
 import re
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import ProviderProfile, ProviderRequest
@@ -170,8 +171,27 @@ class ProviderProfileForm(forms.ModelForm):
                 raise ValidationError(_("Pincode must contain numbers only (6 digits)."))
         return pincode
 
+    def clean_issue_date(self):
+        issue_date = self.cleaned_data.get("issue_date")
+        if issue_date and issue_date > timezone.now().date():
+            raise ValidationError(
+                _("License issue date cannot be in the future. Please select today's date or an earlier date.")
+            )
+        return issue_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        issue_date = cleaned_data.get("issue_date")
+        expiry_date = cleaned_data.get("expiry_date")
+        if issue_date and expiry_date and expiry_date <= issue_date:
+            self.add_error("expiry_date", _("License expiry date must be after the issue date."))
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        today_str = timezone.now().date().isoformat()
+        if "issue_date" in self.fields:
+            self.fields["issue_date"].widget.attrs["max"] = today_str
         if self.instance and self.instance.user_id:
             self.fields["full_name"].initial = self.instance.user.name or ""
             self.fields["email"].initial = self.instance.user.email or ""
@@ -198,7 +218,71 @@ class ProviderApplyForm(ProviderProfileForm):
 
 
 class ProviderRequestForm(forms.ModelForm):
-    """Form for an approved Provider to submit a new plant/seed product."""
+    """Form for an approved Provider to submit a new plant or seed product."""
+
+    PRODUCT_TYPE_PLANT = "Plants"
+    PRODUCT_TYPE_SEED = "Seeds"
+    PRODUCT_TYPE_CHOICES = [
+        (PRODUCT_TYPE_PLANT, _("🌿 Plant")),
+        (PRODUCT_TYPE_SEED, _("🌱 Seed")),
+    ]
+
+    product_type = forms.ChoiceField(
+        label=_("Product Type"),
+        choices=PRODUCT_TYPE_CHOICES,
+        initial=PRODUCT_TYPE_PLANT,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select form-select-lg", "id": "id_product_type"}),
+    )
+
+    # Seed-specific helper fields (optional, rich details)
+    seed_variety = forms.CharField(
+        label=_("Seed Variety / Strain"),
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "e.g. F1 Hybrid, Heirloom, Certified Desi Seeds"}
+        ),
+    )
+    germination_rate = forms.CharField(
+        label=_("Germination Rate / Purity"),
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "e.g. > 85% Germination, 98% Purity"}
+        ),
+    )
+    sowing_season = forms.CharField(
+        label=_("Sowing Season"),
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "e.g. Kharif (June-July), Rabi (Oct-Nov), All Seasons"}
+        ),
+    )
+    harvest_duration = forms.CharField(
+        label=_("Days to Harvest / Maturity"),
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "e.g. 60 - 75 Days"}
+        ),
+    )
+    available_packets = forms.IntegerField(
+        label=_("Available Packets"),
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "min": 1,
+                "step": 1,
+                "placeholder": "e.g. 10, 25, 50, 100 packets",
+                "id": "id_available_packets",
+            }
+        ),
+        help_text=_("Number of seed packets available for sale. Must be a positive whole number."),
+    )
 
     class Meta:
         model = ProviderRequest
@@ -214,7 +298,7 @@ class ProviderRequestForm(forms.ModelForm):
         widgets = {
             "category": forms.HiddenInput(),
             "item_name": forms.TextInput(
-                attrs={"class": "form-control form-control-lg", "placeholder": "e.g. Grafted Alphonso Mango Plantlet, Sansevieria Snake Plant..."}
+                attrs={"class": "form-control form-control-lg", "placeholder": "e.g. Grafted Alphonso Mango Plantlet, Hybrid Tomato F1 Seeds..."}
             ),
             "description": forms.Textarea(
                 attrs={
@@ -246,12 +330,24 @@ class ProviderRequestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["category"].required = False
+        self.fields["quantity"].required = False
+        if self.instance and self.instance.pk and self.instance.category:
+            if self.instance.category.category_type == "Seeds" or "seed" in self.instance.category.name.lower():
+                self.fields["product_type"].initial = self.PRODUCT_TYPE_SEED
+            else:
+                self.fields["product_type"].initial = self.PRODUCT_TYPE_PLANT
 
     def clean_quantity(self):
         qty = self.cleaned_data.get("quantity")
         if qty is not None and qty < 1:
             raise ValidationError(_("Quantity must be at least 1."))
         return qty
+
+    def clean_available_packets(self):
+        val = self.cleaned_data.get("available_packets")
+        if val is not None and val <= 0:
+            raise ValidationError(_("Available packets must be a positive whole number greater than 0."))
+        return val
 
     def clean_expected_price(self):
         price = self.cleaned_data.get("expected_price")
@@ -262,26 +358,98 @@ class ProviderRequestForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         from agrivision.marketplace.models import Category
+        product_type = cleaned_data.get("product_type")
         category = cleaned_data.get("category")
         item_name = cleaned_data.get("item_name", "").strip()
 
+        if not product_type:
+            if category:
+                if category.category_type == Category.SEEDS or "seed" in category.name.lower():
+                    product_type = self.PRODUCT_TYPE_SEED
+                else:
+                    product_type = self.PRODUCT_TYPE_PLANT
+            elif "seed" in item_name.lower():
+                product_type = self.PRODUCT_TYPE_SEED
+            else:
+                product_type = self.PRODUCT_TYPE_PLANT
+            cleaned_data["product_type"] = product_type
+
+        # Validate packet quantity for Seed products vs quantity for Plant products
+        if product_type == self.PRODUCT_TYPE_SEED:
+            raw_packets = self.data.get("available_packets")
+            available_packets = cleaned_data.get("available_packets")
+
+            # Check for decimals or negative numbers in raw input
+            if raw_packets is not None and str(raw_packets).strip() != "":
+                raw_str = str(raw_packets).strip()
+                if "." in raw_str:
+                    self.add_error("available_packets", _("Available packets must be a positive whole number without decimals."))
+                else:
+                    try:
+                        int_val = int(raw_str)
+                        if int_val <= 0:
+                            self.add_error("available_packets", _("Available packets must be greater than zero."))
+                    except ValueError:
+                        self.add_error("available_packets", _("Enter a valid whole number of packets."))
+
+            # Mandatory field check for Seed
+            if available_packets is None or available_packets <= 0:
+                # Support fallback to 'quantity' if submitted by existing tests/scripts
+                fallback_qty = cleaned_data.get("quantity")
+                if fallback_qty and fallback_qty > 0 and (raw_packets is None or str(raw_packets).strip() == ""):
+                    available_packets = fallback_qty
+                    cleaned_data["available_packets"] = fallback_qty
+                else:
+                    if "available_packets" not in self.errors:
+                        self.add_error("available_packets", _("Available Packets is mandatory for seed products."))
+            
+            if available_packets and available_packets > 0:
+                cleaned_data["quantity"] = available_packets
+        else:
+            # For plants, ensure quantity is valid
+            plant_qty = cleaned_data.get("quantity")
+            if not plant_qty or plant_qty <= 0:
+                self.add_error("quantity", _("Please specify a valid quantity of plants available."))
+
+        # Map product_type dropdown to Category (if category wasn't explicitly provided)
         if not category:
-            # Auto-assign category: Seeds if 'seed' in name, otherwise Plants
-            if "seed" in item_name.lower():
-                category, _ = Category.objects.get_or_create(
+            if product_type == self.PRODUCT_TYPE_SEED:
+                category, created = Category.objects.get_or_create(
                     name="Seeds",
                     defaults={"category_type": Category.SEEDS, "description": "Agricultural and garden seeds"}
                 )
             else:
-                category, _ = Category.objects.get_or_create(
+                category, created = Category.objects.get_or_create(
                     name="Plants",
                     defaults={"category_type": Category.PLANTS, "description": "Live plants and nursery saplings"}
                 )
             cleaned_data["category"] = category
 
+        # Enrich description with seed details if seed helper fields are provided
         description = cleaned_data.get("description", "").strip()
+        if product_type == self.PRODUCT_TYPE_SEED:
+            seed_details = []
+            if cleaned_data.get("seed_variety"):
+                seed_details.append(f"• Variety: {cleaned_data['seed_variety'].strip()}")
+            if cleaned_data.get("germination_rate"):
+                seed_details.append(f"• Germination Rate: {cleaned_data['germination_rate'].strip()}")
+            if cleaned_data.get("sowing_season"):
+                seed_details.append(f"• Sowing Season: {cleaned_data['sowing_season'].strip()}")
+            if cleaned_data.get("harvest_duration"):
+                seed_details.append(f"• Days to Harvest: {cleaned_data['harvest_duration'].strip()}")
+            if seed_details:
+                prefix = "\n".join(seed_details)
+                if description and not any(k in description for k in seed_details):
+                    description = f"{prefix}\n\n{description}"
+                elif not description:
+                    description = prefix
+                cleaned_data["description"] = description
+
         if not description:
-            self.add_error("description", _("Please provide a description and care details for this plant or seed product."))
+            if product_type == self.PRODUCT_TYPE_SEED:
+                self.add_error("description", _("Please describe the seed variety, growing instructions, and number of seeds per packet."))
+            else:
+                self.add_error("description", _("Please provide a description and care details for this plant."))
 
         return cleaned_data
 

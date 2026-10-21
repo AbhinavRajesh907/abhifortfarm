@@ -81,16 +81,23 @@ custom_login_view = CustomLoginView.as_view()
 
 
 class CustomLogoutView(View):
-    """Logs out the user and redirects back to Home page."""
+    """Logs out the user, flushes the session, and redirects back to Home page."""
     def get(self, request, *args, **kwargs):
-        logout(request)
-        messages.info(request, _("You have been signed out."))
-        return redirect("home")
+        return self._do_logout(request)
 
     def post(self, request, *args, **kwargs):
+        return self._do_logout(request)
+
+    def _do_logout(self, request):
         logout(request)
+        if hasattr(request, "session"):
+            request.session.flush()
         messages.info(request, _("You have been signed out."))
-        return redirect("home")
+        response = redirect("home")
+        response["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response["Pragma"] = "no-cache"
+        response["Expires"] = "0"
+        return response
 
 
 custom_logout_view = CustomLogoutView.as_view()

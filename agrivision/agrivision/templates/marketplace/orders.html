@@ -79,6 +79,12 @@
                    class="btn btn-success btn-sm me-1">
                   <i class="bi bi-geo-alt-fill me-1"></i> Track
                 </a>
+                {% if order.can_cancel %}
+                  <a href="{% url 'marketplace:order_detail' order.order_number %}#cancelOrderModal"
+                     class="btn btn-outline-danger btn-sm me-1" title="Cancel this order">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                  </a>
+                {% endif %}
                 <a href="{% url 'marketplace:order_detail' order.order_number %}"
                    class="btn btn-outline-secondary btn-sm">
                   Details &rarr;

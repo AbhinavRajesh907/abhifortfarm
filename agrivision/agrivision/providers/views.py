@@ -319,6 +319,20 @@ def provider_product_edit(request, pk):
                 "is_active": django_forms.CheckboxInput(attrs={"class": "form-check-input"}),
             }
 
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if self.instance and self.instance.pk and self.instance.category:
+                cat = self.instance.category
+                if cat.category_type == "Seeds" or "seed" in cat.name.lower():
+                    self.fields["stock"].label = "Available Packets"
+                    self.fields["stock"].help_text = "Total number of seed packets available for sale."
+                    self.fields["description"].widget.attrs["placeholder"] = (
+                        "Describe the seed variety, growing instructions, and number of seeds per packet."
+                    )
+                else:
+                    self.fields["stock"].label = "Available Quantity / Stock (Units)"
+                    self.fields["stock"].help_text = "Number of plants or saplings in inventory."
+
         def clean_price(self):
             price = self.cleaned_data.get("price")
             if price is not None and price <= 0:

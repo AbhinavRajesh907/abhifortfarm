@@ -314,4 +314,20 @@
   </div>
 
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const issueDateInput = document.getElementById('id_issue_date');
+    if (issueDateInput) {
+      const today = new Date().toISOString().split('T')[0];
+      issueDateInput.setAttribute('max', today);
+      issueDateInput.addEventListener('change', function() {
+        if (this.value && this.value > today) {
+          alert('License issue date cannot be in the future. Please select today or an earlier date.');
+          this.value = '';
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}

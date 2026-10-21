@@ -732,11 +732,25 @@ def cancel_order(request, order_number):
         return redirect("marketplace:order_detail", order_number=order_number)
 
     order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    if order.order_status == Order.CANCELLED:
+        messages.warning(request, f"Order #{order.order_number} has already been cancelled.")
+        return redirect("marketplace:order_detail", order_number=order_number)
+
     if not order.can_cancel:
         messages.error(request, "This order cannot be cancelled as it has already been processed or dispatched.")
         return redirect("marketplace:order_detail", order_number=order_number)
 
-    reason = request.POST.get("cancellation_reason", "Cancelled by customer").strip()
+    cancellation_reason = request.POST.get("cancellation_reason", "").strip()
+    custom_reason = request.POST.get("custom_cancellation_reason", "").strip()
+
+    if cancellation_reason == "Other" and custom_reason:
+        reason = custom_reason
+    else:
+        reason = cancellation_reason
+
+    if not reason:
+        messages.error(request, "Reason for cancellation is required. Please provide a valid reason.")
+        return redirect("marketplace:order_detail", order_number=order_number)
 
     with transaction.atomic():
         order.order_status = Order.CANCELLED

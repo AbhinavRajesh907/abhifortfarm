@@ -69,12 +69,25 @@
 
             <!-- SECTION 1: Product Information -->
             <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold">
-              <i class="bi bi-tag-fill fs-5"></i> 1. Plant / Product Information
+              <i class="bi bi-tag-fill fs-5"></i> 1. Product &amp; Variety Information
             </div>
+
+            {% if not is_edit %}
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_product_type">
+                  Product Type <span class="text-danger">*</span>
+                </label>
+                {{ form.product_type }}
+                {% if form.product_type.errors %}<div class="text-danger small mt-1">{{ form.product_type.errors.0 }}</div>{% endif %}
+                <div class="form-text small">Select <strong>Plant</strong> for saplings/potted plants, or <strong>Seed</strong> for seed packets.</div>
+              </div>
+            </div>
+            {% endif %}
 
             <div class="row g-3 mb-4">
               <div class="col-12">
-                <label class="form-label fw-semibold" for="{% if is_edit %}{{ form.name.id_for_label }}{% else %}{{ form.item_name.id_for_label }}{% endif %}">
+                <label class="form-label fw-semibold" id="productNameLabel" for="{% if is_edit %}{{ form.name.id_for_label }}{% else %}{{ form.item_name.id_for_label }}{% endif %}">
                   Product / Plant Variety Name <span class="text-danger">*</span>
                 </label>
                 {% if is_edit %}
@@ -84,9 +97,36 @@
                   {{ form.item_name }}
                   {% if form.item_name.errors %}<div class="text-danger small mt-1">{{ form.item_name.errors.0 }}</div>{% endif %}
                 {% endif %}
-                <div class="form-text small">e.g. Grafted Alphonso Mango Plantlet, Hybrid Tomato F1 Seeds, Sansevieria Snake Plant</div>
+                <div class="form-text small" id="productNameHelp">e.g. Grafted Alphonso Mango Plantlet, Hybrid Tomato F1 Seeds, Sansevieria Snake Plant</div>
               </div>
             </div>
+
+            {% if not is_edit %}
+            <!-- Seed-Specific Details Section (Visible when Seed is selected) -->
+            <div id="seedDetailsSection" class="p-3 bg-light rounded-3 border mb-4" style="display: none;">
+              <div class="fw-semibold text-success mb-2 small">
+                <i class="bi bi-seedling me-1"></i> Seed Specifications &amp; Growing Attributes (Optional)
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Seed Variety / Hybrid Strain</label>
+                  {{ form.seed_variety }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Germination Rate / Purity</label>
+                  {{ form.germination_rate }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Sowing Season</label>
+                  {{ form.sowing_season }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Days to Harvest / Maturity</label>
+                  {{ form.harvest_duration }}
+                </div>
+              </div>
+            </div>
+            {% endif %}
 
             <!-- SECTION 2: Pricing, Stock & Product Image -->
             <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold mt-4">
@@ -107,9 +147,14 @@
                 {% endif %}
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                  Available Quantity / Stock (Units) <span class="text-danger">*</span>
+              <!-- Plant Quantity field (Visible when Plant is selected) -->
+              <div class="col-md-6" id="plantQuantityWrap">
+                <label class="form-label fw-semibold" id="quantityLabel" for="{% if is_edit %}{{ form.stock.id_for_label }}{% else %}{{ form.quantity.id_for_label }}{% endif %}">
+                  {% if is_edit and product.category.category_type == 'Seeds' or product.category.name == 'Seeds' %}
+                    Available Packets <span class="text-danger">*</span>
+                  {% else %}
+                    Available Quantity / Stock (Units) <span class="text-danger">*</span>
+                  {% endif %}
                 </label>
                 {% if is_edit %}
                   {{ form.stock }}
@@ -118,7 +163,28 @@
                   {{ form.quantity }}
                   {% if form.quantity.errors %}<div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>{% endif %}
                 {% endif %}
+                <div class="form-text small" id="quantityHelp">
+                  {% if is_edit and product.category.category_type == 'Seeds' or product.category.name == 'Seeds' %}
+                    Total number of seed packets available for sale.
+                  {% else %}
+                    Number of saplings or potted plants in stock.
+                  {% endif %}
+                </div>
               </div>
+
+              {% if not is_edit %}
+              <!-- Available Packets field (Visible when Seed is selected) -->
+              <div class="col-md-6" id="seedPacketsWrap" style="display: none;">
+                <label class="form-label fw-semibold" for="id_available_packets">
+                  Available Packets <span class="text-danger">*</span>
+                </label>
+                {{ form.available_packets }}
+                {% if form.available_packets.errors %}
+                  <div class="text-danger small mt-1">{{ form.available_packets.errors.0 }}</div>
+                {% endif %}
+                <div class="form-text small" id="packetsHelp">Total number of seed packets available for sale (e.g. 10, 25, 50, 100 packets).</div>
+              </div>
+              {% endif %}
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Upload Plant / Seed Image</label>
@@ -145,13 +211,13 @@
 
             <!-- SECTION 3: Detailed Description & Care Guidelines -->
             <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-success fw-bold mt-4">
-              <i class="bi bi-card-text fs-5"></i> 3. Plant Description &amp; Growing Care Guidelines
+              <i class="bi bi-card-text fs-5"></i> <span id="descSectionTitle">3. Plant Description &amp; Growing Care Guidelines</span>
             </div>
 
             <div class="row g-3 mb-4">
               <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <label class="form-label fw-semibold mb-0" for="{{ form.description.id_for_label }}">
+                  <label class="form-label fw-semibold mb-0" id="descLabel" for="{{ form.description.id_for_label }}">
                     Description, Variety Traits &amp; Care Instructions <span class="text-danger">*</span>
                   </label>
                   <!-- Care Template Quick Fill Buttons -->
@@ -169,7 +235,7 @@
                 {% if form.description.errors %}
                   <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
                 {% endif %}
-                <div class="form-text small">
+                <div class="form-text small" id="descHelp">
                   Include key information: <strong>Sunlight needs</strong> (Full sun/Partial shade), <strong>Watering schedule</strong>, <strong>Soil type</strong>, <strong>Pot size / Sapling height</strong>, <strong>Expected flowering/fruiting time</strong>, or <strong>Germination rate</strong>.
                 </div>
               </div>
@@ -199,8 +265,104 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Quick Template Fillers for Plant / Seed Description
+    // Dynamic Product Type Switching (Plant vs Seed)
+    const typeSelect = document.getElementById('id_product_type');
+    const seedSection = document.getElementById('seedDetailsSection');
+    const nameLabel = document.getElementById('productNameLabel');
+    const nameHelp = document.getElementById('productNameHelp');
+    const submitBtn = document.querySelector('button[type="submit"]');
+
+    // Quantity vs Available Packets elements
+    const plantQtyWrap = document.getElementById('plantQuantityWrap');
+    const seedPacketsWrap = document.getElementById('seedPacketsWrap');
+    const packetsInput = document.getElementById('id_available_packets');
+    const plantQtyInput = document.getElementById('id_quantity');
+
+    // Description guidance elements
+    const descSectionTitle = document.getElementById('descSectionTitle');
+    const descLabel = document.getElementById('descLabel');
     const descArea = document.getElementById('id_description');
+    const descHelp = document.getElementById('descHelp');
+
+    function updateProductTypeUI() {
+      if (!typeSelect) return;
+      const selected = typeSelect.value;
+      if (selected === 'Seeds') {
+        if (seedSection) seedSection.style.display = 'block';
+        if (nameLabel) nameLabel.innerHTML = 'Seed Variety / Crop Name <span class="text-danger">*</span>';
+        if (nameHelp) nameHelp.textContent = 'e.g. Hybrid Tomato F1 Seeds, Certified Paddy Seeds, Organic Spinach Seeds';
+
+        // Toggle quantity vs packets fields
+        if (plantQtyWrap) plantQtyWrap.style.display = 'none';
+        if (seedPacketsWrap) seedPacketsWrap.style.display = 'block';
+        if (packetsInput) packetsInput.setAttribute('required', 'required');
+        if (plantQtyInput) plantQtyInput.removeAttribute('required');
+
+        // Update description labels & placeholder for seeds
+        if (descSectionTitle) descSectionTitle.innerHTML = '3. Seed Description, Growing Instructions &amp; Packet Contents';
+        if (descLabel) descLabel.innerHTML = 'Seed Description, Growing Instructions &amp; Seeds per Packet <span class="text-danger">*</span>';
+        if (descArea) descArea.setAttribute('placeholder', 'Describe the seed variety, growing instructions, and number of seeds per packet (e.g. "Hybrid sunflower seeds suitable for garden and agricultural cultivation. Each packet contains 25 seeds. Sow in well-drained soil with adequate sunlight.")');
+        if (descHelp) descHelp.innerHTML = 'Describe the seed variety, growing instructions, and <strong>specify the number of seeds included in one packet</strong> (e.g. 25 seeds per packet).';
+
+        if (submitBtn && submitBtn.textContent.includes('Add')) {
+          submitBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Add Seed to Marketplace';
+        }
+      } else {
+        if (seedSection) seedSection.style.display = 'none';
+        if (nameLabel) nameLabel.innerHTML = 'Product / Plant Variety Name <span class="text-danger">*</span>';
+        if (nameHelp) nameHelp.textContent = 'e.g. Grafted Alphonso Mango Plantlet, Sansevieria Snake Plant';
+
+        // Toggle quantity vs packets fields
+        if (plantQtyWrap) plantQtyWrap.style.display = 'block';
+        if (seedPacketsWrap) seedPacketsWrap.style.display = 'none';
+        if (packetsInput) {
+          packetsInput.removeAttribute('required');
+        }
+        if (plantQtyInput) plantQtyInput.setAttribute('required', 'required');
+
+        // Update description labels & placeholder for plants
+        if (descSectionTitle) descSectionTitle.innerHTML = '3. Plant Description &amp; Growing Care Guidelines';
+        if (descLabel) descLabel.innerHTML = 'Description, Variety Traits &amp; Care Instructions <span class="text-danger">*</span>';
+        if (descArea) descArea.setAttribute('placeholder', 'Enter detailed plant description, variety specifications, sunlight & watering guidelines, pot size / sapling height, soil requirements...');
+        if (descHelp) descHelp.innerHTML = 'Include key information: <strong>Sunlight needs</strong> (Full sun/Partial shade), <strong>Watering schedule</strong>, <strong>Soil type</strong>, <strong>Pot size / Sapling height</strong>, <strong>Expected flowering/fruiting time</strong>.';
+
+        if (submitBtn && submitBtn.textContent.includes('Add')) {
+          submitBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Add Plant to Marketplace';
+        }
+      }
+    }
+
+    if (typeSelect) {
+      typeSelect.addEventListener('change', updateProductTypeUI);
+      updateProductTypeUI();
+    }
+
+    // Client-side validation on form submit
+    const productForm = document.getElementById('plantProductForm');
+    if (productForm) {
+      productForm.addEventListener('submit', function(e) {
+        if (typeSelect && typeSelect.value === 'Seeds') {
+          if (packetsInput) {
+            const val = packetsInput.value.trim();
+            if (!val) {
+              e.preventDefault();
+              alert('Available Packets is mandatory for seed products. Please enter the number of packets.');
+              packetsInput.focus();
+              return false;
+            }
+            const num = Number(val);
+            if (isNaN(num) || num <= 0 || !Number.isInteger(num)) {
+              e.preventDefault();
+              alert('Available Packets must be a positive whole number (e.g. 10, 25, 50, 100 packets). Zero, negative numbers, and decimals are not allowed.');
+              packetsInput.focus();
+              return false;
+            }
+          }
+        }
+      });
+    }
+
+    // Quick Template Fillers for Plant / Seed Description
     document.querySelectorAll('.template-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const type = this.getAttribute('data-type');
@@ -215,12 +377,13 @@
 • Growth & Care: Suitable for home gardens, terrace farming, or indoor pots. Resilient and low-maintenance.`;
         } else if (type === 'seed') {
           descArea.value = 
-`• Variety: High-yield F1 hybrid certified seed packet
+`• Variety: Hybrid sunflower seeds suitable for garden and agricultural cultivation
+• Packet Contents: Each packet contains 25 seeds
 • Germination Rate: > 85% germination within 6-10 days
 • Sowing Season: All seasons / Kharif & Rabi suitable
-• Sowing Depth: 0.5 cm deep in fertile, moist nursery bed or seed tray
-• Days to Harvest: 60 - 75 days after transplantation
-• Features: Disease-resistant variety producing uniform, flavorful harvest.`;
+• Sowing Depth: 0.5 cm deep in well-drained soil with adequate sunlight
+• Days to Harvest: 60 - 75 days after germination
+• Care: Water gently until seedlings emerge; maintain moist soil.`;
         }
       });
     });

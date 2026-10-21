@@ -49,9 +49,15 @@
       <div class="product-detail-price mb-3">₹{{ product.price }}</div>
 
       <p class="mb-3">
-        <strong>Available Stock:</strong>
+        <strong>
+          {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}
+            Available Packets:
+          {% else %}
+            Available Stock:
+          {% endif %}
+        </strong>
         {% if product.in_stock %}
-          <span class="text-success fw-bold">{{ product.stock }} units</span>
+          <span class="text-success fw-bold">{{ product.stock }} {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}packets{% else %}units{% endif %}</span>
           {% if cart_item_qty > 0 %}
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2">
               <i class="bi bi-cart-check"></i> {{ cart_item_qty }} already in your cart
@@ -68,7 +74,13 @@
             {% csrf_token %}
             <div class="mb-3">
               <div class="d-flex align-items-center gap-3">
-                <label class="fw-semibold" for="qtyInput">Quantity:</label>
+                <label class="fw-semibold" for="qtyInput">
+                  {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}
+                    Packets:
+                  {% else %}
+                    Quantity:
+                  {% endif %}
+                </label>
                 <div class="qty-control d-flex align-items-center gap-2">
                   <button type="button" class="btn btn-outline-secondary btn-sm" id="qtyDecBtn" aria-label="Decrease quantity">−</button>
                   <input type="number" name="quantity" id="qtyInput" value="1"
@@ -80,7 +92,12 @@
                   {% if cart_item_qty > 0 %}
                     (Can add up to <strong class="text-success">{{ remaining_stock }}</strong> more)
                   {% else %}
-                    (Available: <strong class="text-success">{{ product.stock }}</strong>)
+                    (Available: <strong class="text-success">{{ product.stock }}</strong>
+                    {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}
+                      packets
+                    {% else %}
+                      units
+                    {% endif %})
                   {% endif %}
                 </span>
               </div>
@@ -101,7 +118,12 @@
           <div class="alert alert-info d-flex align-items-center justify-content-between p-3 rounded-3 mb-3">
             <div>
               <i class="bi bi-cart-check-fill text-success fs-5 me-2"></i>
-              You have already added all <strong>{{ product.stock }}</strong> available units to your cart.
+              You have already added all <strong>{{ product.stock }}</strong> available
+              {% if product.category.category_type == 'Seeds' or product.category.name == 'Seeds' or 'seed' in product.category.name.lower %}
+                packets
+              {% else %}
+                units
+              {% endif %} to your cart.
             </div>
             <a href="{% url 'marketplace:cart' %}" class="btn btn-sm btn-success text-nowrap ms-3">
               View Cart →

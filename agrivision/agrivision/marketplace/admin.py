@@ -18,7 +18,10 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ["name", "category", "price", "stock", "is_active", "created_at"]
     list_filter = ["category", "is_active"]
     search_fields = ["name"]
-    list_editable = ["is_active", "stock", "price"]
+    
+    def has_change_permission(self, request, obj=None):
+        # Product editing is reserved for providers
+        return False
 
 
 @admin.register(Cart)
