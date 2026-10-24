@@ -13,8 +13,6 @@ urlpatterns = [
     # --------------------------------------------------------------------------
     path("", views.smart_assistant, name="index"),
     path("smart-assistant/", views.smart_assistant, name="smart_assistant"),
-    # AI Agronomist Chatbot
-    path("chatbot/", views.agri_chatbot, name="chatbot"),
     path("disease-detection/", views.disease_detection, name="disease_detection"),
     path("disease-detection/<int:pk>/", views.disease_result, name="disease_result"),
     path("disease-detection/history/", views.disease_history, name="disease_history"),
@@ -27,8 +25,6 @@ urlpatterns = [
     # --------------------------------------------------------------------------
     # REST API Endpoints (JSON)
     # --------------------------------------------------------------------------
-    # AI Chatbot API
-    path("api/chatbot/", api_views.api_agri_chatbot, name="api_agri_chatbot"),
     # AI Disease Detection API
     path("api/disease-detection/upload/", api_views.api_disease_detection_upload, name="api_disease_detection_upload"),
     path("api/disease-detection/history/", api_views.api_disease_detection_history, name="api_disease_detection_history"),
@@ -41,4 +37,3 @@ urlpatterns = [
     path("api/market-prices/", api_views.api_market_prices, name="api_market_prices"),
     path("api/agri-info/", api_views.api_agri_info, name="api_agri_info"),
 ]
-

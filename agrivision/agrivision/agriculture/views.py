@@ -36,8 +36,8 @@ from agrivision.agriculture.services.market_price import get_market_prices
 
 @login_required
 def smart_assistant(request):
-    """AI Assistant Portal — Redirects directly to the AI Agronomist Chatbot."""
-    return redirect("agriculture:chatbot")
+    """Redirect the assistant entry point to the disease detection feature."""
+    return redirect("agriculture:disease_detection")
 
 
 @login_required
@@ -229,10 +229,3 @@ def agriculture_info(request):
             "total_diseases": diseases.count(),
         },
     )
-
-
-@login_required
-def agri_chatbot(request):
-    """Interactive AI Agronomist Chatbot interface."""
-    return render(request, "agriculture/chatbot.html")
-

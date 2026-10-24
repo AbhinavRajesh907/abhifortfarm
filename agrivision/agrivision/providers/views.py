@@ -29,6 +29,7 @@ from agrivision.marketplace.models import StockHistory
 from .forms import ProviderApplyForm
 from .forms import ProviderProfileForm
 from .forms import ProviderRequestForm
+from .forms import ProductEditForm
 from .models import ProviderProfile, ProviderRequest, ProviderProduct
 
 
@@ -229,6 +230,7 @@ def provider_product_add(request):
     """Approved provider registers a new seed/plant product."""
     _ensure_default_categories()
     profile = request.user.provider_profile
+    category_list = Category.objects.filter(is_active=True).order_by("category_type", "name")
 
     if request.method == "POST":
         form = ProviderRequestForm(request.POST, request.FILES)
@@ -273,6 +275,7 @@ def provider_product_add(request):
                 req = form.save(commit=False)
                 req.provider = profile
                 req.status = ProviderRequest.Status.APPROVED
+                req.category = category
                 req.selling_price = expected_price
                 req.admin_notes = "Auto-approved upon registration by provider."
                 req.reviewed_by = request.user
@@ -289,69 +292,31 @@ def provider_product_add(request):
 
             messages.success(
                 request,
-                f"✅ '{product.name}' registered successfully! It is now live in the Marketplace with {product.stock} units.",
+                f"✅ '{product.name}' registered successfully under '{category.name}'! It is now live in the Marketplace with {product.stock} units.",
             )
             return redirect("providers:product_list")
     else:
         form = ProviderRequestForm()
 
-    return render(request, "providers/product_form.html", {"form": form, "profile": profile, "is_edit": False})
+    return render(
+        request,
+        "providers/product_form.html",
+        {
+            "form": form,
+            "profile": profile,
+            "is_edit": False,
+            "category_list": category_list,
+        },
+    )
 
 
 @approved_provider_required
 def provider_product_edit(request, pk):
     """Edit a marketplace product that belongs to this provider."""
+    _ensure_default_categories()
     profile = request.user.provider_profile
     product = get_object_or_404(Product, pk=pk, provider=profile)
-
-    from django import forms as django_forms
-
-    class ProductEditForm(django_forms.ModelForm):
-        class Meta:
-            model = Product
-            fields = ["name", "description", "price", "stock", "image", "is_active"]
-            widgets = {
-                "name": django_forms.TextInput(attrs={"class": "form-control"}),
-                "description": django_forms.Textarea(attrs={"class": "form-control", "rows": 5, "placeholder": "Enter detailed plant description, care instructions, soil, sunlight, and watering guidance..."}),
-                "price": django_forms.NumberInput(attrs={"class": "form-control", "min": "0.01", "step": "0.01"}),
-                "stock": django_forms.NumberInput(attrs={"class": "form-control", "min": 0}),
-                "image": django_forms.ClearableFileInput(attrs={"class": "form-control"}),
-                "is_active": django_forms.CheckboxInput(attrs={"class": "form-check-input"}),
-            }
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            if self.instance and self.instance.pk and self.instance.category:
-                cat = self.instance.category
-                if cat.category_type == "Seeds" or "seed" in cat.name.lower():
-                    self.fields["stock"].label = "Available Packets"
-                    self.fields["stock"].help_text = "Total number of seed packets available for sale."
-                    self.fields["description"].widget.attrs["placeholder"] = (
-                        "Describe the seed variety, growing instructions, and number of seeds per packet."
-                    )
-                else:
-                    self.fields["stock"].label = "Available Quantity / Stock (Units)"
-                    self.fields["stock"].help_text = "Number of plants or saplings in inventory."
-
-        def clean_price(self):
-            price = self.cleaned_data.get("price")
-            if price is not None and price <= 0:
-                raise django_forms.ValidationError("Price must be greater than zero.")
-            return price
-
-        def clean_stock(self):
-            stock = self.cleaned_data.get("stock")
-            if stock is not None and stock < 0:
-                raise django_forms.ValidationError("Stock cannot be negative.")
-            return stock
-
-        def clean(self):
-            cleaned_data = super().clean()
-            description = cleaned_data.get("description", "").strip()
-            if not description:
-                self.add_error("description", "Please provide a description and care details.")
-
-            return cleaned_data
+    category_list = Category.objects.filter(is_active=True).order_by("category_type", "name")
 
     if request.method == "POST":
         old_stock = product.stock
@@ -372,7 +337,15 @@ def provider_product_edit(request, pk):
                         created_by=request.user,
                     )
 
-            messages.success(request, f"✅ '{product.name}' updated successfully.")
+                # Keep any associated ProviderRequest in sync
+                ProviderRequest.objects.filter(created_product=updated_prod).update(
+                    category=updated_prod.category,
+                    item_name=updated_prod.name,
+                    expected_price=updated_prod.price,
+                    description=updated_prod.description,
+                )
+
+            messages.success(request, f"✅ '{product.name}' updated successfully in category '{updated_prod.category.name}'.")
             return redirect("providers:product_list")
     else:
         form = ProductEditForm(instance=product)
@@ -380,7 +353,13 @@ def provider_product_edit(request, pk):
     return render(
         request,
         "providers/product_form.html",
-        {"form": form, "profile": profile, "product": product, "is_edit": True},
+        {
+            "form": form,
+            "profile": profile,
+            "product": product,
+            "is_edit": True,
+            "category_list": category_list,
+        },
     )
 
 

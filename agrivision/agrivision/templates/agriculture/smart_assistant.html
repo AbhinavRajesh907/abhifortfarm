@@ -19,7 +19,7 @@
           </span>
           <h1 class="display-6 fw-bold text-white mb-2">Smart AI Assistant</h1>
           <p class="text-white-50 leading-relaxed mb-0 fs-6">
-            Your single destination for AI plant disease diagnosis, soil & season crop recommendations, live market prices, and agronomist AI advisory.
+            Your single destination for AI plant disease diagnosis, soil & season crop recommendations, and live market prices.
           </p>
         </div>
         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
@@ -67,13 +67,6 @@
              class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'library' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
             <i class="bi bi-book-half me-1 fs-5 align-middle"></i>
             <span>Agri Library</span>
-          </a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a href="{% url 'agriculture:smart_assistant' %}?tab=chatbot" 
-             class="nav-link rounded-3 py-3 fw-bold border {% if active_tab == 'chatbot' %}active bg-success text-white border-success{% else %}text-secondary bg-light border-0{% endif %}">
-            <i class="bi bi-robot me-1 fs-5 align-middle"></i>
-            <span>AI Chatbot</span>
           </a>
         </li>
       </ul>
@@ -548,58 +541,6 @@
   </div>
   {% endif %}
 
-  <!-- ==========================================================================
-       TAB CONTENT 5: AI CHATBOT
-       ========================================================================== -->
-  {% if active_tab == 'chatbot' %}
-  <div class="card border-0 rounded-4 shadow-sm mb-4">
-    <div class="card-header bg-white border-0 pt-4 px-4 d-flex align-items-center justify-content-between">
-      <div>
-        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-robot text-success me-2"></i> AI Agronomist Chat Assistant</h5>
-        <p class="text-muted small mb-0">Ask any question regarding crop pests, fertilizers, soil care, or farming advice.</p>
-      </div>
-      <span class="badge bg-success text-white px-3 py-2 rounded-pill"><i class="bi bi-circle-fill fs-6 text-warning me-1"></i> Online AI</span>
-    </div>
-    <div class="card-body p-4">
-      
-      <!-- Chat message box -->
-      <div id="chatBox" class="border rounded-4 p-4 bg-light mb-3" style="height: 380px; overflow-y: auto;">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div class="bg-success text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-            <i class="bi bi-robot fs-5"></i>
-          </div>
-          <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 80%;">
-            <p class="mb-0 text-dark small">
-              Hello! I am your <strong>Smart AI Agronomist Assistant</strong>. Ask me anything about crop diseases, pest management, soil health, or agricultural best practices!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick prompts -->
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('What is the best fertilizer for tomato plants?')">
-          🍅 Tomato Fertilizers
-        </button>
-        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('How to prevent early blight in potatoes?')">
-          🥔 Potato Early Blight
-        </button>
-        <button class="btn btn-outline-success btn-sm rounded-pill prompt-btn" onclick="sendPresetQuery('What crops grow best in clay soil during monsoon?')">
-          🌧️ Monsoon Crops
-        </button>
-      </div>
-
-      <!-- Input box -->
-      <form id="chatForm" class="d-flex gap-2">
-        <input type="text" id="chatInput" class="form-control rounded-3" placeholder="Type your agricultural question here..." required>
-        <button type="submit" class="btn btn-success rounded-3 px-4 fw-bold">
-          <i class="bi bi-send-fill me-1"></i> Send
-        </button>
-      </form>
-    </div>
-  </div>
-  {% endif %}
-
 </div>
 
 <script>
@@ -624,71 +565,5 @@
     });
   }
 
-  // Interactive Chatbot Handler
-  const chatForm = document.getElementById('chatForm');
-  const chatInput = document.getElementById('chatInput');
-  const chatBox = document.getElementById('chatBox');
-
-  if (chatForm) {
-    chatForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      appendMessage(text, 'user');
-      chatInput.value = '';
-
-      // Send to API
-      try {
-        const response = await fetch("{% url 'agriculture:api_agri_chatbot' %}", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-          },
-          body: JSON.stringify({ message: text })
-        });
-        const data = await response.json();
-        appendMessage(data.reply || data.response || "Thank you for reaching out! Keep your soil balanced, monitor irrigation, and ensure adequate crop sunlight.", 'bot');
-      } catch (err) {
-        appendMessage("Thank you for reaching out! For optimal yield, practice crop rotation, use certified seed varieties, and consult your Smart AI Assistant disease detection tool when symptoms appear.", 'bot');
-      }
-    });
-  }
-
-  function sendPresetQuery(query) {
-    if (chatInput) {
-      chatInput.value = query;
-      chatForm.dispatchEvent(new Event('submit'));
-    }
-  }
-
-  function appendMessage(msg, sender) {
-    if (!chatBox) return;
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `d-flex align-items-start gap-3 mb-3 ${sender === 'user' ? 'justify-content-end' : ''}`;
-    
-    if (sender === 'bot') {
-      msgDiv.innerHTML = `
-        <div class="bg-success text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-          <i class="bi bi-robot fs-5"></i>
-        </div>
-        <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 80%;">
-          <p class="mb-0 text-dark small">${msg}</p>
-        </div>
-      `;
-    } else {
-      msgDiv.innerHTML = `
-        <div class="bg-success-subtle text-success p-3 rounded-4 border border-success-subtle" style="max-width: 80%;">
-          <p class="mb-0 small fw-semibold">${msg}</p>
-        </div>
-        <div class="bg-secondary text-white rounded-circle p-2 flex-shrink-0" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-          <i class="bi bi-person-fill fs-5"></i>
-        </div>
-      `;
-    }
-    chatBox.appendChild(msgDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
 </script>
 {% endblock content %}

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from agrivision.marketplace.models import Category, Product
 from .models import ProviderProfile, ProviderRequest
 
 PROVIDER_TYPE_CHOICES = [
@@ -284,6 +285,14 @@ class ProviderRequestForm(forms.ModelForm):
         help_text=_("Number of seed packets available for sale. Must be a positive whole number."),
     )
 
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.none(),
+        required=False,
+        empty_label="-- Select Category --",
+        widget=forms.Select(attrs={"class": "form-select form-select-lg", "id": "id_category"}),
+        label=_("Category"),
+    )
+
     class Meta:
         model = ProviderRequest
         fields = [
@@ -296,7 +305,7 @@ class ProviderRequestForm(forms.ModelForm):
             "image_url",
         ]
         widgets = {
-            "category": forms.HiddenInput(),
+            "category": forms.Select(attrs={"class": "form-select form-select-lg", "id": "id_category"}),
             "item_name": forms.TextInput(
                 attrs={"class": "form-control form-control-lg", "placeholder": "e.g. Grafted Alphonso Mango Plantlet, Hybrid Tomato F1 Seeds..."}
             ),
@@ -329,9 +338,11 @@ class ProviderRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("category_type", "name")
         self.fields["category"].required = False
         self.fields["quantity"].required = False
         if self.instance and self.instance.pk and self.instance.category:
+            self.fields["category"].initial = self.instance.category
             if self.instance.category.category_type == "Seeds" or "seed" in self.instance.category.name.lower():
                 self.fields["product_type"].initial = self.PRODUCT_TYPE_SEED
             else:
@@ -357,18 +368,23 @@ class ProviderRequestForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        from agrivision.marketplace.models import Category
         product_type = cleaned_data.get("product_type")
         category = cleaned_data.get("category")
         item_name = cleaned_data.get("item_name", "").strip()
 
-        if not product_type:
-            if category:
-                if category.category_type == Category.SEEDS or "seed" in category.name.lower():
+        # If category is provided, auto-sync product_type if not explicitly set
+        if category:
+            if category.category_type == Category.SEEDS or "seed" in category.name.lower():
+                if not product_type:
                     product_type = self.PRODUCT_TYPE_SEED
-                else:
+                    cleaned_data["product_type"] = product_type
+            elif category.category_type == Category.PLANTS or "plant" in category.name.lower():
+                if not product_type:
                     product_type = self.PRODUCT_TYPE_PLANT
-            elif "seed" in item_name.lower():
+                    cleaned_data["product_type"] = product_type
+
+        if not product_type:
+            if "seed" in item_name.lower():
                 product_type = self.PRODUCT_TYPE_SEED
             else:
                 product_type = self.PRODUCT_TYPE_PLANT
@@ -451,6 +467,79 @@ class ProviderRequestForm(forms.ModelForm):
             else:
                 self.add_error("description", _("Please provide a description and care details for this plant."))
 
+        return cleaned_data
+
+
+class ProductEditForm(forms.ModelForm):
+    """Form for an approved Provider to edit an existing plant or seed product."""
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.none(),
+        required=False,
+        empty_label="-- Select Category --",
+        widget=forms.Select(attrs={"class": "form-select form-select-lg", "id": "id_category"}),
+        label=_("Category"),
+    )
+
+    class Meta:
+        model = Product
+        fields = ["name", "category", "description", "price", "stock", "image", "is_active"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select form-select-lg", "id": "id_category"}),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": "Enter detailed plant description, care instructions, soil, sunlight, and watering guidance...",
+                }
+            ),
+            "price": forms.NumberInput(attrs={"class": "form-control", "min": "0.01", "step": "0.01"}),
+            "stock": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("category_type", "name")
+        if self.instance and self.instance.pk and self.instance.category:
+            self.fields["category"].initial = self.instance.category
+            cat = self.instance.category
+            if cat.category_type == "Seeds" or "seed" in cat.name.lower():
+                self.fields["stock"].label = _("Available Packets")
+                self.fields["stock"].help_text = _("Total number of seed packets available for sale.")
+                self.fields["description"].widget.attrs["placeholder"] = _(
+                    "Describe the seed variety, growing instructions, and number of seeds per packet."
+                )
+            else:
+                self.fields["stock"].label = _("Available Quantity / Stock (Units)")
+                self.fields["stock"].help_text = _("Number of plants or saplings in inventory.")
+
+    def clean_category(self):
+        category = self.cleaned_data.get("category")
+        if not category and self.instance and self.instance.category_id:
+            category = self.instance.category
+        if not category:
+            raise ValidationError(_("Please select a category."))
+        return category
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is not None and price <= 0:
+            raise ValidationError(_("Price must be greater than zero."))
+        return price
+
+    def clean_stock(self):
+        stock = self.cleaned_data.get("stock")
+        if stock is not None and stock < 0:
+            raise ValidationError(_("Stock cannot be negative."))
+        return stock
+
+    def clean(self):
+        cleaned_data = super().clean()
+        description = cleaned_data.get("description", "").strip()
+        if not description:
+            self.add_error("description", _("Please provide a description and care details."))
         return cleaned_data
 
 

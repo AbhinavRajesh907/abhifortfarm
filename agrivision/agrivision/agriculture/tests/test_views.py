@@ -27,7 +27,6 @@ def create_test_image():
 def test_views_require_login(client):
     urls = [
         reverse("agriculture:smart_assistant"),
-        reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
         reverse("agriculture:crop_recommendation"),
@@ -45,7 +44,6 @@ def test_authenticated_views_load(client, user):
     client.force_login(user)
     urls = [
         reverse("agriculture:smart_assistant"),
-        reverse("agriculture:chatbot"),
         reverse("agriculture:disease_detection"),
         reverse("agriculture:disease_history"),
         reverse("agriculture:crop_recommendation"),
@@ -56,6 +54,11 @@ def test_authenticated_views_load(client, user):
     for url in urls:
         response = client.get(url, follow=True)
         assert response.status_code == HTTPStatus.OK
+
+
+def test_chatbot_routes_are_removed(client):
+    assert client.get("/agriculture/chatbot/").status_code == HTTPStatus.NOT_FOUND
+    assert client.post("/agriculture/api/chatbot/", {"message": "Hello"}).status_code == HTTPStatus.NOT_FOUND
 
 
 

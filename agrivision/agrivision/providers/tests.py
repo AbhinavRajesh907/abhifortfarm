@@ -373,3 +373,106 @@ class ProviderWorkflowTests(TestCase):
         self.assertContains(res_b, "Rose Plant")
         self.assertNotContains(res_b, "AGV-TEST-001")
         self.assertNotContains(res_b, "Tomato Seeds")
+
+    def test_add_and_update_plant_and_seed_with_category(self):
+        """Test adding and updating plant and seed products with specific categories."""
+        profile = ProviderProfile.objects.create(
+            user=self.user_a,
+            farm_name="Botanical Nursery",
+            phone_number="9876543210",
+            verification_status=ProviderProfile.VerificationStatus.APPROVED,
+        )
+        self.client.login(email="provider_a@example.com", password="testpassword123")
+
+        flowering_plants, _ = Category.objects.get_or_create(
+            name="Flowering Plants",
+            defaults={"category_type": Category.PLANTS, "description": "Flowering ornamental plants"}
+        )
+        indoor_plants, _ = Category.objects.get_or_create(
+            name="Indoor Plants",
+            defaults={"category_type": Category.PLANTS, "description": "Indoor decorative plants"}
+        )
+        veg_seeds, _ = Category.objects.get_or_create(
+            name="Vegetable Seeds",
+            defaults={"category_type": Category.SEEDS, "description": "Seeds for vegetable gardening"}
+        )
+        flower_seeds, _ = Category.objects.get_or_create(
+            name="Flower Seeds",
+            defaults={"category_type": Category.SEEDS, "description": "Seeds for flowers"}
+        )
+
+        # 1. Add Plant with "Flowering Plants" category
+        plant_data = {
+            "product_type": "Plants",
+            "category": flowering_plants.pk,
+            "item_name": "Hibiscus Rosa-Sinensis",
+            "description": "Healthy flowering red hibiscus plant in 6-inch pot. Requires full sunlight and moderate watering.",
+            "quantity": 20,
+            "expected_price": "180.00",
+        }
+        res_add = self.client.post(reverse("providers:product_add"), data=plant_data)
+        self.assertEqual(res_add.status_code, 302)
+
+        plant_prod = Product.objects.get(name="Hibiscus Rosa-Sinensis")
+        self.assertEqual(plant_prod.category, flowering_plants)
+        self.assertEqual(plant_prod.category.category_type, Category.PLANTS)
+        req = ProviderRequest.objects.get(created_product=plant_prod)
+        self.assertEqual(req.category, flowering_plants)
+
+        # 2. Update Plant category to "Indoor Plants"
+        edit_data = {
+            "name": "Hibiscus Rosa-Sinensis (Indoor Care)",
+            "category": indoor_plants.pk,
+            "description": "Updated description for indoor windowsill placement with indirect bright sunlight.",
+            "price": "195.00",
+            "stock": 18,
+            "is_active": True,
+        }
+        res_edit = self.client.post(
+            reverse("providers:product_edit", kwargs={"pk": plant_prod.pk}),
+            data=edit_data,
+        )
+        self.assertEqual(res_edit.status_code, 302)
+        plant_prod.refresh_from_db()
+        self.assertEqual(plant_prod.category, indoor_plants)
+        self.assertEqual(plant_prod.name, "Hibiscus Rosa-Sinensis (Indoor Care)")
+        self.assertEqual(plant_prod.price, Decimal("195.00"))
+        req.refresh_from_db()
+        self.assertEqual(req.category, indoor_plants)
+
+        # 3. Add Seed with "Vegetable Seeds" category
+        seed_data = {
+            "product_type": "Seeds",
+            "category": veg_seeds.pk,
+            "item_name": "Organic Capsicum Seeds",
+            "description": "Premium bell pepper capsicum seeds with 90% germination rate. 30 seeds per packet.",
+            "available_packets": 50,
+            "expected_price": "75.00",
+        }
+        res_seed_add = self.client.post(reverse("providers:product_add"), data=seed_data)
+        self.assertEqual(res_seed_add.status_code, 302)
+
+        seed_prod = Product.objects.get(name="Organic Capsicum Seeds")
+        self.assertEqual(seed_prod.category, veg_seeds)
+        self.assertEqual(seed_prod.category.category_type, Category.SEEDS)
+        self.assertEqual(seed_prod.stock, 50)
+
+        # 4. Update Seed category to "Flower Seeds"
+        seed_edit_data = {
+            "name": "Organic Capsicum & Marigold Seed Pack",
+            "category": flower_seeds.pk,
+            "description": "Companion planting seed pack for garden protection and vibrant blooms.",
+            "price": "85.00",
+            "stock": 45,
+            "is_active": True,
+        }
+        res_seed_edit = self.client.post(
+            reverse("providers:product_edit", kwargs={"pk": seed_prod.pk}),
+            data=seed_edit_data,
+        )
+        self.assertEqual(res_seed_edit.status_code, 302)
+        seed_prod.refresh_from_db()
+        self.assertEqual(seed_prod.category, flower_seeds)
+        self.assertEqual(seed_prod.category.category_type, Category.SEEDS)
+        self.assertEqual(seed_prod.stock, 45)
+

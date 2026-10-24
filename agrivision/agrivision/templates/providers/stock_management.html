@@ -128,7 +128,7 @@
                   <img src="{{ prod.image.url }}" alt="{{ prod.name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;"/>
                 {% else %}
                   <div style="width: 50px; height: 50px; background: #e8f5e9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-                    {% if prod.category.name == 'Seeds' %}🌱{% else %}🌿{% endif %}
+                    {% if prod.category.category_type == 'Seeds' or 'seed' in prod.category.name.lower %}🌱{% else %}🌿{% endif %}
                   </div>
                 {% endif %}
               </td>
@@ -137,7 +137,7 @@
                 <small class="text-muted">SKU / ID: #{{ prod.id }}</small>
               </td>
               <td>
-                <span class="badge {% if prod.category.name == 'Seeds' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                <span class="badge {% if prod.category.category_type == 'Seeds' or 'seed' in prod.category.name.lower %}bg-warning text-dark{% else %}bg-success{% endif %}">
                   {{ prod.category.name }}
                 </span>
               </td>

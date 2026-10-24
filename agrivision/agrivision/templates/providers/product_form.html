@@ -72,18 +72,32 @@
               <i class="bi bi-tag-fill fs-5"></i> 1. Product &amp; Variety Information
             </div>
 
-            {% if not is_edit %}
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold" for="id_product_type">
                   Product Type <span class="text-danger">*</span>
                 </label>
-                {{ form.product_type }}
+                {% if is_edit %}
+                  <select class="form-select form-select-lg" id="id_product_type" name="product_type">
+                    <option value="Plants" {% if not product.category.is_seed_category %}selected{% endif %}>🌿 Plant</option>
+                    <option value="Seeds" {% if product.category.is_seed_category %}selected{% endif %}>🌱 Seed</option>
+                  </select>
+                {% else %}
+                  {{ form.product_type }}
+                {% endif %}
                 {% if form.product_type.errors %}<div class="text-danger small mt-1">{{ form.product_type.errors.0 }}</div>{% endif %}
                 <div class="form-text small">Select <strong>Plant</strong> for saplings/potted plants, or <strong>Seed</strong> for seed packets.</div>
               </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_category">
+                  Category <span class="text-danger">*</span>
+                </label>
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>{% endif %}
+                <div class="form-text small">Select category (e.g. Vegetable Seeds, Fruit Plants, Indoor Plants).</div>
+              </div>
             </div>
-            {% endif %}
 
             <div class="row g-3 mb-4">
               <div class="col-12">
@@ -263,10 +277,19 @@
   </div>
 </div>
 
+<script id="categories-data" type="application/json">
+[
+  {% for cat in category_list %}
+    {"id": {{ cat.id }}, "name": "{{ cat.name|escapejs }}", "type": "{{ cat.category_type }}"}{% if not forloop.last %},{% endif %}
+  {% endfor %}
+]
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Dynamic Product Type Switching (Plant vs Seed)
     const typeSelect = document.getElementById('id_product_type');
+    const categorySelect = document.getElementById('id_category');
     const seedSection = document.getElementById('seedDetailsSection');
     const nameLabel = document.getElementById('productNameLabel');
     const nameHelp = document.getElementById('productNameHelp');
@@ -277,12 +300,56 @@
     const seedPacketsWrap = document.getElementById('seedPacketsWrap');
     const packetsInput = document.getElementById('id_available_packets');
     const plantQtyInput = document.getElementById('id_quantity');
+    const quantityLabel = document.getElementById('quantityLabel');
+    const quantityHelp = document.getElementById('quantityHelp');
 
     // Description guidance elements
     const descSectionTitle = document.getElementById('descSectionTitle');
     const descLabel = document.getElementById('descLabel');
     const descArea = document.getElementById('id_description');
     const descHelp = document.getElementById('descHelp');
+
+    // Parse categories JSON
+    const catScript = document.getElementById('categories-data');
+    const allCategories = catScript ? JSON.parse(catScript.textContent) : [];
+
+    function updateCategoryDropdown(selectedType, targetCategoryId) {
+      if (!categorySelect || allCategories.length === 0) return;
+      const currentVal = (targetCategoryId !== undefined && targetCategoryId !== null) ? String(targetCategoryId) : categorySelect.value;
+      categorySelect.innerHTML = '';
+
+      // Filter categories by selectedType ("Plants" or "Seeds")
+      const filtered = allCategories.filter(cat => {
+        if (selectedType === 'Seeds') {
+          return cat.type === 'Seeds' || cat.name.toLowerCase().includes('seed');
+        } else {
+          return cat.type === 'Plants' || cat.name.toLowerCase().includes('plant');
+        }
+      });
+
+      const listToRender = filtered.length > 0 ? filtered : allCategories;
+
+      let found = false;
+      listToRender.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        if (String(cat.id) === String(currentVal)) {
+          opt.selected = true;
+          found = true;
+        }
+        categorySelect.appendChild(opt);
+      });
+
+      if (!found && listToRender.length > 0) {
+        const mainCat = listToRender.find(c => c.name === selectedType);
+        if (mainCat) {
+          categorySelect.value = String(mainCat.id);
+        } else {
+          categorySelect.selectedIndex = 0;
+        }
+      }
+    }
 
     function updateProductTypeUI() {
       if (!typeSelect) return;
@@ -293,10 +360,15 @@
         if (nameHelp) nameHelp.textContent = 'e.g. Hybrid Tomato F1 Seeds, Certified Paddy Seeds, Organic Spinach Seeds';
 
         // Toggle quantity vs packets fields
-        if (plantQtyWrap) plantQtyWrap.style.display = 'none';
-        if (seedPacketsWrap) seedPacketsWrap.style.display = 'block';
-        if (packetsInput) packetsInput.setAttribute('required', 'required');
-        if (plantQtyInput) plantQtyInput.removeAttribute('required');
+        {% if is_edit %}
+          if (quantityLabel) quantityLabel.innerHTML = 'Available Packets <span class="text-danger">*</span>';
+          if (quantityHelp) quantityHelp.textContent = 'Total number of seed packets available for sale.';
+        {% else %}
+          if (plantQtyWrap) plantQtyWrap.style.display = 'none';
+          if (seedPacketsWrap) seedPacketsWrap.style.display = 'block';
+          if (packetsInput) packetsInput.setAttribute('required', 'required');
+          if (plantQtyInput) plantQtyInput.removeAttribute('required');
+        {% endif %}
 
         // Update description labels & placeholder for seeds
         if (descSectionTitle) descSectionTitle.innerHTML = '3. Seed Description, Growing Instructions &amp; Packet Contents';
@@ -313,12 +385,17 @@
         if (nameHelp) nameHelp.textContent = 'e.g. Grafted Alphonso Mango Plantlet, Sansevieria Snake Plant';
 
         // Toggle quantity vs packets fields
-        if (plantQtyWrap) plantQtyWrap.style.display = 'block';
-        if (seedPacketsWrap) seedPacketsWrap.style.display = 'none';
-        if (packetsInput) {
-          packetsInput.removeAttribute('required');
-        }
-        if (plantQtyInput) plantQtyInput.setAttribute('required', 'required');
+        {% if is_edit %}
+          if (quantityLabel) quantityLabel.innerHTML = 'Available Quantity / Stock (Units) <span class="text-danger">*</span>';
+          if (quantityHelp) quantityHelp.textContent = 'Number of saplings or potted plants in stock.';
+        {% else %}
+          if (plantQtyWrap) plantQtyWrap.style.display = 'block';
+          if (seedPacketsWrap) seedPacketsWrap.style.display = 'none';
+          if (packetsInput) {
+            packetsInput.removeAttribute('required');
+          }
+          if (plantQtyInput) plantQtyInput.setAttribute('required', 'required');
+        {% endif %}
 
         // Update description labels & placeholder for plants
         if (descSectionTitle) descSectionTitle.innerHTML = '3. Plant Description &amp; Growing Care Guidelines';
@@ -333,8 +410,35 @@
     }
 
     if (typeSelect) {
-      typeSelect.addEventListener('change', updateProductTypeUI);
-      updateProductTypeUI();
+      typeSelect.addEventListener('change', function() {
+        updateProductTypeUI();
+        updateCategoryDropdown(typeSelect.value);
+      });
+    }
+
+    if (categorySelect) {
+      categorySelect.addEventListener('change', function() {
+        const selectedId = categorySelect.value;
+        const matched = allCategories.find(c => String(c.id) === String(selectedId));
+        if (matched && typeSelect) {
+          const isSeed = matched.type === 'Seeds' || matched.name.toLowerCase().includes('seed');
+          const expectedType = isSeed ? 'Seeds' : 'Plants';
+          if (typeSelect.value !== expectedType) {
+            typeSelect.value = expectedType;
+            updateProductTypeUI();
+          }
+        }
+      });
+    }
+
+    // Initialize on page load
+    const initialCategoryId = {% if is_edit %}{{ product.category.id|default:"null" }}{% else %}{{ form.category.value|default:"null" }}{% endif %};
+    const initialType = typeSelect ? typeSelect.value : 'Plants';
+    updateProductTypeUI();
+    if (initialCategoryId) {
+      updateCategoryDropdown(initialType, initialCategoryId);
+    } else {
+      updateCategoryDropdown(initialType);
     }
 
     // Client-side validation on form submit
